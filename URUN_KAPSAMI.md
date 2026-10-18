@@ -16,6 +16,8 @@ Mobil uygulamadaki bu turun davranışı ve örnek/canlı ayrımı [deneyim notl
 
 ## Kabul edilen kapsam
 
+İkinci blok `panel/` altında yerel belediye çalışma alanı olarak başlatıldı. Panelin örnek atama, duyuru ve sonuç akışları mobil uygulamadan bağımsızdır. Üçüncü saha bloğundan sonra roller, API ve canlı yayın birlikte bağlanacaktır; [panel kılavuzu](panel/README.md) mevcut sınırları açıklar.
+
 - Tek sistem içinde vatandaş, belediye merkez birimi ve saha ekibi için ayrı yetkiler ve ekranlar.
 - İlk geliştirme bloğu Android vatandaş uygulamasıdır. Merkez ve ekip modülleri ayrı geliştirildikten sonra bağlanacaktır.
 - İlk sorun kategorileri: elektrik kesintisi, su kesintisi, çöp birikmesi, yol hasarı ve buzlanma.
