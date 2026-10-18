@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KentYanımda</string>
+    <string name="title_activity_main">KentYanımda</string>
+    <string name="package_name">com.kentyanimda.vatandas</string>
+    <string name="custom_url_scheme">com.kentyanimda.vatandas</string>
+</resources>
