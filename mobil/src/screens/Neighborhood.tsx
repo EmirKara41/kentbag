@@ -49,7 +49,7 @@ export function AreaPicker() {
                 ? "SON BİLDİRDİĞİN YER"
                 : "YAŞADIĞIN YER"}
           </small>
-          <strong>{label || "Bölgeni seç"}</strong>
+          <strong>{label || "Oltu · Erzurum"}</strong>
         </span>
         <Icon name="down" size={17} />
       </button>
@@ -68,7 +68,7 @@ export function AreaPicker() {
               maxLength={120}
               value={value}
               onChange={(event) => setValue(event.target.value)}
-              placeholder="Örn. Cumhuriyet Mahallesi"
+              placeholder="Örn. Cumhuriyet Mahallesi · Oltu"
             />
           </label>
           <Button

@@ -33,8 +33,8 @@ export const communityExamples: CommunityItem[] = [
       "Ana borudaki arızanın giderilmesi için çalışma yapılıyor. Tahmini bitiş: 17.00.",
     impact: "Çınar, Menekşe ve Park sokakları",
     count: 48,
-    latitude: 41.023,
-    longitude: 29.002,
+    latitude: 40.545,
+    longitude: 41.994,
     history: [
       {
         time: "12.10",
@@ -63,8 +63,8 @@ export const communityExamples: CommunityItem[] = [
     summary: "Yol yüzeyi yenilenirken tek şeritten kontrollü geçiş sağlanıyor.",
     impact: "Okul Caddesi'ni kullanan araçlar ve yayalar",
     count: 21,
-    latitude: 41.025,
-    longitude: 29.004,
+    latitude: 40.547,
+    longitude: 41.996,
     history: [
       {
         time: "09.00",
@@ -89,8 +89,8 @@ export const communityExamples: CommunityItem[] = [
       "Yüksek kaldırım, tekerlekli sandalye ve bebek arabası kullananların geçişini zorlaştırıyor. Uygun eğimli bir rampa isteniyor.",
     impact: "Erişilebilirlik · Sağlık hizmetine ulaşım",
     count: 24,
-    latitude: 41.022,
-    longitude: 29.003,
+    latitude: 40.544,
+    longitude: 41.995,
     history: [
       {
         time: "1. adım",
@@ -115,8 +115,8 @@ export const communityExamples: CommunityItem[] = [
       "Park ile durak arasındaki yürüyüş yolunun akşamları daha rahat kullanılabilmesi için aydınlatma isteniyor.",
     impact: "Yaya güvenliği · Ortak alan kullanımı",
     count: 86,
-    latitude: 41.024,
-    longitude: 29.006,
+    latitude: 40.546,
+    longitude: 41.998,
     history: [
       {
         time: "Son durum",
@@ -136,8 +136,8 @@ export const communityExamples: CommunityItem[] = [
       "Bozuk yüzey düzeltildi, durak bağlantısındaki geçiş düzenlendi. Bu çalışma kaldırım ve erişilebilir geçiş taleplerini karşılıyor.",
     impact: "Kaldırım yüzeyi ve durak bağlantısında erişilebilir geçiş",
     count: 17,
-    latitude: 41.021,
-    longitude: 29.001,
+    latitude: 40.543,
+    longitude: 41.993,
     history: [
       {
         time: "1. adım",

@@ -1,0 +1,47 @@
+.connection-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+.connection-actions button {
+  border: 1px solid #c4d8cd;
+  background: #fff;
+  border-radius: 7px;
+  padding: 7px 10px;
+  color: #234c40;
+  cursor: pointer;
+  font: inherit;
+  font-size: 12px;
+}
+.triage-card {
+  padding: 16px;
+  margin: 18px 0;
+  border: 1px solid #d4e1dc;
+  background: #f2f7f4;
+  border-radius: 12px;
+  color: #294a3f;
+}
+.triage-card p {
+  font-size: 14px;
+  line-height: 1.65;
+  margin: 8px 0;
+}
+.triage-card small {
+  display: block;
+  font-size: 12px;
+  line-height: 1.6;
+}
+.receipt-photos {
+  display: flex;
+  gap: 10px;
+  margin: 15px 0;
+  flex-wrap: wrap;
+}
+.receipt-photos img {
+  width: 120px;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 9px;
+}

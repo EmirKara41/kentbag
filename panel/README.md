@@ -1,50 +1,38 @@
-# KentBağ · Belediye Çözüm Merkezi
+# KentBağ · Belediye paneli
 
-İkinci blok: belediye merkez biriminin web paneli. Vatandaş uygulaması ve saha ekibi entegrasyonu bu blokta açılmaz. Veriler açıkça örnektir; işlemler yalnız bu tarayıcıda kalır. Kurum hesabı, gerçek mesaj gönderimi veya çalışan bir saha bağlantısı varmış gibi gösterilmez.
-
-## Çalıştırma
-
-Node.js 22+ ile, bu klasörde:
+Oltu yerel pilotunda gerçek vatandaş talepleriyle çalışan merkez birim ekranı. Kurulum ve telefon bağlantısı için [yerel deneme kılavuzu](../YEREL_DENEME.md).
 
 ```powershell
 npm ci
 npm run dev
 ```
 
-Panel: http://localhost:4280/. Vatandaş önizlemesinin 4173 portu bağımsız kalır.
+Bilgisayarda `http://localhost:4280/` açılır. `/api` istekleri yerel API'ye (`127.0.0.1:3000`) aktarılır. API `sunucu` klasöründen `npm run pilot` ile başlatılır. Yerel yönetici bağlantısı sadece loopback istemcisine ve izin verilen panel kaynağına açılır; panel anahtarı APK'ya, derlenmiş web paketine veya Git'e yazılmaz. Çok kullanıcılı üretim kimlik doğrulaması henüz yoktur.
+
+Varsayılan ekran gerçek pilot verilerini kullanır. Sunucu yoksa hata görünür; kendiliğinden örnek verilerle dolmaz. **Örnek alanı aç** veya `/?ornek=1` ile tamamen ayrı, tarayıcıda saklanan örnek çalışma açılır. **Yerel sisteme bağlan** gerçek kuyruğa döner. Gerçek kayıtlar örnek sıfırlamayla silinemez.
+
+## Yapılabilenler
+
+- Gelen arıza ve iyileştirme taleplerini, fotoğraf ve elle/GPS/haritayla girilen konumlarını inceleme; koordinatsız adres için nokta uydurulmaz.
+- Gerekçeli kural/Gemini aciliyet önerisiyle kuyruk sıralama; yetkilinin ayrı öncelik kararı. Anahtar yokluğu ve analiz hatası görünürdür.
+- Kategoriye uygun birim/ekip atama, çalışmayı başlatma, çözüm kaydetme, yeniden inceleme. Saha uygulaması teslimi henüz yoktur.
+- Vatandaşa açık açıklama/durum/çözümü gerçek kaydına ve uygulama içi güncellemelerine yazma. Kurum içi notlar vatandaş yanıtına dahil edilmez.
+- Vatandaşın çözüm geri dönüşünü ve sorunun sürdüğüne dair açıklamasını görme. Çözüm bildirimi vatandaş onayı değildir; devam eden sorun çözülmüş sayılmaz.
+- Dış kurum kuyruğu oluşturma; su için ESKİ, elektrik için dağıtım kurumu. Gerçek dış kurum gönderimi veya teslim teyidi yoktur.
+- Sunucuda kalıcı ekip durumları, duyurular, çalışma kayıtları ve işlem geçmişi; kategori/ekip uygunluğu sunucuda da doğrulanır.
+- Türkçe arama, durum/kategori/öncelik filtreleri, liste/harita ve canlı/örnek ayrımı işaretlenen CSV.
+
+Duyurular ve çalışma sonuçlarının vatandaşın genel bölge yayınına aktarımı henüz bağlı değildir; bu aşamada panel kayıtlarıdır. Mobildeki mahalle örnekleri gerçek duyurularla karıştırılmaz. Arka planda push/e-posta, gerçek saha görevi teslimi ve sonuç fotoğrafı üçüncü blokla tamamlanacaktır.
+
+## Doğrulama
 
 ```powershell
 npm run typecheck
 npm test
-npm run test:ui
 npm run build
+npm run test:ui
 ```
 
-Üretim çıktısı `dist/` altındadır. Harita ayrı parçada, yalnız harita ekranı açılınca yüklenir. Uygulama kimlik veya sunucu anahtarı içermez. Bu turda internet yayını yapılmaz; mevcut Vercel API ile canlı bağlantı son aşamaya bırakılmıştır.
+UI testleri `?ornek=1` çalışma alanını kullanır; gerçek veritabanını değiştirmez. Yerel sunucu entegrasyon testleri `sunucu/tests/municipality.test.ts` içindedir. Güncel tarayıcı doğrulamasında ayrı test veritabanıyla talep → birim/aciliyet → atama → açıklama/çözüm → vatandaş geri dönüşü denendi.
 
-## İlk sürümdeki ekranlar
-
-- **Genel bakış:** Devam eden işler, atama bekleyenler, ekip atamaları ve çözüm bildirilen kayıtlar örnek verilerden hesaplanır. Öncelikli iş kuyruğu, ortak bölge olayları, birim dağılımı ve vatandaş geri dönüşleri görünür.
-- **Talepler:** Arıza ve iyileştirme ayrımı, durum/kategori/öncelik filtresi, Türkçe arama ve örnek olarak işaretlenen CSV çıktısı. Sayılar destek veya benzersiz kişi sayısı yerine geçmez.
-- **Talep ayrıntısı:** Adres, kurumca belirlenen öncelik, uygun birim/ekip atama, kurum içi not, vatandaşa açık açıklama, süreç geçmişi, vatandaş görünümü, çözüm bildirimi ve gerekçeyle yeniden inceleme. Görev alamayan veya farklı birime ait ekip seçilemez. Çözüm bildirmek vatandaş onayı değildir.
-- **Harita:** Örnek talep noktaları. Koordinatsız elle adresler soldaki listede kalır; adreslerden nokta uydurulmaz. OSM yüklenmezse CARTO denenir; ikisi de başarısızsa kayıt listesi çalışır. Ekiplerin canlı konumu gösterilmez.
-- **Bölge duyuruları:** Taslak/yayında/tamamlanan örnek duyurular. Açıklama, etkilenen bölge, tahmini bitiş, aynı kategorideki ilişkili talepler ve vatandaş önizlemesi. Bir kayıt aynı anda iki ortak olaya bağlanmaz. Bağlanan talepler silinmez veya otomatik tamamlanmaz.
-- **Çalışmalar ve sonuçlar:** Planlanan/devam eden/tamamlanan çalışmalar, karşılanan ihtiyaç ve ilgili talepler. Çalışma sayısı ve tekil ilişkili talep sayısı ayrı hesaplanır. Tamamlanan çalışma ilişkili talepleri kendiliğinden kapatmaz.
-- **Birimler ve ekipler:** Ekiplerin aktif yükü, yeni görev alabilirliği ve görevleri. Elektrik dağıtım kurumu gibi dış sorumlular için yönlendirme kaydı tutulur; teslim teyidi veya müdahale gerçekleşmiş gibi ifade edilmez.
-- **İşlem geçmişi:** Örnek kurum işlemlerinin kaydı. Kamuya açık açıklamalarla kurum içi kayıtlar ayrıdır.
-
-## Kalıcılık ve sınırlar
-
-Tarayıcıda `kentbag-panel-demo-v1` anahtarı altında sürümlü örnek durum tutulur. Tarayıcı yenilemesi atamaları ve düzenlemeleri korur. Depolama başarısızsa işlem uygulanmaz ve hata gösterilir. Örnekleri sıfırlamak onay ister; mobil uygulamanın kayıtlarına dokunmaz. Tarayıcı verilerini temizlemek bu örnek çalışmayı siler.
-
-Bu bir üretim yetkilendirme sistemi değildir. Yan menüdeki operatör ve belediye örnektir. Gerçek vatandaş verileri, fotoğraf servisi, ekipten gelen sonuç kanıtı, e-posta/push, çoklu kurum yetkisi ve kullanıcı yönetimi henüz bağlı değildir. Görsel etiketleme/öncelik için yapay zekâ kullanılmaz; kurum önceliği elle belirler.
-
-## Üçüncü bloktan sonra bağlantı
-
-1. Saha uygulamasında görevi alma, durumu güncelleme ve sonuç açıklaması/fotoğrafı akışı tamamlanır.
-2. Belediye kapsamı ve rol izinleri sunucuda doğrulanır. Vatandaş oturumu kurum işlemleri yapamaz; istemciden gelen rol/kurum kimliğine güvenilmez.
-3. Panelin yerel durum katmanı yetkili API katmanıyla değiştirilir. Vatandaş kayıtlarının kategori, tür, konum, durum, işlem geçmişi ve çözüm geri dönüşleri eşleştirilir. Panelin başlık, öncelik, birim ve ekip alanları kurum sözleşmesinde ayrıca tanımlanır.
-4. Duyurular ve çalışma sonuçları, kurum içi notlar ve özel vatandaş bilgileri ayıklanarak mobil yayına aktarılır. API'ye kayıt ve bildirimin teslimi ayrı izlenir.
-5. Gerçek akış vatandaş → merkez → ekip → sonuç → vatandaş geri dönüşü olarak uçtan uca doğrulanır.
-
-Dosya düzeni: `src/domain.ts` veri modeli ve işlem kuralları; `fixtures.ts` tamamen örnek kayıtlar; `store.tsx` yerel kalıcılık; `Reports.tsx`, `Announcements.tsx`, `MapView.tsx`, `App.tsx` ekranlar. Test sonuçları ve ekran görüntüleri Git dışında `artifacts/` içinde tutulur.
+`src/domain.ts`, API'nin de kullandığı saf işlem kurallarını `sunucu/src/municipality-domain.ts` dosyasından dışa aktarır. `fixtures.ts` yalnız örnekler, `store.tsx` birbirinden ayrı API/örnek katmanlarıdır. Fotoğraf sunucusu, kurum işlemleri ve role göre erişim pilot API tarafından sağlanır; üretim için Vercel dağıtımı ve kurumsal rol sistemi ayrıca tamamlanacaktır.

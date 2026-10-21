@@ -6,10 +6,10 @@ Proje adı KentBağ'dır. Mevcut vatandaş uygulamasının görünen adı KentYa
 
 - `mobil/`: Android vatandaş uygulaması. Bölge ana sayfası, aktif olaylar, iyileştirme istekleri, tamamlanan kişisel talepler, kamera/galeri, GPS/harita ve hesap ekranları APK'nın içindedir. [Yeni deneyim ve bağlantı sınırları](mobil/URUN_DENEYIMI.md).
 - `sunucu/`: Vercel üzerinde çalışacak API; Better Auth ile giriş, PostgreSQL kayıtları ve özel Vercel Blob fotoğrafları.
-- `panel/`: Belediye merkez biriminin bağımsız web paneli. Talep inceleme/yönlendirme, harita, duyurular, ekipler ve çalışma sonuçları. Bu aşamada açıkça etiketlenen örnek verilerle, tarayıcıda kayıt tutarak çalışır. [Panel kılavuzu](panel/README.md).
+- `panel/`: Belediye merkez biriminin web paneli. Oltu yerel pilotunda gerçek vatandaş taleplerine bağlıdır; örnek çalışma alanı ayrıca açılabilir. [Panel kılavuzu](panel/README.md).
 
-Sunucu Vercel için hazırlanmıştır. Canlı API ve depolar henüz dağıtılmamıştır. Hesap hizmeti açılana kadar kullanıcı menülerde gezinebilir, fotoğraf/konum ekleyebilir ve taslak hazırlayabilir; sunucuya gönderilmiş gibi başarı gösterilmez. Belediye paneli ikinci blok olarak bağımsız geliştirildi; saha ekibi üçüncü bloktur. Üç tarafın canlı bağlantısı saha uygulamasından sonra yapılacaktır.
+Oltu pilotunda vatandaş → yerel API → belediye paneli ve panel → vatandaş durum/açıklama/çözüm akışı bağlıdır. Gerçek hesaplar, talepler ve fotoğraflar bilgisayarda kalıcı saklanır. Aciliyet önerisi Gemini anahtarı yokken gerekçeli kurallarla, anahtar eklenince Gemini ile üretilir; yetkili kararı ayrı tutulur. İnternetteki Vercel/Neon/Blob üretim kaynakları henüz dağıtılmadı. Saha uygulaması üçüncü bloktur.
 
-Android uygulaması yardımcı uygulama veya açık bilgisayar gerektirmez. APK hazırlama/indirme: [mobil kılavuzu](mobil/README.md). Sunucuyu bağlama: [Vercel kurulumu](sunucu/README.md). Kabul edilen ürün kapsamı: [kapsam](URUN_KAPSAMI.md).
+Android menüleri APK içine gömülüdür; yardımcı uygulama gerekmez. Bu yerel pilotta kayıt göndermek ve güncelleme almak için telefon aynı ağda olmalı ve bilgisayardaki API açık kalmalıdır. [Yerel deneme ve yeniden başlatma](YEREL_DENEME.md). APK hazırlama/indirme: [mobil kılavuzu](mobil/README.md). [Vercel kurulumu](sunucu/README.md). Kabul edilen ürün kapsamı: [kapsam](URUN_KAPSAMI.md).
 
 Önceki mobil çalışma `arsiv/mobil-ilk-deneme/` altında kullanım dışı tutulur; yeni uygulamanın derlemesine katılmaz. Masaüstündeki Pusula referans projesi değiştirilmemiştir.

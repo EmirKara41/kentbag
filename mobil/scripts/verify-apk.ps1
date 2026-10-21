@@ -1,6 +1,7 @@
 $ErrorActionPreference='Stop'
 $kentRoot=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
-$kentApk=Join-Path $kentRoot 'artifacts\KentYanimda-Android-1.1.1.apk'
+$kentVersion=(Get-Content -LiteralPath (Join-Path $kentRoot 'package.json') -Raw | ConvertFrom-Json).version
+$kentApk=Join-Path $kentRoot "artifacts\KentYanimda-Android-$kentVersion.apk"
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 $kentZip=[System.IO.Compression.ZipFile]::OpenRead($kentApk)
 try{

@@ -4,7 +4,7 @@ const http = require("node:http"),
   os = require("node:os"),
   QR = require("qrcode");
 const root = path.resolve("artifacts"),
-  apk = path.join(root, "KentYanimda-Android-1.1.1.apk");
+  apk = path.join(root, "KentYanimda-Android-1.2.0.apk");
 const ips = Object.entries(os.networkInterfaces()).flatMap(([name, list]) =>
   (list || [])
     .filter((x) => x.family === "IPv4" && !x.internal)
@@ -39,7 +39,7 @@ const ip =
           "Content-Type": "application/vnd.android.package-archive",
           "Content-Length": fs.statSync(apk).size,
           "Content-Disposition":
-            'attachment; filename="KentYanimda-Android-1.1.1.apk"',
+            'attachment; filename="KentYanimda-Android-1.2.0.apk"',
           "Cache-Control": "no-store",
         });
         fs.createReadStream(apk).pipe(res);
@@ -55,7 +55,7 @@ const ip =
           "Cache-Control": "no-store",
         })
         .end(
-          `<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KentYanımda · Android</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f1f5fb;font:15px/1.7 system-ui;color:#223955;padding:20px;box-sizing:border-box}main{max-width:430px;text-align:center;border:1px solid #dce6f2;border-radius:24px;background:white;padding:32px}h1{margin:0;font-size:29px;letter-spacing:-1px}img{width:220px}a{display:block;background:#216ce5;border-radius:12px;padding:15px;color:white;text-decoration:none;font-weight:650}p{color:#7c8da3}small{font-size:12px;color:#90a0b5}.note{background:#f0f5fd;padding:14px;border-radius:12px;text-align:left;font-size:12px}</style><main><h1>KentYanımda</h1><p>Yeni Android uygulaması · 1.1.1</p><img src="/qr.png" alt="Android uygulamasını indirme bağlantısı"><a href="/KentYanimda.apk">Android uygulamasını indir</a><p>APK'yı indir, telefonuna kur ve aç.<br>Yardımcı uygulama gerekmez.</p><p class="note">Bu paket iç deneme sürümüdür. Kamera, konum, menüler ve taslak hazırlama kullanılabilir. Hesap ve talep gönderimi canlı hizmet bağlantısı tamamlandığında açılacak.</p><small>İndirirken telefon ve bilgisayar aynı ağda olmalı. Kurduktan sonra uygulama bu bilgisayardan bağımsız açılır. Test imzalı APK; mağaza yayını değildir.</small></main></html>`,
+          `<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KentYanımda · Android</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f1f5fb;font:15px/1.7 system-ui;color:#223955;padding:20px;box-sizing:border-box}main{max-width:430px;text-align:center;border:1px solid #dce6f2;border-radius:24px;background:white;padding:32px}h1{margin:0;font-size:29px;letter-spacing:-1px}img{width:220px}a{display:block;background:#216ce5;border-radius:12px;padding:15px;color:white;text-decoration:none;font-weight:650}p{color:#7c8da3}small{font-size:12px;color:#90a0b5}.note{background:#f0f5fd;padding:14px;border-radius:12px;text-align:left;font-size:12px}</style><main><h1>KentYanımda</h1><p>Yeni Android uygulaması · 1.2.0</p><img src="/qr.png" alt="Android uygulamasını indirme bağlantısı"><a href="/KentYanimda.apk">Android uygulamasını indir</a><p>APK'yı indir, telefonuna kur ve aç.<br>Yardımcı uygulama gerekmez.</p><p class="note">Bu paket iç deneme sürümüdür. Kamera, konum, menüler ve taslak hazırlama kullanılabilir. Hesap açma ve talep gönderimi Oltu yerel sunucusuna bağlıdır. Telefon ve bilgisayar aynı Wi-Fi ağında olmalı.</p><small>İndirirken telefon ve bilgisayar aynı ağda olmalı. Uygulama kendi menüleriyle açılır; talep gönderme ve güncellemeleri almak için bu bilgisayardaki sunucu açık olmalıdır. Test imzalı APK; mağaza yayını değildir.</small></main></html>`,
         );
     })
     .listen(8181, "0.0.0.0", () =>

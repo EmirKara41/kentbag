@@ -10,7 +10,7 @@ export default defineConfig({
     isMobile: true,
     hasTouch: true,
     permissions: ["geolocation"],
-    geolocation: { latitude: 41.023, longitude: 29.002, accuracy: 12 },
+    geolocation: { latitude: 40.545, longitude: 41.994, accuracy: 12 },
     screenshot: "only-on-failure",
     trace: "retain-on-failure",
   },

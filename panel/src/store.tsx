@@ -1,55 +1,183 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { applyAction, type Action, type PanelState } from "./domain";
 import { seedState } from "./fixtures";
 const key = "kentbag-panel-demo-v1";
-function read() {
-  try {
-    const raw = localStorage.getItem(key);
-    if (!raw) return { data: seedState(), error: "" };
-    const data = JSON.parse(raw) as PanelState;
-    if (
-      data.version !== 1 ||
-      !Array.isArray(data.reports) ||
-      !Array.isArray(data.teams) ||
-      !Array.isArray(data.announcements) ||
-      !Array.isArray(data.works) ||
-      !Array.isArray(data.audit)
-    )
-      throw new Error();
-    return { data, error: "" };
-  } catch {
-    return {
-      data: seedState(),
-      error:
-        "Kaydedilmiş örnek çalışma okunamadı. Mevcut kayıt üzerine yazılmadı; sıfırlamayı seçebilirsin.",
-    };
-  }
-}
+const blank = (): PanelState => ({
+  version: 1,
+  reports: [],
+  teams: [],
+  announcements: [],
+  works: [],
+  audit: [],
+});
+type Mode = "connecting" | "live" | "demo" | "offline";
 function usePanelStore() {
-  const [saved, setSaved] = useState(read),
-    [error, setError] = useState(saved.error);
-  const [notice, setNotice] = useState("");
-  function persist(data: PanelState) {
-    try {
-      localStorage.setItem(key, JSON.stringify(data));
-    } catch {
-      throw new Error(
-        "Değişiklik kaydedilemedi. Tarayıcı depolama alanını kontrol et; işlem uygulanmadı.",
-      );
-    }
-    setSaved({ data, error: "" });
-    setError("");
+  const [data, setData] = useState<PanelState>(blank),
+    [mode, setMode] = useState<Mode>("connecting");
+  const [error, setError] = useState(""),
+    [notice, setNotice] = useState(""),
+    [ai, setAi] = useState("no_key");
+  const [busy, setBusy] = useState(false),
+    [lastSync, setLastSync] = useState("");
+  const token = useRef(""),
+    revision = useRef(0),
+    mutation = useRef(false);
+  async function remote<T>(path: string, body?: unknown): Promise<T> {
+    const response = await fetch("/api/municipality" + path, {
+      method: body === undefined ? "GET" : "POST",
+      credentials: "omit",
+      cache: "no-store",
+      signal: AbortSignal.timeout(15000),
+      headers: {
+        "Content-Type": "application/json",
+        ...(token.current ? { Authorization: `Bearer ${token.current}` } : {}),
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    });
+    const result = await response.json();
+    if (!response.ok)
+      throw new Error(result.error || "Yerel sisteme ulaşılamadı.");
+    return result;
   }
-  function act(action: Action) {
-    if (saved.error) throw new Error(saved.error);
-    persist(applyAction(saved.data, action));
-    setNotice("Örnek değişiklik bu tarayıcıya kaydedildi.");
+  async function refresh() {
+    if (mutation.current) return;
+    const expected = revision.current;
+    try {
+      const result = await remote<{ data: PanelState; ai: string }>(
+        "/workspace",
+      );
+      if (expected !== revision.current || mutation.current) return;
+      setData(result.data);
+      setAi(result.ai);
+      setError("");
+      setLastSync(new Date().toISOString());
+    } catch {
+      if (expected === revision.current)
+        setError(
+          "Sunucuyla bağlantı kesildi. Son alınan kayıtlar gösteriliyor; bağlantı gelince yenilenecek.",
+        );
+    }
+  }
+  async function connect() {
+    const expected = ++revision.current;
+    setMode("connecting");
+    setData(blank());
+    setError("");
+    try {
+      const session = await remote<{ token: string }>("/local-session", {});
+      token.current = session.token;
+      const result = await remote<{ data: PanelState; ai: string }>(
+        "/workspace",
+      );
+      if (expected !== revision.current) return;
+      setData(result.data);
+      setAi(result.ai);
+      setMode("live");
+      setLastSync(new Date().toISOString());
+    } catch {
+      if (expected === revision.current) {
+        setMode("offline");
+        setError(
+          "Oltu yerel sunucusuna ulaşılamadı. Sunucuyu başlatıp yeniden bağlanabilirsin.",
+        );
+      }
+    }
+  }
+  function demo() {
+    revision.current++;
+    token.current = "";
+    try {
+      const raw = localStorage.getItem(key),
+        saved = raw ? JSON.parse(raw) : seedState();
+      if (
+        saved.version !== 1 ||
+        !Array.isArray(saved.reports) ||
+        !Array.isArray(saved.audit)
+      )
+        throw new Error();
+      setData(saved);
+      setMode("demo");
+      setError("");
+    } catch {
+      setError("Örnek çalışma okunamadı. Tarayıcıdaki kayıt değiştirilmedi.");
+    }
+  }
+  useEffect(() => {
+    if (new URLSearchParams(location.search).get("ornek") === "1") demo();
+    else void connect();
+    return () => {
+      revision.current++;
+    };
+  }, []);
+  useEffect(() => {
+    if (mode !== "live") return;
+    const timer = setInterval(() => {
+      if (document.visibilityState === "visible") void refresh();
+    }, 3000);
+    const focus = () => void refresh();
+    window.addEventListener("focus", focus);
+    return () => {
+      clearInterval(timer);
+      window.removeEventListener("focus", focus);
+    };
+  }, [mode]);
+  async function act(action: Action) {
+    if (mutation.current) throw new Error("Önceki işlem sürüyor.");
+    if (mode === "demo") {
+      const next = applyAction(data, action);
+      try {
+        localStorage.setItem(key, JSON.stringify(next));
+      } catch {
+        throw new Error("Örnek değişiklik kaydedilemedi.");
+      }
+      setData(next);
+      setNotice("Örnek değişiklik bu tarayıcıya kaydedildi.");
+      return;
+    }
+    if (mode !== "live") throw new Error("Önce yerel sunucuya bağlan.");
+    mutation.current = true;
+    setBusy(true);
+    revision.current++;
+    try {
+      const result = await remote<{ data: PanelState }>("/actions", action);
+      setData(result.data);
+      setError("");
+      setNotice("İşlem sunucuya kaydedildi.");
+      setLastSync(new Date().toISOString());
+    } finally {
+      mutation.current = false;
+      setBusy(false);
+    }
   }
   function reset() {
-    persist(seedState());
-    setNotice("Örnek çalışma başlangıç durumuna döndürüldü.");
+    if (mode !== "demo")
+      throw new Error("Gerçek kayıtlar bu ekrandan sıfırlanamaz.");
+    const next = seedState();
+    localStorage.setItem(key, JSON.stringify(next));
+    setData(next);
+    setNotice("Örnek çalışma sıfırlandı.");
   }
-  return { data: saved.data, error, act, reset, notice, setNotice };
+  return {
+    data,
+    mode,
+    ai,
+    busy,
+    lastSync,
+    error,
+    act,
+    reset,
+    notice,
+    setNotice,
+    connect,
+    demo,
+  };
 }
 const Context = createContext<ReturnType<typeof usePanelStore> | null>(null);
 export function PanelProvider({ children }: { children: ReactNode }) {

@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { PanelProvider } from "./store";
 import App from "./App";
 import "./style.css";
+import "./styles.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
   state = { failed: false };
   static getDerivedStateFromError() {

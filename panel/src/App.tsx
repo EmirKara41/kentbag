@@ -49,7 +49,19 @@ const pages: { id: Page; title: string; icon: IconName; group?: string }[] = [
   { id: "history", title: "İşlem geçmişi", icon: "history" },
 ];
 export default function App() {
-  const { data, error, reset, notice, setNotice } = usePanel();
+  const {
+    data,
+    error,
+    reset,
+    notice,
+    setNotice,
+    mode,
+    ai,
+    busy,
+    connect,
+    demo,
+    lastSync,
+  } = usePanel();
   const [page, setPage] = useState<Page>("overview"),
     [selected, setSelected] = useState<string | null>(null),
     [filter, setFilter] = useState("all"),
@@ -95,7 +107,7 @@ export default function App() {
             <Icon name="work" size={19} />
           </span>
           <div>
-            <strong>Örnek Belediye</strong>
+            <strong>Oltu Belediyesi</strong>
             <small>Merkez birim çalışma alanı</small>
           </div>
           <Icon name="chevron" size={14} />
@@ -120,18 +132,25 @@ export default function App() {
           <div className="connection-status">
             <i />
             <span>
-              Yerel örnek çalışma alanı<small>Canlı servis bağlı değil</small>
+              {mode === "live"
+                ? "Yerel sunucu bağlı"
+                : "Örnek / bağlantısız alan"}
+              <small>Oltu · Yerel ağ</small>
             </span>
           </div>
-          <button className="reset-link" onClick={() => setResetPrompt(true)}>
+          <button
+            className="reset-link"
+            disabled={mode !== "demo"}
+            onClick={() => setResetPrompt(true)}
+          >
             <Icon name="reset" size={15} />
             Örnek verileri sıfırla
           </button>
           <div className="operator">
-            <span>ÖO</span>
+            <span>YO</span>
             <div>
-              <strong>Örnek Operatör</strong>
-              <small>Kurum oturumu henüz bağlı değil</small>
+              <strong>Yerel Operatör</strong>
+              <small>Bu bilgisayarın pilot oturumu</small>
             </div>
           </div>
         </div>
@@ -177,15 +196,49 @@ export default function App() {
             <Icon name="bell" />
             <i />
           </button>
-          <span className="operator-avatar">ÖO</span>
+          <span className="operator-avatar">YO</span>
         </header>
         <div className="demo-banner">
           <Icon name="info" size={15} />
           <span>
-            <strong>Örnek çalışma alanı</strong> — İşlemler yalnız bu tarayıcıda
-            saklanır. Vatandaşa bildirim veya ekibe gerçek görev gönderilmez.
+            <strong>
+              {mode === "live"
+                ? "Oltu · Yerel bağlantı"
+                : mode === "connecting"
+                  ? "Yerel sisteme bağlanılıyor…"
+                  : "Örnek / bağlantısız alan"}
+            </strong>
+            {mode === "live"
+              ? ` — Telefon talepleri ve vatandaş güncellemeleri sunucuda. ${ai === "no_key" ? "Gemini anahtarı yok; kural tabanlı öneriler açık." : "Gemini analizi açık."} Saha uygulaması henüz bağlı değil.`
+              : " — Örnek işlemler gerçek kayıtlara eklenmez."}
+            {lastSync && mode === "live" && (
+              <small> Son eşitleme: {dateText(lastSync)}</small>
+            )}
           </span>
-          <span className="block-label">2. BLOK · BELEDİYE</span>
+          <div className="connection-actions">
+            {mode !== "live" && (
+              <button
+                disabled={mode === "connecting" || busy}
+                onClick={() => {
+                  setSelected(null);
+                  void connect();
+                }}
+              >
+                Yerel sisteme bağlan
+              </button>
+            )}
+            {mode !== "demo" && (
+              <button
+                disabled={busy}
+                onClick={() => {
+                  setSelected(null);
+                  demo();
+                }}
+              >
+                Örnek alanı aç
+              </button>
+            )}
+          </div>
         </div>
         <main className="workspace">
           {error && <Message>{error}</Message>}
@@ -215,7 +268,7 @@ export default function App() {
               <PageHeading
                 eyebrow="KURUM İÇİ KAYIT"
                 title="İşlem geçmişi"
-                body="Örnek çalışma alanında yapılan işlemler. Vatandaşa açık süreç ayrı tutulur."
+                body="Kurum içinde kaydedilen işlemler. Vatandaşa açık açıklamalar ayrıca talebe işlenir."
               />
               <div className="content-panel audit-panel">
                 {data.audit.map((item) => (
@@ -234,11 +287,16 @@ export default function App() {
             <span>
               KentBağ <i>·</i> Vatandaş ile yönetim arasında.
             </span>
-            <span>Örnek veriler · Panel 0.1.0</span>
+            <span>
+              {mode === "live"
+                ? "Oltu · Gerçek pilot kayıtları"
+                : "Örnek veriler"}{" "}
+              · Panel 0.2.0
+            </span>
           </footer>
         </main>
       </div>
-      {selected && (
+      {selected && data.reports.some((r) => r.id === selected) && (
         <ReportDetail
           key={selected}
           id={selected}
@@ -333,7 +391,7 @@ function Overview({
     {
       title: "Çözüm bildirilen",
       value: data.reports.filter(finished).length,
-      sub: `${data.reports.filter((report) => report.feedback === "solved").length} vatandaş onaylı örnek kayıt`,
+      sub: `${data.reports.filter((report) => report.feedback === "solved").length} vatandaş tarafından çözüldü olarak işaretlenen`,
       icon: "done",
       color: "green",
       action: () => onNavigate("requests", "completed"),
@@ -380,8 +438,8 @@ function Overview({
             <strong>{urgent.length} yüksek öncelikli talep</strong> kurumun
             değerlendirmesini bekliyor.
             <small>
-              Öncelikler örnek kurum kararlarıdır; destek sayısından otomatik
-              üretilmez.
+              Otomatik aciliyet önerileri kurumun incelemesine açıktır.
+              Yetkilinin belirlediği öncelik esas alınır.
             </small>
           </p>
         </div>
@@ -428,7 +486,7 @@ function Overview({
               <div className="active-event" key={item.id}>
                 <span className="event-type">
                   <Icon name="water" size={19} />
-                  ÖRNEK BÖLGE DUYURUSU
+                  BÖLGE DUYURUSU · PANEL KAYDI
                 </span>
                 <h3>{item.title}</h3>
                 <p>{item.body}</p>
@@ -535,7 +593,7 @@ function Overview({
   );
 }
 function Teams({ onOpen }: { onOpen: (id: string) => void }) {
-  const { data, act } = usePanel();
+  const { data, act, mode } = usePanel();
   const [error, setError] = useState("");
   return (
     <>
@@ -568,7 +626,12 @@ function Teams({ onOpen }: { onOpen: (id: string) => void }) {
               <div className="team-load">
                 <strong>{tasks.length}</strong>
                 <span>
-                  aktif görev<small>Örnek atama kayıtları</small>
+                  aktif görev
+                  <small>
+                    {mode === "live"
+                      ? "Kurum ataması · Saha uygulaması henüz bağlı değil"
+                      : "Örnek atama kayıtları"}
+                  </small>
                 </span>
                 <b>{team.code}</b>
               </div>
@@ -583,9 +646,13 @@ function Teams({ onOpen }: { onOpen: (id: string) => void }) {
               </div>
               <Button
                 variant="secondary"
-                onClick={() => {
+                onClick={async () => {
                   try {
-                    act({ type: "team", id: team.id, active: !team.active });
+                    await act({
+                      type: "team",
+                      id: team.id,
+                      active: !team.active,
+                    });
                     setError("");
                   } catch (error) {
                     setError(

@@ -109,7 +109,7 @@ function useCitizenStore() {
       () => {
         if (document.visibilityState === "visible") void refresh();
       },
-      10 * 60 * 1000,
+      15 * 1000,
     );
     return () => {
       clearInterval(timer);

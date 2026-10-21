@@ -12,16 +12,22 @@ export type CitizenUser = {
 export class CitizenService {
   constructor(
     private db: Database,
-    private config: Pick<Config, "baseUrl" | "secret">,
+    private config: Pick<Config, "baseUrl" | "secret"> & {
+      municipalityConnected?: boolean;
+    },
   ) {}
-  async decorate(report: Record<string, any>, sql: Sql = this.db) {
+  async decorate(
+    report: Record<string, any>,
+    sql: Sql = this.db,
+  ): Promise<Record<string, any>> {
     const { rows } = await sql.query(
       "SELECT id, width, height FROM citizen_photo WHERE report_id=$1 AND owner_id=$2",
       [report.id, report.ownerId],
     );
     const byId = new Map(rows.map((row) => [row.id, row]));
+    const { municipality: _privateMunicipalNotes, ...visible } = report;
     return {
-      ...report,
+      ...visible,
       photos: report.photos.map((id: string) => {
         const photo = byId.get(id);
         if (!photo) throw new Error("Photo metadata missing");
@@ -86,8 +92,9 @@ export class CitizenService {
       ]);
       const id = randomUUID();
       const now = new Date().toISOString();
-      const message =
-        "Bildirimin sisteme kaydedildi. Belediye merkezi bağlantısı henüz açık değil.";
+      const message = this.config.municipalityConnected
+        ? "Bildirimin Oltu çözüm merkezine kaydedildi. Birim kuyruğu hazırlanıyor."
+        : "Bildirimin sisteme kaydedildi. Belediye merkezi bağlantısı henüz açık değil.";
       const document = {
         ...input,
         id,

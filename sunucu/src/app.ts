@@ -13,6 +13,7 @@ import type { PhotoStore } from "./storage.js";
 import { verifyPhotoSignature } from "./storage.js";
 import { CitizenService, type CitizenUser } from "./citizen.js";
 import { HttpError } from "./validation.js";
+import { MunicipalityService, municipalityRouter } from "./municipality.js";
 
 export function createApp(deps: {
   db: Database;
@@ -20,9 +21,17 @@ export function createApp(deps: {
   photos: PhotoStore;
   authHandler: RequestHandler;
   session: (req: express.Request) => Promise<CitizenUser | null>;
+  municipality?: {
+    service: MunicipalityService;
+    token: string;
+    panelOrigin: string;
+  };
 }) {
   const { db, config, photos } = deps;
-  const service = new CitizenService(db, config);
+  const service = new CitizenService(db, {
+    ...config,
+    municipalityConnected: !!deps.municipality,
+  });
   const app = express();
   app.disable("x-powered-by");
   app.use((req, res, next) => {
@@ -52,14 +61,14 @@ export function createApp(deps: {
   app.get("/", (_req, res) =>
     res
       .type("text")
-      .send("KentYanımda vatandaş API. Belediye merkezi henüz bağlı değil."),
+      .send(deps.municipality ? "KentBağ Oltu yerel API. Vatandaş ve belediye paneli bağlı." : "KentYanımda vatandaş API. Belediye merkezi henüz bağlı değil."),
   );
   app.get("/api/health", async (_req, res) => {
     await db.query("SELECT id FROM citizen_report LIMIT 1");
     res.json({
       ok: true,
       service: "kentyanimda-api",
-      municipalityConnected: false,
+      municipalityConnected: !!deps.municipality,
     });
   });
   app.all("/api/auth/*splat", (req, res, next) => {
@@ -94,6 +103,12 @@ export function createApp(deps: {
     const mime = await fileTypeFromBuffer(buffer);
     res.type(mime?.mime || "application/octet-stream").send(buffer);
   });
+  if (deps.municipality) {
+    app.use(
+      "/api/municipality",
+      municipalityRouter(deps.municipality.service, deps.municipality),
+    );
+  }
   app.use("/api", async (req, res, next) => {
     const user = await deps.session(req);
     if (!user) throw new HttpError(401, "Oturum sona erdi. Yeniden giriş yap.");
@@ -183,9 +198,11 @@ export function createApp(deps: {
     await service.updateProfile(res.locals.user, req.body);
     res.json({ ok: true });
   });
-  app.post("/api/reports", async (req, res) =>
-    res.json(await service.submit(res.locals.user, req.body)),
-  );
+  app.post("/api/reports", async (req, res) => {
+    const report = await service.submit(res.locals.user, req.body);
+    if (deps.municipality) await deps.municipality.service.ingest(report.id);
+    res.json(report);
+  });
   app.post("/api/reports/:id/notes", async (req, res) => {
     const { text } = z
       .object({ text: z.string().trim().min(2).max(1000) })

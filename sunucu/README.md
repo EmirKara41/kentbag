@@ -2,7 +2,11 @@
 
 Express 5 / Node.js 24. Kalıcı veriler PostgreSQL, özel fotoğraflar Vercel Blob, e-posta/şifre ve oturumlar Better Auth ile yönetilir. Supabase bağlantısı gerekmez.
 
-## Kurulum
+## Yerel Oltu pilotu
+
+Hesap/anahtar gerekmeden `npm run pilot` ile kalıcı yerel API açılır. [Telefon bağlantısı, panel yetkisi, Gemini ve veri saklama](../YEREL_DENEME.md). Bu mod Vercel kaynağı oluşturmaz; gerçek auth/veri/fotoğraf kayıtları `.local/` altında saklanır. Aşağıdaki bölümler internet yayını için ayrı üretim yoludur.
+
+## Vercel üretim kurulumu
 
 1. Vercel hesabını bağla ve bu klasörü (`sunucu`) proje kökü olarak seç. Framework Express, Node.js 24 kullanılır. Kaynağı Vercel CLI ile de yükleyebilirsin; herkese açık Git deposu gerekmez.
 2. Vercel Marketplace'ten Neon PostgreSQL veritabanını bu projeye bağla. Havuzlu bağlantı adresini `DATABASE_URL` olarak ayarla.
@@ -35,7 +39,7 @@ Mobil 1.1.1'de etki seçimi formdan kaldırıldı; eski kayıt/istemci uyumlulu�
 
 `POST /api/reports/:id/feedback` yalnız kayıt sahibinin, `resolved` / `closed` talebe `solved` / `persists` geri dönüşü ve isteğe bağlı açıklama eklemesine izin verir. Resmi durum ve ekip ataması değişmez. Son cevap ve en fazla 50 geri dönüşlük geçmiş korunur; aynı cevabın tekrar gönderimi geçmişi çoğaltmaz. Mahalle yayını/destek servisi henüz yoktur; mobildeki örnek kayıtlar bu API'ye gönderilmez.
 
-JPEG/PNG dosya imzası ve boyutları kontrol edilir; bir fotoğraf en fazla 3 MB, talep en fazla üç fotoğraf kabul eder. Bu kontrol görselin soruna uygunluğunu değerlendiren AI değildir. Gemini henüz bağlı değildir. Hesap başına günlük 30 yükleme ve 50 talep sınırı vardır. Kimlik doğrulama denemeleri veritabanı üzerinden sınırlandırılır. Vercel'in güvenilir IP başlığı kullanılır.
+JPEG/PNG dosya imzası ve boyutları kontrol edilir; bir fotoğraf en fazla 3 MB, talep en fazla üç fotoğraf kabul eder. Bu kontrol görselin soruna uygunluğunu değerlendiren AI değildir. Yerel pilotta metin aciliyet analizi isteğe bağlı Gemini bağlantısını kullanır; fotoğraf uygunluk analizi henüz yoktur. Hesap başına günlük 30 yükleme ve 50 talep sınırı vardır. Kimlik doğrulama denemeleri veritabanı üzerinden sınırlandırılır. Vercel'in güvenilir IP başlığı kullanılır.
 
 Fotoğraflar özel Blob deposundadır. Yalnızca sahibinin kayıtlarından üretilen 30 dakikalık imzalı URL ile API üzerinden görüntülenir. Süresi dolan bağlantıyı yenilemek için kayıtları yenile. `npm run cleanup`, bir günden eski ve hiçbir talebe bağlanmamış en fazla 100 yüklemeyi temizler; gerektiğinde tekrarlanır. Otomatik zamanlama kurulmamıştır.
 

@@ -4,6 +4,7 @@
     <application
         android:allowBackup="false"
         android:usesCleartextTraffic="false"
+        android:networkSecurityConfig="@xml/kent_network_security"
         android:icon="@drawable/kent_launcher"
         android:label="@string/app_name"
         android:roundIcon="@drawable/kent_launcher"

@@ -102,7 +102,7 @@ function MapCanvas({
   useEffect(() => {
     if (!root.current) return;
     const map = L.map(root.current, { scrollWheelZoom: false }).setView(
-      [41.023, 29.002],
+      [40.545, 41.994],
       14,
     );
     let active = true,

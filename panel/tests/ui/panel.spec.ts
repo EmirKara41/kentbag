@@ -10,7 +10,7 @@ test("operator assigns, separates private notes from public updates, and preserv
 }) => {
   const errors: string[] = [];
   page.on("pageerror", (error) => errors.push(error.message));
-  await page.goto("/");
+  await page.goto("/?ornek=1");
   await expect(
     page.getByRole("heading", { name: "Bugünün hizmet akışı", exact: true }),
   ).toBeVisible();
@@ -72,7 +72,7 @@ test("operator assigns, separates private notes from public updates, and preserv
 test("announcement editor links requests, previews public content and persists publication state", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/?ornek=1");
   await nav(page, "Bölge duyuruları");
   await page.getByRole("button", { name: "İncele ve güncelle" }).click();
   await page
@@ -82,7 +82,7 @@ test("announcement editor links requests, previews public content and persists p
     "Kontrollü su verme",
   );
   await page.getByLabel("Tahmini bitiş").fill("Bugün 18.30");
-  await page.getByRole("button", { name: "Örnek duyuruyu kaydet" }).click();
+  await page.getByRole("button", { name: "Duyuruyu kaydet" }).click();
   await expect(page.locator(".announcement-card")).toContainText("Bugün 18.30");
   await expect(page.locator(".announcement-card")).toContainText(
     "2 ilişkili talep",
@@ -106,7 +106,7 @@ test("manual-address reports stay off the map; map failure preserves the list", 
   await page.route("https://basemaps.cartocdn.com/**", (route) =>
     route.abort(),
   );
-  await page.goto("/");
+  await page.goto("/?ornek=1");
   await nav(page, "Harita");
   await expect(page.locator(".map-report-list")).toContainText(
     "Sağlık merkezine erişilebilir geçiş",
@@ -123,7 +123,7 @@ test("manual-address reports stay off the map; map failure preserves the list", 
 test("work completion does not close linked requests; export produces a marked CSV", async ({
   page,
 }) => {
-  await page.goto("/");
+  await page.goto("/?ornek=1");
   await nav(page, "Çalışmalar ve sonuçlar");
   await page.getByRole("button", { name: "Çalışma kaydı oluştur" }).click();
   await page
@@ -166,7 +166,7 @@ test("navigation and drawers work on narrow screens without page overflow", asyn
 }) => {
   for (const width of [390, 768, 1440]) {
     await page.setViewportSize({ width, height: 900 });
-    await page.goto("/");
+    await page.goto("/?ornek=1");
     for (const item of [
       "Genel bakış",
       "Talepler",

@@ -18,7 +18,7 @@ import {
 } from "./ui";
 
 export function Announcements() {
-  const { data } = usePanel();
+  const { data, mode } = usePanel();
   const [editing, setEditing] = useState<Announcement | null>(null),
     [creating, setCreating] = useState(false),
     [filter, setFilter] = useState("all");
@@ -36,6 +36,12 @@ export function Announcements() {
           Yeni duyuru
         </Button>
       </PageHeading>
+      {mode === "live" && (
+        <Message>
+          Duyurular bu aşamada sunucuda ve panelde saklanır. Vatandaş
+          uygulamasındaki bölge yayını henüz bağlı değil.
+        </Message>
+      )}
       <div className="split-info">
         <Icon name="announce" size={25} />
         <div>
@@ -70,7 +76,7 @@ export function Announcements() {
               <CategoryIcon category={item.category} />
               <span className={`publication-state ${item.state}`}>
                 {item.state === "active"
-                  ? "Örnek yayında"
+                  ? "Panelde aktif"
                   : item.state === "draft"
                     ? "Taslak"
                     : "Tamamlandı"}
@@ -159,10 +165,10 @@ function AnnouncementEditor({
       onClose={onClose}
     >
       <form
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
           try {
-            act({ type: "announcement", value });
+            await act({ type: "announcement", value });
             onClose();
           } catch (error) {
             setError(error instanceof Error ? error.message : "Kaydedilemedi.");
@@ -245,7 +251,7 @@ function AnnouncementEditor({
                   }
                 >
                   <option value="draft">Taslak</option>
-                  <option value="active">Örnek yayında</option>
+                  <option value="active">Panelde aktif</option>
                   <option value="completed">Tamamlandı</option>
                 </select>
               </label>
@@ -312,7 +318,7 @@ function AnnouncementEditor({
             Vazgeç
           </Button>
           <Button icon="check" type="submit">
-            Örnek duyuruyu kaydet
+            Duyuruyu kaydet
           </Button>
         </div>
       </form>
@@ -339,7 +345,7 @@ export function Works({ onOpen }: { onOpen: (id: string) => void }) {
       <div className="result-stats">
         <div>
           <strong>{completed.length}</strong>
-          <span>Tamamlanan örnek çalışma</span>
+          <span>Tamamlanan çalışma kaydı</span>
         </div>
         <div>
           <strong>{linked.size}</strong>
@@ -362,7 +368,7 @@ export function Works({ onOpen }: { onOpen: (id: string) => void }) {
                 name={work.state === "completed" ? "done" : "work"}
                 size={36}
               />
-              <span>ÖRNEK ÇALIŞMA KAYDI</span>
+              <span>ÇALIŞMA KAYDI</span>
             </div>
             <div className="work-card-body">
               <div className="card-top">
@@ -452,10 +458,10 @@ function WorkEditor({
       onClose={onClose}
     >
       <form
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
           try {
-            act({ type: "work", value });
+            await act({ type: "work", value });
             onClose();
           } catch (error) {
             setError(error instanceof Error ? error.message : "Kaydedilemedi.");

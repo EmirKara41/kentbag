@@ -154,7 +154,7 @@ export function Auth({ onComplete }: { onComplete: () => void }) {
               value={input.neighborhood}
               maxLength={120}
               onChange={(e) => field("neighborhood", e.target.value)}
-              placeholder="Mahallenin adı"
+              placeholder="Örn. Cumhuriyet Mahallesi · Oltu"
             />
           </label>
         )}
@@ -287,7 +287,7 @@ export function Account() {
       <div className="app-version">
         <Brand compact />
         <strong>KentYanımda</strong>
-        <small>Sürüm 1.1.1 · Yaşadığın yer için.</small>
+        <small>Sürüm 1.2.0 · Yaşadığın yer için.</small>
       </div>
       {confirm && (
         <Sheet
@@ -387,7 +387,7 @@ export function EditProfile() {
             value={neighborhood}
             maxLength={120}
             onChange={(e) => setNeighborhood(e.target.value)}
-            placeholder="Mahallenin adı"
+            placeholder="Örn. Cumhuriyet Mahallesi · Oltu"
           />
         </label>
         <button

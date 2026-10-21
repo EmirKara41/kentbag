@@ -41,7 +41,7 @@ async function prepare(page: Page, photo = false) {
     .getByRole("button", { name: "Mevcut konumumu kullan", exact: true })
     .click();
   await expect(
-    page.getByText("41.02300, 29.00200", { exact: true }),
+    page.getByText("40.54500, 41.99400", { exact: true }),
   ).toBeVisible();
   await page
     .getByPlaceholder("Sokak, bina veya yakındaki bir yer")
@@ -227,7 +227,7 @@ test("improvement request preserves category through auth and actual submission"
   await page.getByRole("button", { name: "Devam et", exact: true }).click();
   await page.getByRole("button", { name: "Mevcut konumumu kullan" }).click();
   await expect(
-    page.getByText("41.02300, 29.00200", { exact: true }),
+    page.getByText("40.54500, 41.99400", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Devam et", exact: true }).click();
   await expect(
@@ -279,8 +279,8 @@ test("completed archive persists, excludes withdrawn reports, and records unreso
       category: "waste",
       description: "Bu kayıt test sırasında geri çekilecek.",
       location: {
-        latitude: 41.023,
-        longitude: 29.002,
+        latitude: 40.545,
+        longitude: 41.994,
         address: "Test",
         source: "map",
       },
@@ -364,7 +364,7 @@ test("nearby known incident can be opened without losing the report draft", asyn
     .click();
   await page.getByRole("button", { name: "Geri", exact: true }).click();
   await expect(
-    page.getByText("41.02300, 29.00200", { exact: true }),
+    page.getByText("40.54500, 41.99400", { exact: true }),
   ).toBeVisible();
   await page.getByRole("button", { name: "Geri", exact: true }).click();
   await expect(page.getByLabel("Sorun açıklaması")).toHaveValue(

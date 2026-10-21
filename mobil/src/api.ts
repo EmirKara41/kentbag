@@ -19,9 +19,21 @@ function endpoint() {
       "Hesap hizmeti henüz kullanıma açılmadı. Bildirimini taslak olarak hazırlayabilirsin.",
     );
   const url = new URL(configured);
+  const parts = url.hostname.split(".").map(Number);
+  const privateLan =
+    parts.length === 4 &&
+    parts.every((p) => Number.isInteger(p) && p >= 0 && p <= 255) &&
+    (parts[0] === 10 ||
+      (parts[0] === 192 && parts[1] === 168) ||
+      (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31));
   if (
     url.protocol !== "https:" &&
-    !(import.meta.env.DEV && ["localhost", "127.0.0.1"].includes(url.hostname))
+    !(
+      url.protocol === "http:" &&
+      ((import.meta.env.DEV &&
+        ["localhost", "127.0.0.1"].includes(url.hostname)) ||
+        (import.meta.env.VITE_LAN_PILOT === "true" && privateLan))
+    )
   )
     throw new ApiError("Hizmet bağlantısı kullanılamıyor.");
   if (

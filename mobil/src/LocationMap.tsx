@@ -52,7 +52,7 @@ export function LocationMap({
       scrollWheelZoom: false,
       doubleClickZoom: interactive,
     }).setView(
-      initial ? [initial.latitude, initial.longitude] : [41.015, 28.979],
+      initial ? [initial.latitude, initial.longitude] : [40.545, 41.994],
       initial ? 16 : 11,
     );
     map.current = instance;

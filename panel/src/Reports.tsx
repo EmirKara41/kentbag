@@ -119,7 +119,7 @@ export function Reports({
   initialFilter?: string;
   initialQuery?: string;
 }) {
-  const { data } = usePanel();
+  const { data, mode } = usePanel();
   const [tab, setTab] = useState(initialFilter),
     [query, setQuery] = useState(initialQuery),
     [status, setStatus] = useState(""),
@@ -143,11 +143,16 @@ export function Reports({
   );
   function download() {
     const url = URL.createObjectURL(
-      new Blob([exportCsv(filtered)], { type: "text/csv;charset=utf-8" }),
+      new Blob([exportCsv(filtered, mode !== "live")], {
+        type: "text/csv;charset=utf-8",
+      }),
     );
     const link = document.createElement("a");
     link.href = url;
-    link.download = "KentBag-ornek-talepler.csv";
+    link.download =
+      mode === "live"
+        ? "KentBag-Oltu-talepler.csv"
+        : "KentBag-ornek-talepler.csv";
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -235,7 +240,8 @@ export function Reports({
         </div>
         <div className="table-summary">
           <span>
-            <strong>{filtered.length}</strong> örnek kayıt
+            <strong>{filtered.length}</strong>{" "}
+            {mode === "live" ? "kayıt" : "örnek kayıt"}
           </span>
           <span>Öncelik ve bekleme süresine göre sıralı</span>
         </div>
@@ -257,24 +263,25 @@ export function ReportDetail({
   id: string;
   onClose: () => void;
 }) {
-  const { data, act } = usePanel();
+  const { data, act, mode, busy } = usePanel();
   const report = data.reports.find((item) => item.id === id)!;
   const [unitId, setUnit] = useState(report.unitId ?? ""),
     [teamId, setTeam] = useState(report.teamId ?? ""),
-    [priority, setPriority] = useState<Priority>(report.priority),
+    [priorityChoice, setPriority] = useState<Priority | null>(null),
     [note, setNote] = useState(""),
     [audience, setAudience] = useState<"internal" | "citizen">("internal"),
     [resolution, setResolution] = useState(""),
     [error, setError] = useState(""),
     [section, setSection] = useState("process");
+  const priority = priorityChoice ?? report.priority;
   const unit = units.find((item) => item.id === unitId);
   const selectedTeams = data.teams.filter((item) => item.unitId === unitId);
   const linked = data.announcements.find(
     (item) => item.id === report.incidentId,
   );
-  function run(task: () => void) {
+  async function run(task: () => void | Promise<void>) {
     try {
-      task();
+      await task();
       setError("");
     } catch (error) {
       setError(error instanceof Error ? error.message : "İşlem tamamlanamadı.");
@@ -299,6 +306,37 @@ export function ReportDetail({
         <PriorityBadge report={report} />
       </div>
       <p className="report-description">{report.description}</p>
+      {report.triage && (
+        <div className="triage-card">
+          <strong>
+            {report.triage.source === "gemini"
+              ? "Gemini önerisi"
+              : "Kural tabanlı öneri"}{" "}
+            · {priorities[report.triage.priority]}
+          </strong>
+          <p>{report.triage.reason}</p>
+          <small>
+            {report.prioritySource === "authority"
+              ? `Yetkili kararı: ${priorities[report.priority]}. Otomatik öneri kararı değiştirmez.`
+              : "Kuyruk bu öneriye göre sıralanır; yetkili önceliği değiştirebilir."}
+          </small>
+          {report.triage.aiState === "pending" && (
+            <small> Gemini değerlendirmesi bekleniyor.</small>
+          )}
+          {report.triage.aiState === "failed" && (
+            <small> Gemini yanıtı alınamadı; kurallar kullanıldı.</small>
+          )}
+        </div>
+      )}
+      {!!report.photos?.length && (
+        <div className="receipt-photos">
+          {report.photos.map((photo) => (
+            <a key={photo.id} href={photo.uri} target="_blank" rel="noreferrer">
+              <img src={photo.uri} alt="Vatandaşın talebe eklediği fotoğraf" />
+            </a>
+          ))}
+        </div>
+      )}
       <div className="address-box">
         <Icon name="pin" size={19} />
         <div>
@@ -314,7 +352,8 @@ export function ReportDetail({
         <div>
           <small>Bildiren</small>
           <strong>
-            {report.citizen} <span>Örnek kişi</span>
+            {report.citizen}{" "}
+            <span>{mode === "live" ? "Vatandaş kaydı" : "Örnek kişi"}</span>
           </strong>
         </div>
         <div>
@@ -331,6 +370,7 @@ export function ReportDetail({
           <Icon name="reset" size={19} />
           <span>
             <strong>Vatandaş sorunun devam ettiğini bildirdi.</strong>
+            {report.feedbackText && <p>{report.feedbackText}</p>}
             <small>
               Önceki çözüm kaydı korunuyor. Yeniden inceleme kararını yetkili
               verir.
@@ -344,7 +384,7 @@ export function ReportDetail({
           <span>
             <small>ORTAK DUYURUYA BAĞLI</small>
             <strong>{linked.title}</strong>
-            <p>Bu duyuru {linked.reportIds.length} örnek taleple ilişkili.</p>
+            <p>Bu duyuru {linked.reportIds.length} taleple ilişkili.</p>
           </span>
         </div>
       )}
@@ -378,7 +418,7 @@ export function ReportDetail({
                   {dateText(event.at)} ·{" "}
                   {event.audience === "internal"
                     ? "Kurum içi"
-                    : "Vatandaşa açık örnek"}
+                    : "Vatandaşa açık"}
                 </small>
                 <p>{event.body}</p>
               </div>
@@ -390,7 +430,7 @@ export function ReportDetail({
         <div className="citizen-preview">
           <div>
             <Icon name="bell" />
-            <strong>Vatandaşın görebileceği örnek içerik</strong>
+            <strong>Vatandaşın görebileceği içerik</strong>
           </div>
           <p className="preview-caption">
             Canlı uygulamaya gönderilmez. Kurum içi notlar bu görünümde yer
@@ -495,13 +535,14 @@ export function ReportDetail({
                     icon={unit?.external ? "external" : "team"}
                     disabled={!unitId}
                     onClick={() =>
-                      run(() =>
-                        act({
-                          type: "assign",
-                          id,
-                          unitId,
-                          teamId: teamId || undefined,
-                        }),
+                      run(
+                        async () =>
+                          await act({
+                            type: "assign",
+                            id,
+                            unitId,
+                            teamId: teamId || undefined,
+                          }),
                       )
                     }
                   >
@@ -514,7 +555,7 @@ export function ReportDetail({
                       variant="ghost"
                       onClick={() => run(() => act({ type: "progress", id }))}
                     >
-                      Örnek çalışmayı başlat
+                      Çalışmayı başlat
                     </Button>
                   )}
                 </section>
@@ -550,10 +591,10 @@ export function ReportDetail({
                 <Button
                   variant="secondary"
                   icon="plus"
-                  disabled={note.trim().length < 5}
+                  disabled={busy || note.trim().length < 5}
                   onClick={() =>
-                    run(() => {
-                      act({ type: "note", id, body: note, audience });
+                    run(async () => {
+                      await act({ type: "note", id, body: note, audience });
                       setNote("");
                     })
                   }
@@ -587,10 +628,10 @@ export function ReportDetail({
                 <Button
                   icon="done"
                   variant="secondary"
-                  disabled={resolution.trim().length < 15}
+                  disabled={busy || resolution.trim().length < 15}
                   onClick={() =>
-                    run(() => {
-                      act({
+                    run(async () => {
+                      await act({
                         type: ["resolved", "closed"].includes(report.status)
                           ? "reopen"
                           : "resolve",
@@ -603,7 +644,7 @@ export function ReportDetail({
                 >
                   {["resolved", "closed"].includes(report.status)
                     ? "Yeniden incelemeye al"
-                    : "Örnek çözümü kaydet"}
+                    : "Çözümü kaydet"}
                 </Button>
                 <p className="field-note">
                   Çözüm bildirimi vatandaş onayı sayılmaz. Saha fotoğrafları ve

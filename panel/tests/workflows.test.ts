@@ -59,7 +59,8 @@ test("external routing records intent without implying delivery or a municipal c
   assert.equal(report.status, "in_review");
   assert.equal(report.teamId, undefined);
   assert.match(report.externalRouting!, /Teslim teyidi yok/);
-  assert.equal(report.events.at(-1)?.audience, "internal");
+  assert.equal(report.events.at(-1)?.audience, "citizen");
+  assert.match(report.events.at(-1)?.body ?? "", /teslim teyidi yok/);
 });
 test("withdrawals and unresolved feedback never inflate solved counts; resolution does not imply citizen consent", () => {
   const state = seedState();

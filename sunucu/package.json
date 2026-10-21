@@ -11,11 +11,16 @@
     "typecheck": "tsc --noEmit",
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
-    "cleanup": "tsx --env-file=.env scripts/cleanup.ts"
+    "cleanup": "tsx --env-file=.env scripts/cleanup.ts",
+    "pilot": "tsx --env-file-if-exists=.env scripts/pilot.ts"
   },
   "dependencies": {
+    "@ai-sdk/google": "^4.0.102",
+    "@electric-sql/pglite": "^0.5.10",
+    "@electric-sql/pglite-socket": "^0.2.13",
     "@vercel/blob": "^2.8.2",
     "@vercel/functions": "^3.10.1",
+    "ai": "^7.0.148",
     "better-auth": "^1.7.9",
     "cors": "^2.8.6",
     "express": "^5.3.0",
@@ -25,7 +30,6 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@electric-sql/pglite": "^0.5.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^26.6.5",

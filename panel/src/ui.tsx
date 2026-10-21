@@ -119,9 +119,17 @@ export function StatusBadge({ report }: { report: CitizenReport }) {
 }
 export function PriorityBadge({ report }: { report: CitizenReport }) {
   return (
-    <span className={`priority-badge ${report.priority}`}>
+    <span
+      className={`priority-badge ${report.priority}`}
+      title={
+        report.prioritySource === "suggestion"
+          ? "Otomatik öneri; yetkili kararı bekleniyor"
+          : "Yetkili tarafından belirlenen öncelik"
+      }
+    >
       <i />
       {priorities[report.priority]}
+      {report.prioritySource === "suggestion" && " · Öneri"}
     </span>
   );
 }
@@ -241,7 +249,7 @@ export function Modal({
     >
       <div className="modal-head">
         <div>
-          <span className="eyebrow">KENTBAĞ · ÖRNEK ÇALIŞMA ALANI</span>
+          <span className="eyebrow">KENTBAĞ · ÇÖZÜM MERKEZİ</span>
           <h2 id={titleId}>{title}</h2>
         </div>
         <button
