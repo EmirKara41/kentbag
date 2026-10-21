@@ -20,7 +20,7 @@ Kullanıcı APK'yı telefonuna kurup açar. Ana sayfa, bildirim formu, talepler,
 - Bağlantı yokken açıklayıcı durum; sunucu onayı olmadan gönderildi denmez.
 - Android Keystore ile şifrelenen oturum; sırlar mobil pakete girmez.
 
-1.2.0 LAN paketi gerçek yerel API'ye bağlıdır. Hesap oluşturma, fotoğraf/talep gönderme ve belediye panelinden durum/açıklama/çözüm alma çalışır. Kurulum, ağ ve Gemini ayrıntıları: [Oltu yerel deneme](../YEREL_DENEME.md). İnternet üzerindeki üretim API'si henüz dağıtılmadı.
+1.2.1 LAN paketi gerçek yerel API'ye bağlıdır. Hesap oluşturma, fotoğraf/talep gönderme ve belediye panelinden durum/açıklama/çözüm alma çalışır. Kurulum, ağ ve Gemini ayrıntıları: [Oltu yerel deneme](../YEREL_DENEME.md). İnternet üzerindeki üretim API'si henüz dağıtılmadı.
 
 ## Android paketi
 
@@ -30,7 +30,7 @@ npm run android:apk
 npm run phone
 ```
 
-Çıktı: `artifacts/KentYanimda-Android-1.2.0.apk`. `phone` yalnız indirme sayfasını ve QR kodunu sunar. İndirme sırasında telefon ve bilgisayar aynı ağda olmalıdır. Arayüz gömülüdür; LAN API işlemleri için bilgisayarın açık olması gerekir.
+Çıktı: `artifacts/KentYanimda-Android-1.2.1.apk`. `phone` yalnız indirme sayfasını ve QR kodunu sunar. İndirme sırasında telefon ve bilgisayar aynı ağda olmalıdır. Arayüz gömülüdür; LAN API işlemleri için bilgisayarın açık olması gerekir.
 
 Derleme bu bilgisayarda `%USERPROFILE%/.cache/kentyanimda-android/tools.json` ile kayıtlı JDK 21 ve Android SDK'yı kullanır. Yeni bilgisayarda Node.js 22+, JDK 21 ve SDK 36 hazırlayıp bu dosyadaki `javaHome` / `sdkRoot` yollarını ayarlayın. Sistem PATH ayarlarını değiştirmez. Anahtar önbellekte `signing/kent-mobile-preview.keystore` altında saklanır; kaynak veya APK içine konmaz. Aynı anahtar sonraki test güncellemeleri için korunmalıdır. APK iç deneme anahtarıyla imzalıdır; mağaza yayını değildir.
 
