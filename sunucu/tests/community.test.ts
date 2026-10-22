@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { mkdtemp, rm } from "node:fs/promises";
+import { mkdtemp, rm, readFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import request from "supertest";
@@ -163,6 +163,25 @@ test(
       assert.equal(ws.inbox.length, 1);
       assert.equal(ws.inbox[0].issueId, issueId);
       assert.equal(ws.inbox[0].reportId, undefined);
+      const ownerWorkspace = (
+        await request(pilot.app).get("/api/workspace").set(owner).expect(200)
+      ).body;
+      assert.equal(
+        ownerWorkspace.inbox.filter(
+          (i: any) =>
+            i.body === "Ekip bölgeye yönlendirildi; ortak güncelleme.",
+        ).length,
+        1,
+      );
+      assert.equal(
+        ownerWorkspace.reports
+          .find((r: any) => r.id === report.id)
+          .events.filter(
+            (e: any) =>
+              e.body === "Ekip bölgeye yönlendirildi; ortak güncelleme.",
+          ).length,
+        1,
+      );
       detail = (await request(pilot.app).get(`/api/community/${issueId}`)).body;
       assert.equal(detail.events.length, 1);
       assert.doesNotMatch(
@@ -182,6 +201,66 @@ test(
           i.body.startsWith("Kurum kaydındaki son durum:"),
         ),
       );
+      const sharedStatuses = ws.inbox.filter((i: any) =>
+        i.body.startsWith("Kurum kaydındaki son durum:"),
+      );
+      const ownerAfterStatus = (
+        await request(pilot.app).get("/api/workspace").set(owner)
+      ).body;
+      for (const status of sharedStatuses) {
+        assert.equal(
+          ownerAfterStatus.inbox.filter(
+            (i: any) =>
+              i.communityEventId === status.communityEventId &&
+              i.body === status.body,
+          ).length,
+          1,
+        );
+        assert.ok(
+          ownerAfterStatus.reports
+            .find((r: any) => r.id === report.id)
+            .events.some((e: any) => e.body === status.body),
+        );
+      }
+      // Simulate the old omission; repair must restore only the owner, once.
+      const lostStatus = sharedStatuses[0];
+      await pilot.db.query(
+        "DELETE FROM citizen_inbox WHERE owner_id=$1 AND document->>'communityEventId'=$2",
+        [ownerAfterStatus.sessionId, lostStatus.communityEventId],
+      );
+      await pilot.db.query(
+        "UPDATE citizen_report SET document=jsonb_set(document,'{events}',$1::jsonb) WHERE id=$2",
+        [
+          JSON.stringify(
+            ownerAfterStatus.reports
+              .find((r: any) => r.id === report.id)
+              .events.filter((e: any) => e.id !== lostStatus.communityEventId),
+          ),
+          report.id,
+        ],
+      );
+      const repair = await readFile(
+        new URL("../migrations/004_owner_shared_updates.sql", import.meta.url),
+        "utf8",
+      );
+      await pilot.db.query(repair);
+      await pilot.db.query(repair);
+      const repairedOwner = (
+        await request(pilot.app).get("/api/workspace").set(owner)
+      ).body;
+      assert.equal(
+        repairedOwner.inbox.filter(
+          (i: any) => i.communityEventId === lostStatus.communityEventId,
+        ).length,
+        1,
+      );
+      assert.equal(
+        repairedOwner.reports
+          .find((r: any) => r.id === report.id)
+          .events.filter((e: any) => e.id === lostStatus.communityEventId)
+          .length,
+        1,
+      );
       await pilot.close();
       pilot = await startPilot(options);
       ws = (
@@ -192,6 +271,20 @@ test(
       ).body;
       assert.equal(ws.subscriptions.length, 1);
       assert.equal(ws.subscriptions[0].joined, true);
+      const restoredOwner = (
+        await request(pilot.app).get("/api/workspace").set(owner).expect(200)
+      ).body;
+      assert.equal(
+        restoredOwner.inbox.filter(
+          (i: any) => i.communityEventId === lostStatus.communityEventId,
+        ).length,
+        1,
+      );
+      assert.ok(
+        restoredOwner.reports
+          .find((r: any) => r.id === report.id)
+          .events.some((e: any) => e.id === lostStatus.communityEventId),
+      );
       await request(pilot.app)
         .post(`/api/reports/${report.id}/sharing`)
         .set(owner)

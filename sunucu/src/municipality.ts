@@ -153,7 +153,12 @@ export class MunicipalityService {
       );
     });
   }
-  private async publicEvent(sql: Sql, doc: any, message: string) {
+  private async publicEvent(
+    sql: Sql,
+    doc: any,
+    message: string,
+    notify = true,
+  ) {
     const now = new Date().toISOString();
     doc.events.push({
       id: randomUUID(),
@@ -161,6 +166,7 @@ export class MunicipalityService {
       body: message,
       createdAt: now,
     });
+    if (!notify) return;
     const inboxId = randomUUID();
     await sql.query(
       "INSERT INTO citizen_inbox(id,owner_id,report_id,document) VALUES($1,$2,$3,$4::jsonb)",
@@ -310,10 +316,15 @@ export class MunicipalityService {
         for (const event of added.filter(
           (e) => e.audience === "citizen" || e.audience === "participants",
         ))
-          await this.publicEvent(sql, doc, event.body);
+          await this.publicEvent(
+            sql,
+            doc,
+            event.body,
+            !(doc.sharePublicly && previous.status !== after.status),
+          );
         const community = new CommunityService(this.db);
         if (action.type === "note" && action.audience === "participants")
-          await community.update(sql, doc, action.body);
+          await community.update(sql, doc, action.body, true);
         if (previous.status !== after.status) await community.status(sql, doc);
         await sql.query(
           "UPDATE citizen_report SET document=$1::jsonb WHERE id=$2",

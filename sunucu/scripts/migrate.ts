@@ -23,6 +23,12 @@ try {
       "utf8",
     ),
   );
+  await pool.query(
+    await readFile(
+      new URL("../migrations/004_owner_shared_updates.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   console.log("Authentication and citizen database schema is ready.");
 } finally {
   await pool.end();

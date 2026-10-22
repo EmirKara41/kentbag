@@ -222,7 +222,12 @@ export class CommunityService {
       );
     });
   }
-  async update(sql: Sql, report: any, message: string) {
+  async update(
+    sql: Sql,
+    report: any,
+    message: string,
+    ownerAlreadyNotified = false,
+  ) {
     const issue = (
       await sql.query(
         "SELECT id,published FROM community_issue WHERE report_id=$1",
@@ -230,16 +235,29 @@ export class CommunityService {
       )
     ).rows[0];
     if (!issue?.published) return;
+    const eventId = randomUUID();
     await sql.query(
       "INSERT INTO community_event(id,issue_id,body,status) VALUES($1,$2,$3,$4)",
-      [randomUUID(), issue.id, message, report.status],
+      [eventId, issue.id, message, report.status],
     );
+    if (!ownerAlreadyNotified)
+      report.events.push({
+        id: eventId,
+        body: message,
+        status: report.status,
+        createdAt: new Date().toISOString(),
+      });
     const subscribers = (
       await sql.query(
         "SELECT owner_id FROM community_subscription WHERE issue_id=$1",
         [issue.id],
       )
     ).rows;
+    if (
+      !ownerAlreadyNotified &&
+      !subscribers.some((s) => s.owner_id === report.ownerId)
+    )
+      subscribers.push({ owner_id: report.ownerId });
     for (const subscriber of subscribers) {
       const id = randomUUID();
       await sql.query(
@@ -251,8 +269,14 @@ export class CommunityService {
           JSON.stringify({
             id,
             ownerId: subscriber.owner_id,
-            issueId: issue.id,
-            title: "Katıldığın bildirimde gelişme var",
+            ...(subscriber.owner_id === report.ownerId
+              ? { reportId: report.id }
+              : { issueId: issue.id }),
+            communityEventId: eventId,
+            title:
+              subscriber.owner_id === report.ownerId
+                ? "Talebinde yeni gelişme"
+                : "Katıldığın bildirimde gelişme var",
             body: message,
             createdAt: new Date().toISOString(),
             read: false,
