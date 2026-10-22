@@ -133,7 +133,7 @@ export type Report = Omit<Draft, "category" | "location" | "updatedAt"> & {
   status: Status;
   createdAt: string;
   notes: { id: string; text: string; createdAt: string }[];
-  events: { id: string; status: Status; body: string; createdAt: string }[];
+  events: ReportEvent[];
   resolution?: { body: string; photos: Photo[]; completedAt: string };
   feedback?: {
     outcome: "solved" | "persists";
@@ -258,6 +258,29 @@ export const isCompleted = (report: Pick<Report, "status" | "feedback">) =>
   report.feedback?.outcome !== "persists";
 export const isOngoing = (report: Pick<Report, "status" | "feedback">) =>
   report.status !== "withdrawn" && !isCompleted(report);
+export type ReportEvent = {
+  id: string;
+  status: Status;
+  body: string;
+  createdAt: string;
+  kind?: "status" | "message";
+};
+export function groupReportEvents(events: ReportEvent[]) {
+  const groups: { event: ReportEvent; repeats: ReportEvent[] }[] = [];
+  for (const event of events) {
+    const previous = groups.at(-1);
+    if (
+      event.kind !== "message" &&
+      previous &&
+      previous.event.kind !== "message" &&
+      previous.event.status === event.status &&
+      previous.event.body === event.body
+    )
+      previous.repeats.push(event);
+    else groups.push({ event, repeats: [] });
+  }
+  return groups;
+}
 export const completionTime = (report: Report) =>
   report.resolution?.completedAt ??
   [...report.events]

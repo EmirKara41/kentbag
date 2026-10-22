@@ -14,6 +14,8 @@ Android menüleri APK içine gömülüdür; yardımcı uygulama gerekmez. Bu yer
 
 Android 1.3.0 ile **Bildir** önce paylaşılmış açık sorunları gösterir. Vatandaş GPS/harita ile yaklaşık 5 km çevresine veya mahalle seçerek bölgesine bakabilir; mevcut soruna **Ben de etkileniyorum** diyebilir veya **Farklı bir sorun bildir** ile yeni kayıt açabilir. Katılımlar **Kayıtlarım → Katıldıklarım** altında hesap bazında saklanır; katılım yeni talep oluşturmaz. Aynı hesap aynı kayda bir kez katılır, istediğinde takibi bırakabilir.
 
+Android 1.3.1 talep ayrıntılarında kurumun yazdığı açıklamaları **Çözüm merkezinden mesajlar** alanında öne çıkarır. Art arda aynı otomatik işlem kayıtları, eski veriler silinmeden açılabilir bir tekrar grubunda gösterilir. Panel ve API aynı birim/ekip atamasını tekrar kaydederek yeni bildirim üretmez veya devam eden çalışmayı geriye götürmez.
+
 Paylaşım yalnız kategori, mahalle, yaklaşık konum (koordinatlar üç ondalığa yuvarlanır), durum ve ortak açıklamaları kapsar. İsim, asıl açıklama, açık adres, fotoğraflar ve kişiye özel yanıtlar paylaşılmaz. Yeni formda paylaşım tercihi görünür; eski talepler otomatik yayımlanmaz. Talep sahibi ayrıntı ekranından paylaşımı açıp kapatabilir. Elle yazılmış adres için harita noktası uydurulmaz; kayıt bölge listesinde görünür. Panelde **Talep sahibine yanıt** özel kalır; paylaşılan kayıtta **Ortak güncelleme · Katılan herkese** ortak geçmişe ve katılan hesapların uygulama içi güncellemelerine gider. Durum değişiklikleri de katılanlara iletilir. İşletim sistemi push bildirimi bu sürüme dahil değildir.
 
 Önceki mobil çalışma `arsiv/mobil-ilk-deneme/` altında kullanım dışı tutulur; yeni uygulamanın derlemesine katılmaz. Masaüstündeki Pusula referans projesi değiştirilmemiştir.

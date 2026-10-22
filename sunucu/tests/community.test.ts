@@ -174,6 +174,37 @@ test(
         1,
       );
       assert.equal(
+        ownerWorkspace.reports[0].events.find(
+          (e: any) => e.body === "Sadece talep sahibine özel yanıt.",
+        ).kind,
+        "message",
+      );
+      const oldEvents = ownerWorkspace.reports[0].events.map((e: any) => {
+        const { kind: _kind, ...event } = e;
+        return event;
+      });
+      await pilot.db.query(
+        "UPDATE citizen_report SET document=jsonb_set(document,'{events}',$1::jsonb) WHERE id=$2",
+        [JSON.stringify(oldEvents), report.id],
+      );
+      const labelMessages = await readFile(
+        new URL("../migrations/005_label_center_messages.sql", import.meta.url),
+        "utf8",
+      );
+      await pilot.db.query(labelMessages);
+      await pilot.db.query(labelMessages);
+      const labeledOwner = (
+        await request(pilot.app).get("/api/workspace").set(owner)
+      ).body;
+      assert.equal(
+        labeledOwner.reports[0].events.find(
+          (e: any) =>
+            e.body === "Ekip bölgeye yönlendirildi; ortak güncelleme.",
+        ).kind,
+        "message",
+      );
+      assert.equal(labeledOwner.reports[0].events.length, oldEvents.length);
+      assert.equal(
         ownerWorkspace.reports
           .find((r: any) => r.id === report.id)
           .events.filter(
@@ -194,6 +225,30 @@ test(
         teamId: "oltu-fen",
       }).expect(200);
       await act({ type: "progress" }).expect(200);
+      const beforeRepeatedAssignment = (
+        await request(pilot.app).get("/api/workspace").set(owner)
+      ).body;
+      await Promise.all(
+        Array.from({ length: 3 }, () =>
+          act({
+            type: "assign",
+            unitId: "public-works",
+            teamId: "oltu-fen",
+          }).expect(200),
+        ),
+      );
+      const afterRepeatedAssignment = (
+        await request(pilot.app).get("/api/workspace").set(owner)
+      ).body;
+      assert.equal(afterRepeatedAssignment.reports[0].status, "in_progress");
+      assert.deepEqual(
+        afterRepeatedAssignment.inbox,
+        beforeRepeatedAssignment.inbox,
+      );
+      assert.deepEqual(
+        afterRepeatedAssignment.reports[0].events,
+        beforeRepeatedAssignment.reports[0].events,
+      );
       ws = (await request(pilot.app).get("/api/workspace").set(participant))
         .body;
       assert.ok(

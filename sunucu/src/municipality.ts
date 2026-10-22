@@ -158,12 +158,14 @@ export class MunicipalityService {
     doc: any,
     message: string,
     notify = true,
+    kind: "status" | "message" = "status",
   ) {
     const now = new Date().toISOString();
     doc.events.push({
       id: randomUUID(),
       status: doc.status,
       body: message,
+      kind,
       createdAt: now,
     });
     if (!notify) return;
@@ -321,6 +323,7 @@ export class MunicipalityService {
             doc,
             event.body,
             !(doc.sharePublicly && previous.status !== after.status),
+            action.type === "note" ? "message" : "status",
           );
         const community = new CommunityService(this.db);
         if (action.type === "note" && action.audience === "participants")

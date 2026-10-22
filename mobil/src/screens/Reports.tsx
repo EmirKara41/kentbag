@@ -7,6 +7,7 @@ import {
   isOngoing,
   statusNames,
   validPoint,
+  groupReportEvents,
   type Report,
 } from "../domain";
 import { api } from "../api";
@@ -380,6 +381,10 @@ export function Detail({ id, created }: { id: string; created?: boolean }) {
       </div>
     );
   const category = categoryFor(report.category);
+  const historyGroups = groupReportEvents(report.events ?? []);
+  const centerMessages = (report.events ?? [])
+    .filter((event) => event.kind === "message")
+    .reverse();
   async function action(withdraw = false) {
     if (!store.profile) return;
     setBusy(true);
@@ -477,6 +482,17 @@ export function Detail({ id, created }: { id: string; created?: boolean }) {
       {["resolved", "closed"].includes(report.status) && (
         <ResolutionFeedback report={report} />
       )}
+      {centerMessages.length > 0 && (
+        <section className="content-card center-messages">
+          <h2>Çözüm merkezinden mesajlar</h2>
+          {centerMessages.map((event) => (
+            <article key={event.id}>
+              <small>{dateText(event.createdAt, true)}</small>
+              <p>{event.body}</p>
+            </article>
+          ))}
+        </section>
+      )}
       {report.status !== "withdrawn" && <ShareReport report={report} />}
       <section className="content-card">
         <h2>Bildirim ayrıntıları</h2>
@@ -529,20 +545,34 @@ export function Detail({ id, created }: { id: string; created?: boolean }) {
       <section className="content-card">
         <h2>İşlem geçmişi</h2>
         <ol className="timeline">
-          {(report.events ?? []).map((event, index) => (
+          {historyGroups.map(({ event, repeats }, index) => (
             <li
               key={event.id}
-              className={
-                index === (report.events ?? []).length - 1 ? "latest" : ""
-              }
+              className={index === historyGroups.length - 1 ? "latest" : ""}
             >
               <span className="timeline-dot">
                 <Icon name="check" size={12} />
               </span>
               <div>
-                <strong>{statusNames[event.status]}</strong>
+                <strong>
+                  {event.kind === "message"
+                    ? "Çözüm merkezinden mesaj"
+                    : statusNames[event.status]}
+                </strong>
                 <p>{event.body}</p>
                 <small>{dateText(event.createdAt, true)}</small>
+                {repeats.length > 0 && (
+                  <details className="repeated-events">
+                    <summary>
+                      Aynı işlemin {repeats.length} tekrar kaydı
+                    </summary>
+                    {repeats.map((repeat) => (
+                      <p key={repeat.id}>
+                        {dateText(repeat.createdAt, true)} · {repeat.body}
+                      </p>
+                    ))}
+                  </details>
+                )}
               </div>
             </li>
           ))}

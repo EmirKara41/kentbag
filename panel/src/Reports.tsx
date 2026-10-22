@@ -541,7 +541,12 @@ export function ReportDetail({
                   )}
                   <Button
                     icon={unit?.external ? "external" : "team"}
-                    disabled={!unitId}
+                    disabled={
+                      !unitId ||
+                      (report.status !== "submitted" &&
+                        unitId === report.unitId &&
+                        (teamId || undefined) === report.teamId)
+                    }
                     onClick={() =>
                       run(
                         async () =>

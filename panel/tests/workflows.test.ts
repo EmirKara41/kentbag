@@ -62,6 +62,25 @@ test("external routing records intent without implying delivery or a municipal c
   assert.equal(report.events.at(-1)?.audience, "citizen");
   assert.match(report.events.at(-1)?.body ?? "", /teslim teyidi yok/);
 });
+test("saving an existing assignment is a no-op and never resets ongoing work", () => {
+  const action = {
+    type: "assign" as const,
+    id: "r1",
+    unitId: "public-works",
+    teamId: "t2",
+  };
+  const assigned = applyAction(seedState(), action);
+  assert.deepEqual(applyAction(assigned, action), assigned);
+  const working = applyAction(assigned, { type: "progress", id: "r1" });
+  assert.deepEqual(applyAction(working, action), working);
+  const externalAction = {
+    type: "assign" as const,
+    id: "r5",
+    unitId: "electricity-external",
+  };
+  const external = applyAction(seedState(), externalAction);
+  assert.deepEqual(applyAction(external, externalAction), external);
+});
 test("withdrawals and unresolved feedback never inflate solved counts; resolution does not imply citizen consent", () => {
   const state = seedState();
   assert.equal(

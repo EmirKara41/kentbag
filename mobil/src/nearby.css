@@ -91,6 +91,37 @@
   display: grid;
   gap: 12px;
 }
+.center-messages {
+  border-color: #b9d2ca;
+  background: #f0f7f3;
+}
+.center-messages article + article {
+  border-top: 1px solid #d4e5dc;
+  padding-top: 12px;
+  margin-top: 12px;
+}
+.center-messages small {
+  color: #668477;
+  font-size: 11px;
+}
+.center-messages article p {
+  color: #264e41;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.7;
+  margin: 8px 0 0;
+}
+.repeated-events {
+  margin-top: 8px;
+  color: #778a9b;
+  font-size: 11px;
+}
+.repeated-events summary {
+  cursor: pointer;
+}
+.repeated-events p {
+  font-size: 11px;
+}
 .shared-card {
   display: block;
   width: 100%;

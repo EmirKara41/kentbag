@@ -314,6 +314,12 @@ export function applyAction(
       const team = next.teams.find((item) => item.id === action.teamId);
       if (action.teamId && (!team || team.unitId !== unit.id || !team.active))
         throw new Error("Seçilen ekip bu birim için görev alamıyor.");
+      if (
+        report.status !== "submitted" &&
+        report.unitId === unit.id &&
+        (report.teamId ?? "") === (team?.id ?? "")
+      )
+        return state;
       audience = "citizen";
       report.unitId = unit.id;
       report.teamId = team?.id;

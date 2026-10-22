@@ -115,6 +115,7 @@ export async function startPilot(
     "002_municipality.sql",
     "003_community.sql",
     "004_owner_shared_updates.sql",
+    "005_label_center_messages.sql",
   ])
     await pool.query(
       await readFile(new URL(`../migrations/${file}`, import.meta.url), "utf8"),

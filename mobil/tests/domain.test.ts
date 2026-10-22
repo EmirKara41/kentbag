@@ -6,7 +6,38 @@ import {
   validPoint,
   isCompleted,
   isOngoing,
+  groupReportEvents,
+  type ReportEvent,
 } from "../src/domain";
+test("history groups only adjacent automatic duplicates and preserves every authored message", () => {
+  const event: ReportEvent = {
+    id: "1",
+    status: "in_review",
+    body: "Yönlendirme kaydı oluşturuldu.",
+    createdAt: "2026-10-22T11:18:00Z",
+  };
+  const message: ReportEvent = {
+    ...event,
+    id: "3",
+    body: "Ekip bölgeye gidiyor.",
+    kind: "message",
+  };
+  const events = [
+    event,
+    { ...event, id: "2" },
+    message,
+    { ...message, id: "4" },
+    { ...event, id: "5" },
+  ];
+  const grouped = groupReportEvents(events);
+  assert.equal(grouped.length, 4);
+  assert.equal(grouped[0].repeats.length, 1);
+  assert.deepEqual(
+    grouped.flatMap((g) => [g.event, ...g.repeats]),
+    events,
+  );
+  assert.equal(events.length, 5);
+});
 test("reports require a valid category, description, point and no more than three photos", () => {
   const draft = freshDraft("road");
   draft.description = "Yolun girişinde büyük bir çukur oluşmuş.";
