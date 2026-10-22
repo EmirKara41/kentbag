@@ -42,9 +42,10 @@ export type Event = {
   id: string;
   body: string;
   at: string;
-  audience: "internal" | "citizen";
+  audience: "internal" | "citizen" | "participants";
 };
 export type CitizenReport = {
+  shared?: boolean;
   triage?: {
     source: "rules" | "gemini";
     priority: Priority;
@@ -196,7 +197,12 @@ export type Action =
   | { type: "priority"; id: string; priority: Priority }
   | { type: "assign"; id: string; unitId: string; teamId?: string }
   | { type: "progress"; id: string }
-  | { type: "note"; id: string; body: string; audience: "internal" | "citizen" }
+  | {
+      type: "note";
+      id: string;
+      body: string;
+      audience: "internal" | "citizen" | "participants";
+    }
   | { type: "resolve"; id: string; body: string }
   | { type: "reopen"; id: string; body: string }
   | { type: "team"; id: string; active: boolean }

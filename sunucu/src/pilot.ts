@@ -110,7 +110,11 @@ export async function startPilot(
   };
   const auth = createAuth(pool, config);
   await (await getMigrations(auth.options)).runMigrations();
-  for (const file of ["001_citizen.sql", "002_municipality.sql"])
+  for (const file of [
+    "001_citizen.sql",
+    "002_municipality.sql",
+    "003_community.sql",
+  ])
     await pool.query(
       await readFile(new URL(`../migrations/${file}`, import.meta.url), "utf8"),
     );

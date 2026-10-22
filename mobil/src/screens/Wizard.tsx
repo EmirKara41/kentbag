@@ -6,6 +6,7 @@ import {
   draftError,
   validPoint,
   validLocation,
+  publicAreas,
   type Draft,
 } from "../domain";
 import { Button, Icon, Message, Sheet } from "../ui";
@@ -286,6 +287,33 @@ export function Wizard({
                 <span>{draft.description.length}/2000</span>
               </span>
             </label>
+            <div className="sharing-options">
+              <label>
+                <input
+                  type="checkbox"
+                  checked={draft.sharePublicly === true}
+                  onChange={(e) => update({ sharePublicly: e.target.checked })}
+                />{" "}
+                Başkaları bu soruna katılabilsin
+              </label>
+              <p>
+                Yalnız sorun türü, seçtiğin bölge ve yaklaşık konum paylaşılır.
+                Açıklama, fotoğraf ve kişisel bilgilerin yalnız kurumda kalır.
+              </p>
+              {draft.sharePublicly && (
+                <label className="field">
+                  <span>Paylaşılacak bölge</span>
+                  <select
+                    value={draft.publicArea ?? "Oltu"}
+                    onChange={(e) => update({ publicArea: e.target.value })}
+                  >
+                    {publicAreas.map((a) => (
+                      <option key={a}>{a}</option>
+                    ))}
+                  </select>
+                </label>
+              )}
+            </div>
             <div className="field-label">
               Fotoğraf ekle <small>İsteğe bağlı · En fazla 3</small>
             </div>

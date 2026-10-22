@@ -1,4 +1,4 @@
-import type { Draft, Profile, Report, Workspace } from "./domain";
+import type { Draft, Profile, Report, Workspace, SharedIssue } from "./domain";
 import { draftError } from "./domain";
 import { sessionStore } from "./native";
 const configured = import.meta.env.VITE_API_URL?.trim();
@@ -120,6 +120,24 @@ const json = <T>(
     owner,
   );
 export const api = {
+  community: (query: URLSearchParams = new URLSearchParams()) =>
+    request<{ items: SharedIssue[] }>(`/api/community?${query}`),
+  sharedIssue: (id: string) =>
+    request<SharedIssue>(`/api/community/${encodeURIComponent(id)}`),
+  subscribe: (id: string, subscribed: boolean, owner: string) =>
+    json(
+      `/api/community/${encodeURIComponent(id)}/subscription`,
+      "PUT",
+      { subscribed },
+      owner,
+    ),
+  share: (id: string, enabled: boolean, area: string, owner: string) =>
+    json(
+      `/api/reports/${encodeURIComponent(id)}/sharing`,
+      "POST",
+      { enabled, area },
+      owner,
+    ),
   async restore() {
     token = await sessionStore.get();
     if (!token) return null;
@@ -206,6 +224,8 @@ export const api = {
         description: draft.description,
         location: draft.location,
         photos: photoIds,
+        sharePublicly: draft.sharePublicly === true,
+        publicArea: draft.publicArea ?? "Oltu",
       },
       owner,
     );

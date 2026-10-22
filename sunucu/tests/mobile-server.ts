@@ -16,6 +16,12 @@ await pg.exec(
     "utf8",
   ),
 );
+await pg.exec(
+  await readFile(
+    new URL("../migrations/003_community.sql", import.meta.url),
+    "utf8",
+  ),
+);
 const sql = (client: Pick<typeof pg, "query">): Sql => ({
   async query(text, params) {
     const result = await client.query<Record<string, unknown>>(text, params);

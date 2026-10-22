@@ -11,7 +11,10 @@ export type Route = {
     | "privacy"
     | "edit-profile"
     | "detail"
-    | "community-detail";
+    | "community-detail"
+    | "report-entry"
+    | "shared-detail";
+  category?: CategoryId;
   id?: string;
   created?: boolean;
   filter?: string;

@@ -14,6 +14,7 @@ import { useStore } from "../store";
 import { useNav } from "../navigation";
 import { Button, Empty, Icon, Message, Sheet } from "../ui";
 import { LocationMap } from "../Map";
+import { JoinedIssues, ShareReport } from "./Nearby";
 export function Reports({ initialFilter = "all" }: { initialFilter?: string }) {
   const store = useStore(),
     nav = useNav();
@@ -118,21 +119,24 @@ export function Reports({ initialFilter = "all" }: { initialFilter?: string }) {
       )}
       {store.profile && (
         <>
-          <div className="search-input">
-            <Icon name="search" size={19} />
-            <input
-              aria-label="Taleplerde ara"
-              placeholder="Talep numarası veya açıklama ara"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-            />
-          </div>
+          {filter !== "joined" && (
+            <div className="search-input">
+              <Icon name="search" size={19} />
+              <input
+                aria-label="Taleplerde ara"
+                placeholder="Talep numarası veya açıklama ara"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+              />
+            </div>
+          )}
           <div className="segmented" aria-label="Talep filtresi">
             {[
               ["all", "Tümü"],
               ["open", "Devam eden"],
               ["completed", "Tamamlanan"],
               ["withdrawn", "Geri çekilen"],
+              ["joined", "Katıldıklarım"],
             ].map(([id, label]) => (
               <button
                 key={id}
@@ -161,6 +165,8 @@ export function Reports({ initialFilter = "all" }: { initialFilter?: string }) {
         >
           <Button onClick={() => nav.go({ name: "auth" })}>Giriş yap</Button>
         </Empty>
+      ) : filter === "joined" ? (
+        <JoinedIssues />
       ) : store.loading && !store.workspace ? (
         <div className="loading-state">
           <Icon name="loading" className="spin" />
@@ -307,7 +313,9 @@ export function Updates() {
               className={`inbox-item ${item.read ? "" : "unread"}`}
               key={item.id}
               onClick={() => {
-                if (item.reportId)
+                if (item.issueId)
+                  nav.go({ name: "shared-detail", id: item.issueId });
+                else if (item.reportId)
                   nav.go({ name: "detail", id: item.reportId });
               }}
             >
@@ -469,6 +477,7 @@ export function Detail({ id, created }: { id: string; created?: boolean }) {
       {["resolved", "closed"].includes(report.status) && (
         <ResolutionFeedback report={report} />
       )}
+      {report.status !== "withdrawn" && <ShareReport report={report} />}
       <section className="content-card">
         <h2>Bildirim ayrıntıları</h2>
         <p className="pre-wrap">{report.description}</p>

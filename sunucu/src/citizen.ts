@@ -3,6 +3,7 @@ import type { Database, Sql } from "./database.js";
 import { HttpError, reportSchema, profileSchema } from "./validation.js";
 import { photoUrl } from "./storage.js";
 import type { Config } from "./config.js";
+import { CommunityService } from "./community.js";
 export type CitizenUser = {
   id: string;
   name: string;
@@ -71,6 +72,7 @@ export class CitizenService {
         reports.rows.map((row) => this.decorate(row.document)),
       ),
       inbox: inbox.rows.map((row) => row.document),
+      subscriptions: await new CommunityService(this.db).mine(user.id),
       drafts: {},
     };
   }
@@ -97,6 +99,9 @@ export class CitizenService {
         : "Bildirimin sisteme kaydedildi. Belediye merkezi bağlantısı henüz açık değil.";
       const document = {
         ...input,
+        ...(input.sharePublicly
+          ? { publicArea: input.publicArea ?? "Oltu" }
+          : {}),
         id,
         ownerId: user.id,
         reference: `KY-${id.slice(0, 8).toUpperCase()}`,
@@ -153,6 +158,13 @@ export class CitizenService {
           );
       }
       const inboxId = randomUUID();
+      if (input.sharePublicly)
+        await new CommunityService(this.db).publish(
+          sql,
+          document,
+          true,
+          input.publicArea ?? "Oltu",
+        );
       await sql.query(
         "INSERT INTO citizen_inbox(id,owner_id,report_id,document) VALUES($1,$2,$3,$4::jsonb)",
         [

@@ -26,6 +26,9 @@ async function prepare(page: Page, photo = false) {
     .getByRole("button", { name: "Yol hasarı bildir", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Farklı bir sorun bildir", exact: true })
+    .click();
+  await page
     .getByRole("textbox", { name: "Sorun açıklaması" })
     .fill("Sokağın girişinde derin bir çukur oluşmuş.");
   if (photo) {
@@ -118,6 +121,9 @@ test("draft survives restart and all five tabs remain inside the app", async ({
   });
   await page
     .getByRole("button", { name: "Su kesintisi bildir", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Farklı bir sorun bildir", exact: true })
     .click();
   await page
     .getByRole("textbox", { name: "Sorun açıklaması" })
@@ -349,6 +355,9 @@ test("nearby known incident can be opened without losing the report draft", asyn
     .getByRole("button", { name: "Su kesintisi bildir", exact: true })
     .click();
   await page
+    .getByRole("button", { name: "Farklı bir sorun bildir", exact: true })
+    .click();
+  await page
     .getByLabel("Sorun açıklaması")
     .fill("Bugün öğle saatlerinden beri evimizde su kesik.");
   await page.getByRole("button", { name: "Devam et", exact: true }).click();
@@ -425,6 +434,9 @@ test("typed address works without GPS or map, survives restart and reaches the A
   ).toBeLessThanOrEqual(8);
   await page
     .getByRole("button", { name: "Yol hasarı bildir", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Farklı bir sorun bildir", exact: true })
     .click();
   await expect(page.getByText("Neyi etkiliyor?", { exact: false })).toHaveCount(
     0,
@@ -510,6 +522,9 @@ test("denied GPS and blocked tiles still allow manual location selection; offlin
   await page.goto("/");
   await page
     .getByRole("button", { name: "Çöp birikmesi bildir", exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Farklı bir sorun bildir", exact: true })
     .click();
   await page
     .getByRole("textbox", { name: "Sorun açıklaması" })

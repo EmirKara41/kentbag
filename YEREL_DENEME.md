@@ -1,11 +1,11 @@
-# Oltu yerel pilotu · 1.2.3
+# Oltu yerel pilotu · 1.3.0
 
 ## Kullanım
 
 1. Bilgisayar ve Android telefon aynı Wi-Fi ağında olsun.
 2. `sunucu` klasöründe `npm ci` ve `npm run pilot` çalıştır. Pilot; gerçek Better Auth hesapları, imzalı oturumlar ve PostgreSQL uyumlu dosya tabanlı PGlite kullanır. Docker, Supabase veya Vercel hesabı istemez.
 3. `panel` klasöründe `npm ci`, `npm run dev` çalıştır. Bilgisayarda `http://localhost:4280/` aç. Yerel yönetici bağlantısı yalnız bu bilgisayardan açılabilir; vatandaş hesabı panel yetkisi vermez. Bu, üretim için çok kullanıcılı belediye kimlik doğrulaması değildir.
-4. `mobil` klasöründe `npm run phone` ile indirme sayfasını aç. Güncel derleme `artifacts/KentYanimda-Android-1.2.3.apk`. İndirme sayfasının gösterdiği QR'ı okut ve mevcut uygulamayı güncelle. Mevcut test imzası ve paket kimliği korunur.
+4. `mobil` klasöründe `npm run phone` ile indirme sayfasını aç. Güncel derleme `artifacts/KentYanimda-Android-1.3.0.apk`. İndirme sayfasının gösterdiği QR'ı okut ve mevcut uygulamayı güncelle. Mevcut test imzası ve paket kimliği korunur.
 5. Uygulamada hesabını oluştur, bir talep gönder. Belediye paneli görünürken yaklaşık üç saniyede yenilenir. Panelde vatandaş açıklaması, ekip ataması veya çözüm kaydet. Telefon açıkken yaklaşık 15 saniyede, uygulamaya geri dönünce de yenileme yapılır. Bunlar uygulama içi güncellemelerdir; arka planda push bildirimi henüz yoktur.
 
 Bu bilgisayarda hazırlanan APK'nın API adresi `http://10.180.23.5:3000`; indirme sayfası `http://10.180.23.5:8181`. Wi-Fi/IP değişirse aşağıdaki komutla APK'yı yeniden oluştur. Menülerin açılması bilgisayara bağlı değildir; yerel veriye ulaşmak bağlıdır. Android cihazdan son ağ/kamera denemesi kullanıcı tarafından yapılmalıdır.
@@ -51,6 +51,6 @@ Bunlar proje içindeki pilot yönlendirme kurallarıdır; Oltu Belediyesi veya d
 
 Panelde **Örnek alanı aç** seçimi ayrı tarayıcı verisi kullanır. Gerçek taleplerle birleştirilmez. **Yerel sisteme bağlan** gerçek kuyruğa döner. Örnek sıfırlama gerçek veritabanını etkileyemez.
 
-Doğrulama: API testlerinde gerçek diskteki auth/veri/fotoğraf akışı, yeniden başlatma, idempotent gönderim, özel notların vatandaştan gizlenmesi, rol ayrımı ve dış kurum teyidi sınandı. Model şeması ve hata dönüşü sahte sağlayıcı yanıtıyla test edildi. 21 Ekim 2026 tarihinde gerçek Gemini bağlantısı da doğrulandı: uygulamanın analiz fonksiyonu `source=gemini`, `aiState=done` döndürdü. İlk gerçek yanıtlar yaklaşık 37–39 saniye sürdü; analiz arka planda 60 saniyelik sınırla çalışır ve talep makbuzunu bekletmez. Anahtar yalnız sunucunun Git dışında tutulan `.env` dosyasındadır. Tarayıcıda ayrı test veritabanıyla vatandaş → panel → açıklama/çözüm → vatandaş geri dönüşü denendi. Android APK imzası, gömülü arayüz ve sürüm denetlendi; fiziksel telefondan LAN isteği henüz doğrulanmadı.
+Doğrulama: API testlerinde gerçek diskteki auth/veri/fotoğraf akışı, yeniden başlatma, idempotent gönderim, özel notların vatandaştan gizlenmesi, rol ayrımı ve dış kurum teyidi sınandı. Model şeması ve hata dönüşü sahte sağlayıcı yanıtıyla test edildi. 21 Ekim 2026 tarihinde gerçek Gemini bağlantısı da doğrulandı: uygulamanın analiz fonksiyonu `source=gemini`, `aiState=done` döndürdü. İlk gerçek yanıtlar yaklaşık 37–39 saniye sürdü; analiz arka planda 60 saniyelik sınırla çalışır ve talep makbuzunu bekletmez. Anahtar yalnız sunucunun Git dışında tutulan `.env` dosyasındadır. Tarayıcıda ayrı test veritabanıyla vatandaş → panel → açıklama/çözüm → vatandaş geri dönüşü denendi. Android APK imzası, gömülü arayüz ve sürüm denetlendi; kullanıcı telefondan sağlık adresine erişimi doğruladı. Yeni sürümün fiziksel cihaz denemesi ayrıca yapılmalıdır.
 
 Kaynaklar: [Oltu mahalleleri](https://oltu.bel.tr/icerik/mahalle-muhtarlarimiz), [Oltu birimleri](https://oltu.bel.tr/profil-kategori/birim-mudurleri), [ESKİ ilçe altyapısı](https://www.eski.gov.tr/ilcelerde-altyapi-seferberligi-devam-ediyor), [PGlite socket](https://pglite.dev/docs/pglite-socket), [AI SDK Google](https://ai-sdk.dev/providers/ai-sdk-providers/google), [Gemini modelleri](https://ai.google.dev/gemini-api/docs/models).

@@ -18,7 +18,10 @@ import { Wizard } from "./screens/Wizard";
 import { Account, Auth, EditProfile } from "./screens/Account";
 import { Reports, Updates, Detail } from "./screens/Reports";
 import { Help } from "./screens/Help";
+import { Nearby, SharedDetail } from "./screens/Nearby";
 const labels: Record<Route["name"], string> = {
+  "report-entry": "Bildir",
+  "shared-detail": "Ortak bildirim",
   home: "Ana sayfa",
   reports: "Kayıtlarım",
   neighborhood: "Mahallem",
@@ -36,9 +39,13 @@ export default function App() {
   const store = useStore();
   const [history, setHistory] = useState<Route[]>([{ name: "home" }]);
   const route = history.at(-1)!;
-  const isTab = ["home", "reports", "neighborhood", "account"].includes(
-    route.name,
-  );
+  const isTab = [
+    "home",
+    "reports",
+    "neighborhood",
+    "account",
+    "report-entry",
+  ].includes(route.name);
   const [editor, setEditor] = useState<Draft>(() => freshDraft()),
     [step, setStep] = useState(1),
     [draftOwner, setDraftOwner] = useState<string | null>(null);
@@ -67,7 +74,7 @@ export default function App() {
     },
     [store.profile?.id],
   );
-  const report = useCallback(
+  const startReport = useCallback(
     (
       selected?: CategoryId,
       resume = false,
@@ -85,6 +92,18 @@ export default function App() {
         );
     },
     [store.draft, openWizard],
+  );
+  const report = useCallback(
+    (
+      selected?: CategoryId,
+      resume = false,
+      requestKind: RequestKind = "issue",
+    ) => {
+      if (resume || requestKind === "improvement")
+        startReport(selected, resume, requestKind);
+      else go({ name: "report-entry", category: selected });
+    },
+    [go, startReport],
   );
   const back = useCallback(() => {
     const dialog = document.querySelector("dialog[open]");
@@ -215,6 +234,13 @@ export default function App() {
             }
           >
             {route.name === "home" && <Home />}
+            {route.name === "report-entry" && (
+              <Nearby
+                category={route.category}
+                onNew={() => startReport(route.category)}
+              />
+            )}
+            {route.name === "shared-detail" && <SharedDetail id={route.id!} />}
             {route.name === "reports" && (
               <Reports initialFilter={route.filter} />
             )}

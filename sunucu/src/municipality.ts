@@ -14,6 +14,7 @@ import {
   type Action,
 } from "./municipality-domain.js";
 import { ruleTriage, geminiTriage } from "./triage.js";
+import { CommunityService } from "./community.js";
 
 const id = z.string().min(1).max(220);
 const body = z.string().trim().min(3).max(2000);
@@ -40,7 +41,7 @@ const actionSchema = z.discriminatedUnion("type", [
     type: z.literal("note"),
     id,
     body,
-    audience: z.enum(["internal", "citizen"]),
+    audience: z.enum(["internal", "citizen", "participants"]),
   }),
   z.object({ type: z.literal("resolve"), id, body }),
   z.object({ type: z.literal("reopen"), id, body }),
@@ -184,7 +185,9 @@ export class MunicipalityService {
       await sql.query("SELECT document FROM municipality_state WHERE id='oltu'")
     ).rows[0].document as PanelState;
     const rows = await sql.query(
-      `SELECT r.document,u.name,p.data AS profile FROM citizen_report r JOIN "user" u ON u.id=r.owner_id LEFT JOIN citizen_profile p ON p.owner_id=r.owner_id ORDER BY r.created_at DESC`,
+      `SELECT r.document,u.name,p.data AS profile,
+      (SELECT count(*)::integer FROM community_subscription s JOIN community_issue i ON i.id=s.issue_id WHERE i.report_id=r.id) AS subscriptions
+      FROM citizen_report r JOIN "user" u ON u.id=r.owner_id LEFT JOIN citizen_profile p ON p.owner_id=r.owner_id ORDER BY r.created_at DESC`,
     );
     state.reports = await Promise.all(
       rows.rows.map(async (row) => {
@@ -206,7 +209,8 @@ export class MunicipalityService {
               ? undefined
               : [d.location.latitude, d.location.longitude],
           citizen: row.profile?.name || row.name,
-          supports: 0,
+          supports: Number(row.subscriptions),
+          shared: d.sharePublicly === true,
           status: d.status,
           priority: m.priority ?? m.triage?.priority ?? "normal",
           prioritySource: m.prioritySource ?? "suggestion",
@@ -251,6 +255,15 @@ export class MunicipalityService {
       );
       await sql.query("SELECT id FROM citizen_report ORDER BY id FOR UPDATE");
       const before = await this.snapshot(sql);
+      if (
+        action.type === "note" &&
+        action.audience === "participants" &&
+        !before.reports.find((r) => r.id === action.id)?.shared
+      )
+        throw new HttpError(
+          409,
+          "Ortak güncelleme için talebin yakındaki bildirimlerde paylaşılması gerekiyor.",
+        );
       let next: PanelState;
       try {
         next = applyAction(before, action);
@@ -294,8 +307,14 @@ export class MunicipalityService {
           };
           delete doc.feedback;
         }
-        for (const event of added.filter((e) => e.audience === "citizen"))
+        for (const event of added.filter(
+          (e) => e.audience === "citizen" || e.audience === "participants",
+        ))
           await this.publicEvent(sql, doc, event.body);
+        const community = new CommunityService(this.db);
+        if (action.type === "note" && action.audience === "participants")
+          await community.update(sql, doc, action.body);
+        if (previous.status !== after.status) await community.status(sql, doc);
         await sql.query(
           "UPDATE citizen_report SET document=$1::jsonb WHERE id=$2",
           [JSON.stringify(doc), after.id],

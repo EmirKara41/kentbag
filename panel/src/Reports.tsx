@@ -269,7 +269,9 @@ export function ReportDetail({
     [teamId, setTeam] = useState(report.teamId ?? ""),
     [priorityChoice, setPriority] = useState<Priority | null>(null),
     [note, setNote] = useState(""),
-    [audience, setAudience] = useState<"internal" | "citizen">("internal"),
+    [audience, setAudience] = useState<"internal" | "citizen" | "participants">(
+      "internal",
+    ),
     [resolution, setResolution] = useState(""),
     [error, setError] = useState(""),
     [section, setSection] = useState("process");
@@ -418,7 +420,9 @@ export function ReportDetail({
                   {dateText(event.at)} ·{" "}
                   {event.audience === "internal"
                     ? "Kurum içi"
-                    : "Vatandaşa açık"}
+                    : event.audience === "participants"
+                      ? "Katılan herkese"
+                      : "Talep sahibine özel"}
                 </small>
                 <p>{event.body}</p>
               </div>
@@ -437,7 +441,11 @@ export function ReportDetail({
             almaz.
           </p>
           {report.events
-            .filter((event) => event.audience === "citizen")
+            .filter(
+              (event) =>
+                event.audience === "citizen" ||
+                event.audience === "participants",
+            )
             .map((event) => (
               <article key={event.id}>
                 <small>{dateText(event.at)}</small>
@@ -571,7 +579,12 @@ export function ReportDetail({
                     }
                   >
                     <option value="internal">Kurum içi not</option>
-                    <option value="citizen">Vatandaşa açık açıklama</option>
+                    <option value="citizen">Talep sahibine yanıt</option>
+                    {report.shared && (
+                      <option value="participants">
+                        Ortak güncelleme · Katılan herkese
+                      </option>
+                    )}
                   </select>
                 </label>
                 <label className="field">
@@ -584,7 +597,9 @@ export function ReportDetail({
                     placeholder={
                       audience === "internal"
                         ? "Yalnız kurum içinde kalacak ayrıntılar…"
-                        : "Vatandaşa gösterilecek anlaşılır bir açıklama…"
+                        : audience === "participants"
+                          ? "Katılan herkesin göreceği ortak açıklama…"
+                          : "Yalnız talep sahibinin göreceği yanıt…"
                     }
                   />
                 </label>

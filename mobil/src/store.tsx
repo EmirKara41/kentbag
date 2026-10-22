@@ -163,6 +163,7 @@ function useCitizenStore() {
       sessionId: id,
       profiles: previous?.profiles ?? (profile ? [profile] : []),
       inbox: previous?.inbox ?? [],
+      subscriptions: previous?.subscriptions ?? [],
       reports: [
         receipt,
         ...(previous?.reports ?? []).filter(

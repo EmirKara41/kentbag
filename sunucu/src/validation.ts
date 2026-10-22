@@ -47,6 +47,20 @@ export const reportSchema = z
       "park",
     ]),
     description: z.string().trim().min(15).max(2000),
+    sharePublicly: z.boolean().optional(),
+    publicArea: z
+      .enum([
+        "Oltu",
+        "Aslanpaşa",
+        "Cumhuriyet",
+        "Halitpaşa",
+        "Karabekir",
+        "Şehitler",
+        "Yasin Haşimoğlu",
+        "Yusuf Ziyabey",
+        "Ayyıldız",
+      ])
+      .optional(),
     location: reportLocationSchema,
     photos: z
       .array(z.string().uuid())

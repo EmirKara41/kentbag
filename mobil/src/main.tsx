@@ -4,6 +4,7 @@ import App from "./App";
 import { StoreProvider } from "./store";
 import "./style.css";
 import "./civic.css";
+import "./nearby.css";
 class AppBoundary extends Component<
   { children: ReactNode },
   { failed: boolean }

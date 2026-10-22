@@ -19,6 +19,12 @@ test("citizen API authentication, ownership, photos and atomic report lifecycle"
       "utf8",
     ),
   );
+  await pg.exec(
+    await readFile(
+      new URL("../migrations/003_community.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   const adapt = (client: Pick<PGlite, "query">): Sql => ({
     async query(sql, params) {
       const r = await client.query<Record<string, any>>(sql, params);

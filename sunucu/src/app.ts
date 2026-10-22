@@ -14,6 +14,7 @@ import { verifyPhotoSignature } from "./storage.js";
 import { CitizenService, type CitizenUser } from "./citizen.js";
 import { HttpError } from "./validation.js";
 import { MunicipalityService, municipalityRouter } from "./municipality.js";
+import { CommunityService, sharingSchema } from "./community.js";
 
 export function createApp(deps: {
   db: Database;
@@ -28,6 +29,7 @@ export function createApp(deps: {
   };
 }) {
   const { db, config, photos } = deps;
+  const community = new CommunityService(db);
   const service = new CitizenService(db, {
     ...config,
     municipalityConnected: !!deps.municipality,
@@ -61,7 +63,11 @@ export function createApp(deps: {
   app.get("/", (_req, res) =>
     res
       .type("text")
-      .send(deps.municipality ? "KentBağ Oltu yerel API. Vatandaş ve belediye paneli bağlı." : "KentYanımda vatandaş API. Belediye merkezi henüz bağlı değil."),
+      .send(
+        deps.municipality
+          ? "KentBağ Oltu yerel API. Vatandaş ve belediye paneli bağlı."
+          : "KentYanımda vatandaş API. Belediye merkezi henüz bağlı değil.",
+      ),
   );
   app.get("/api/health", async (_req, res) => {
     await db.query("SELECT id FROM citizen_report LIMIT 1");
@@ -109,6 +115,19 @@ export function createApp(deps: {
       municipalityRouter(deps.municipality.service, deps.municipality),
     );
   }
+  app.get("/api/community", async (req, res) =>
+    res.json({
+      items: await community.browse(req.query, (await deps.session(req))?.id),
+    }),
+  );
+  app.get("/api/community/:id", async (req, res) =>
+    res.json(
+      await community.detail(
+        String(req.params.id),
+        (await deps.session(req))?.id,
+      ),
+    ),
+  );
   app.use("/api", async (req, res, next) => {
     const user = await deps.session(req);
     if (!user) throw new HttpError(401, "Oturum sona erdi. Yeniden giriş yap.");
@@ -191,6 +210,35 @@ export function createApp(deps: {
     },
   );
   app.use(express.json({ limit: "32kb" }));
+  app.put("/api/community/:id/subscription", async (req, res) => {
+    const { subscribed } = z
+      .object({ subscribed: z.boolean() })
+      .parse(req.body);
+    await community.subscribe(
+      String(req.params.id),
+      res.locals.user.id,
+      subscribed,
+    );
+    res.json({ ok: true });
+  });
+  app.post("/api/reports/:id/sharing", async (req, res) => {
+    const input = sharingSchema.parse(req.body);
+    await db.transaction(async (sql) => {
+      const row = (
+        await sql.query(
+          "SELECT document FROM citizen_report WHERE id=$1 AND owner_id=$2 FOR UPDATE",
+          [String(req.params.id), res.locals.user.id],
+        )
+      ).rows[0];
+      if (!row) throw new HttpError(404, "Talep bulunamadı.");
+      await community.publish(sql, row.document, input.enabled, input.area);
+      await sql.query(
+        "UPDATE citizen_report SET document=$1::jsonb WHERE id=$2",
+        [JSON.stringify(row.document), String(req.params.id)],
+      );
+    });
+    res.json({ ok: true });
+  });
   app.get("/api/workspace", async (_req, res) =>
     res.json(await service.workspace(res.locals.user)),
   );

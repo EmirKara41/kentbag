@@ -96,6 +96,8 @@ export type Point = {
 export type ReportLocation = Point | { source: "manual"; address: string };
 export type Photo = { id: string; uri: string; width: number; height: number };
 export type Draft = {
+  sharePublicly?: boolean;
+  publicArea?: string;
   requestId: string;
   kind?: RequestKind;
   impacts?: string[];
@@ -145,6 +147,7 @@ export type Report = Omit<Draft, "category" | "location" | "updatedAt"> & {
   }[];
 };
 export type InboxItem = {
+  issueId?: string;
   id: string;
   title: string;
   body: string;
@@ -153,6 +156,7 @@ export type InboxItem = {
   read: boolean;
 };
 export type Workspace = {
+  subscriptions?: SharedIssue[];
   sessionId: string;
   profiles: Profile[];
   reports: Report[];
@@ -179,7 +183,37 @@ export const freshDraft = (
   location: null,
   photos: [],
   updatedAt: new Date().toISOString(),
+  sharePublicly: true,
+  publicArea: "Oltu",
 });
+export const publicAreas = [
+  "Oltu",
+  "Aslanpaşa",
+  "Cumhuriyet",
+  "Halitpaşa",
+  "Karabekir",
+  "Şehitler",
+  "Yasin Haşimoğlu",
+  "Yusuf Ziyabey",
+  "Ayyıldız",
+];
+export type SharedIssue = {
+  id: string;
+  title: string;
+  category: CategoryId;
+  area: string;
+  point?: { latitude: number; longitude: number };
+  distanceKm?: number;
+  status: Status;
+  available: boolean;
+  needsReview: boolean;
+  createdAt: string;
+  participantCount: number;
+  joined: boolean;
+  own: boolean;
+  verification: "unverified" | "institution_record";
+  events?: { id: string; body: string; status: Status; createdAt: string }[];
+};
 export function validPoint(point: ReportLocation | null): point is Point {
   return (
     !!point &&
