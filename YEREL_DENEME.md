@@ -1,20 +1,20 @@
-# Oltu yerel pilotu · 1.2.1
+# Oltu yerel pilotu · 1.2.2
 
 ## Kullanım
 
 1. Bilgisayar ve Android telefon aynı Wi-Fi ağında olsun.
 2. `sunucu` klasöründe `npm ci` ve `npm run pilot` çalıştır. Pilot; gerçek Better Auth hesapları, imzalı oturumlar ve PostgreSQL uyumlu dosya tabanlı PGlite kullanır. Docker, Supabase veya Vercel hesabı istemez.
 3. `panel` klasöründe `npm ci`, `npm run dev` çalıştır. Bilgisayarda `http://localhost:4280/` aç. Yerel yönetici bağlantısı yalnız bu bilgisayardan açılabilir; vatandaş hesabı panel yetkisi vermez. Bu, üretim için çok kullanıcılı belediye kimlik doğrulaması değildir.
-4. `mobil` klasöründe `npm run phone` ile indirme sayfasını aç. Güncel derleme `artifacts/KentYanimda-Android-1.2.1.apk`. İndirme sayfasının gösterdiği QR'ı okut ve mevcut uygulamayı güncelle. Mevcut test imzası ve paket kimliği korunur.
+4. `mobil` klasöründe `npm run phone` ile indirme sayfasını aç. Güncel derleme `artifacts/KentYanimda-Android-1.2.2.apk`. İndirme sayfasının gösterdiği QR'ı okut ve mevcut uygulamayı güncelle. Mevcut test imzası ve paket kimliği korunur.
 5. Uygulamada hesabını oluştur, bir talep gönder. Belediye paneli görünürken yaklaşık üç saniyede yenilenir. Panelde vatandaş açıklaması, ekip ataması veya çözüm kaydet. Telefon açıkken yaklaşık 15 saniyede, uygulamaya geri dönünce de yenileme yapılır. Bunlar uygulama içi güncellemelerdir; arka planda push bildirimi henüz yoktur.
 
-Bu bilgisayarda hazırlanan APK'nın API adresi `http://10.152.62.149:3000`; indirme sayfası `http://10.152.62.149:8181`. Wi-Fi/IP değişirse aşağıdaki komutla APK'yı yeniden oluştur. Menülerin açılması bilgisayara bağlı değildir; yerel veriye ulaşmak bağlıdır. Android cihazdan son ağ/kamera denemesi kullanıcı tarafından yapılmalıdır.
+Bu bilgisayarda hazırlanan APK'nın API adresi `http://192.168.1.103:3000`; indirme sayfası `http://192.168.1.103:8181`. Wi-Fi/IP değişirse aşağıdaki komutla APK'yı yeniden oluştur. Menülerin açılması bilgisayara bağlı değildir; yerel veriye ulaşmak bağlıdır. Android cihazdan son ağ/kamera denemesi kullanıcı tarafından yapılmalıdır.
 
 ## APK'yı yerel API'ye bağlayarak oluşturma
 
 ```powershell
 # mobil klasöründe, bilgisayarın o anki özel IPv4 adresiyle:
-powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1 -LanHost 10.152.62.149
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/build-android.ps1 -LanHost 192.168.1.103
 npm run phone
 ```
 
@@ -29,7 +29,7 @@ Web önizlemesi için mobilde Git'e girmeyen `.env.local` içine `VITE_API_URL=h
 ```dotenv
 GEMINI_API_KEY=
 GEMINI_MODEL=gemini-3.5-flash-lite
-KENT_LAN_HOST=10.152.62.149
+KENT_LAN_HOST=192.168.1.103
 ```
 
 Anahtar edinince yalnız `GEMINI_API_KEY` satırını doldur ve `npm run pilot` sürecini yeniden başlat. Anahtar sohbet, mobil paket veya panel ortamına yazılmaz. Henüz değerlendirilmemiş kayıtlar arka plandaki kuyruktan alınır. Talep makbuzu model beklenmeden saklanır; Gemini hatasında kural tabanlı öneri korunur. Hatalı analizler otomatik ücretli tekrar döngüsüne girmez; sonraki talepler yeniden denenir.
