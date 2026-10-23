@@ -15,6 +15,7 @@ import {
 } from "./municipality-domain.js";
 import { ruleTriage, geminiTriage } from "./triage.js";
 import { CommunityService } from "./community.js";
+import { InstitutionService } from "./institutions.js";
 
 const id = z.string().min(1).max(220);
 const body = z.string().trim().min(3).max(2000);
@@ -194,6 +195,7 @@ export class MunicipalityService {
     ).rows[0].document as PanelState;
     const rows = await sql.query(
       `SELECT r.document,u.name,p.data AS profile,
+      (SELECT jsonb_build_object('id',c.id,'unitId',c.unit_id,'state',c.state,'instruction',c.instruction,'returnReason',c.return_reason,'createdAt',c.created_at,'acceptedAt',c.accepted_at,'updatedAt',c.updated_at,'preparedCount',(SELECT count(*) FROM institution_work_order w WHERE w.delivery_id=c.id AND w.state='prepared'),'events',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',e.id,'kind',e.kind,'body',e.body,'createdAt',e.created_at) ORDER BY e.created_at) FROM institution_case_event e WHERE e.delivery_id=c.id),'[]'::jsonb)) FROM institution_case c WHERE c.report_id=r.id) AS institution_delivery,
       (SELECT count(*)::integer FROM community_subscription s JOIN community_issue i ON i.id=s.issue_id WHERE i.report_id=r.id) AS subscriptions
       FROM citizen_report r JOIN "user" u ON u.id=r.owner_id LEFT JOIN citizen_profile p ON p.owner_id=r.owner_id ORDER BY r.created_at DESC`,
     );
@@ -219,6 +221,7 @@ export class MunicipalityService {
           citizen: row.profile?.name || row.name,
           supports: Number(row.subscriptions),
           shared: d.sharePublicly === true,
+          institutionDelivery: row.institution_delivery ?? undefined,
           status: d.status,
           priority: m.priority ?? m.triage?.priority ?? "normal",
           prioritySource: m.prioritySource ?? "suggestion",
@@ -255,13 +258,29 @@ export class MunicipalityService {
     );
     return state;
   }
-  async action(input: unknown) {
+  async action(input: unknown, actor?: { unitId: string }) {
     const action = actionSchema.parse(input) as Action;
     await this.db.transaction(async (sql) => {
+      let institutionDeliveryId: string | undefined;
       await sql.query(
         "SELECT id FROM municipality_state WHERE id='oltu' FOR UPDATE",
       );
       await sql.query("SELECT id FROM citizen_report ORDER BY id FOR UPDATE");
+      if (actor) {
+        if (action.type !== "note" || action.audience === "internal")
+          throw new HttpError(403, "Bu işlem kurum yetkisi kapsamında değil.");
+        const delivery = (
+          await sql.query(
+            "SELECT id,state FROM institution_case WHERE report_id=$1 AND unit_id=$2",
+            [action.id, actor.unitId],
+          )
+        ).rows[0];
+        if (!delivery)
+          throw new HttpError(404, "Bu talep kurumunuza ait değil.");
+        if (delivery.state !== "accepted")
+          throw new HttpError(409, "Önce talebi incelemeye alın.");
+        institutionDeliveryId = delivery.id;
+      }
       const before = await this.snapshot(sql);
       if (
         action.type === "note" &&
@@ -289,10 +308,28 @@ export class MunicipalityService {
             after.id,
           ])
         ).rows[0].document;
+        if (action.type === "assign") {
+          await sql.query(
+            "UPDATE institution_case SET state='returned',return_reason='Merkez birim atamasını değiştirdi.',updated_at=now() WHERE report_id=$1 AND unit_id<>$2",
+            [after.id, action.unitId],
+          );
+          await sql.query(
+            "UPDATE institution_work_order SET state='cancelled',updated_at=now() WHERE report_id=$1 AND unit_id<>$2 AND state='prepared'",
+            [after.id, action.unitId],
+          );
+        }
         const added = after.events.filter(
           (e) => !previous.events.some((old) => old.id === e.id),
         );
         doc.status = after.status;
+        if (
+          ["resolved", "closed", "withdrawn"].includes(after.status) &&
+          after.feedback !== "persists"
+        )
+          await sql.query(
+            "UPDATE institution_work_order SET state='cancelled',updated_at=now() WHERE report_id=$1 AND state='prepared'",
+            [after.id],
+          );
         doc.municipality = {
           ...doc.municipality,
           priority:
@@ -329,6 +366,25 @@ export class MunicipalityService {
         if (action.type === "note" && action.audience === "participants")
           await community.update(sql, doc, action.body, true);
         if (previous.status !== after.status) await community.status(sql, doc);
+        if (actor && institutionDeliveryId && action.type === "note") {
+          await sql.query(
+            "INSERT INTO institution_case_event(id,report_id,delivery_id,unit_id,kind,body) VALUES($1,$2,$3,$4,$5,$6)",
+            [
+              randomUUID(),
+              after.id,
+              institutionDeliveryId,
+              actor.unitId,
+              action.audience === "participants"
+                ? "Katılan herkese açıklama"
+                : "Talep sahibine yanıt",
+              action.body,
+            ],
+          );
+          await sql.query(
+            "UPDATE institution_case SET updated_at=now() WHERE report_id=$1",
+            [after.id],
+          );
+        }
         await sql.query(
           "UPDATE citizen_report SET document=$1::jsonb WHERE id=$2",
           [JSON.stringify(doc), after.id],
@@ -404,6 +460,14 @@ export function municipalityRouter(
   );
   router.post("/actions", express.json({ limit: "64kb" }), async (req, res) =>
     res.json({ data: await service.action(req.body) }),
+  );
+  router.post(
+    "/institutions/forward",
+    express.json({ limit: "16kb" }),
+    async (req, res) => {
+      await new InstitutionService(service.db, service).forward(req.body);
+      res.json({ data: await service.snapshot() });
+    },
   );
   return router;
 }

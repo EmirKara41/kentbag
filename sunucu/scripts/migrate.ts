@@ -35,6 +35,12 @@ try {
       "utf8",
     ),
   );
+  await pool.query(
+    await readFile(
+      new URL("../migrations/006_institutions.sql", import.meta.url),
+      "utf8",
+    ),
+  );
   console.log("Authentication and citizen database schema is ready.");
 } finally {
   await pool.end();

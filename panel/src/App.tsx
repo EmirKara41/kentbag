@@ -11,6 +11,7 @@ import {
 import { usePanel } from "./store";
 import { ReportDetail, Reports, ReportTable } from "./Reports";
 import { Announcements, Works } from "./Announcements";
+import { InstitutionDirectory } from "./Institutions";
 import {
   Button,
   Empty,
@@ -28,7 +29,8 @@ type Page =
   | "announcements"
   | "works"
   | "teams"
-  | "history";
+  | "history"
+  | "institutions";
 const pages: { id: Page; title: string; icon: IconName; group?: string }[] = [
   {
     id: "overview",
@@ -46,6 +48,7 @@ const pages: { id: Page; title: string; icon: IconName; group?: string }[] = [
     group: "KOORDİNASYON",
   },
   { id: "teams", title: "Birimler ve ekipler", icon: "team" },
+  { id: "institutions", title: "Kurum çalışma alanları", icon: "link" },
   { id: "history", title: "İşlem geçmişi", icon: "history" },
 ];
 export default function App() {
@@ -263,6 +266,7 @@ export default function App() {
           {page === "announcements" && <Announcements />}
           {page === "works" && <Works onOpen={setSelected} />}
           {page === "teams" && <Teams onOpen={setSelected} />}
+          {page === "institutions" && <InstitutionDirectory />}
           {page === "history" && (
             <>
               <PageHeading
@@ -291,7 +295,7 @@ export default function App() {
               {mode === "live"
                 ? "Oltu · Gerçek pilot kayıtları"
                 : "Örnek veriler"}{" "}
-              · Panel 0.2.0
+              · Panel 0.3.0
             </span>
           </footer>
         </main>

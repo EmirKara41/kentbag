@@ -18,6 +18,7 @@ import {
   type Status,
 } from "./domain";
 import { usePanel } from "./store";
+import { InstitutionForward } from "./Institutions";
 import {
   Button,
   CategoryIcon,
@@ -489,7 +490,12 @@ export function ReportDetail({
               </section>
               {ongoing(report) && (
                 <section className="form-section">
-                  <h3>Birime ve ekibe yönlendir</h3>
+                  <h3>Merkezdeki birim ve ekip kaydı</h3>
+                  <p className="field-note">
+                    Bu alan merkezdeki sorumluluk kaydını düzenler. Kurumun
+                    çalışma kuyruğuna iletmek için aşağıdaki gönderim alanını
+                    kullanın.
+                  </p>
                   <label className="field">
                     Sorumlu birim
                     <select
@@ -573,6 +579,7 @@ export function ReportDetail({
                   )}
                 </section>
               )}
+              {ongoing(report) && <InstitutionForward report={report} />}
               <section className="form-section">
                 <h3>Açıklama ekle</h3>
                 <label className="field">

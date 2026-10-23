@@ -164,6 +164,31 @@ function usePanelStore() {
     setData(next);
     setNotice("Örnek çalışma sıfırlandı.");
   }
+  async function forward(input: {
+    id: string;
+    unitId: string;
+    instruction: string;
+  }) {
+    if (mode !== "live")
+      throw new Error("Kurumlara gönderim gerçek yerel bağlantı gerektirir.");
+    if (mutation.current) throw new Error("Önceki işlem sürüyor.");
+    mutation.current = true;
+    setBusy(true);
+    revision.current++;
+    try {
+      const result = await remote<{ data: PanelState }>(
+        "/institutions/forward",
+        input,
+      );
+      setData(result.data);
+      setError("");
+      setNotice("Talep kurum çalışma alanına gönderildi.");
+      setLastSync(new Date().toISOString());
+    } finally {
+      mutation.current = false;
+      setBusy(false);
+    }
+  }
   return {
     data,
     mode,
@@ -177,6 +202,7 @@ function usePanelStore() {
     setNotice,
     connect,
     demo,
+    forward,
   };
 }
 const Context = createContext<ReturnType<typeof usePanelStore> | null>(null);

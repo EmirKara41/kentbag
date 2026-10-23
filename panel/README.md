@@ -2,6 +2,8 @@
 
 Oltu yerel pilotunda gerçek vatandaş talepleriyle çalışan merkez birim ekranı. Kurulum ve telefon bağlantısı için [yerel deneme kılavuzu](../YEREL_DENEME.md).
 
+0.3.0 ile beş ayrı kurum çalışma alanı ve kalıcı görev emri hazırlığı eklendi. **Kurum çalışma alanları** menüsünden açılır. Gönderim, kurum rolü ve saha bağlantısı sınırları: [kurum çalışma alanları kılavuzu](KURUMLAR.md).
+
 ```powershell
 npm ci
 npm run dev

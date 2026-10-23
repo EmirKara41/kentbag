@@ -45,6 +45,7 @@ export type Event = {
   audience: "internal" | "citizen" | "participants";
 };
 export type CitizenReport = {
+  institutionDelivery?: import("./institution-domain.js").InstitutionDelivery;
   shared?: boolean;
   triage?: {
     source: "rules" | "gemini";

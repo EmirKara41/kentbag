@@ -2,6 +2,7 @@ import { Component, StrictMode, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { PanelProvider } from "./store";
 import App from "./App";
+import { InstitutionApp } from "./Institutions";
 import "./style.css";
 import "./styles.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -27,9 +28,13 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Boundary>
-      <PanelProvider>
-        <App />
-      </PanelProvider>
+      {location.pathname.startsWith("/kurumlar") ? (
+        <InstitutionApp />
+      ) : (
+        <PanelProvider>
+          <App />
+        </PanelProvider>
+      )}
     </Boundary>
   </StrictMode>,
 );

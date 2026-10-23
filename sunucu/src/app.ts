@@ -15,6 +15,7 @@ import { CitizenService, type CitizenUser } from "./citizen.js";
 import { HttpError } from "./validation.js";
 import { MunicipalityService, municipalityRouter } from "./municipality.js";
 import { CommunityService, sharingSchema } from "./community.js";
+import { InstitutionService, institutionRouter } from "./institutions.js";
 
 export function createApp(deps: {
   db: Database;
@@ -110,6 +111,13 @@ export function createApp(deps: {
     res.type(mime?.mime || "application/octet-stream").send(buffer);
   });
   if (deps.municipality) {
+    app.use(
+      "/api/institutions",
+      institutionRouter(
+        new InstitutionService(db, deps.municipality.service),
+        deps.municipality,
+      ),
+    );
     app.use(
       "/api/municipality",
       municipalityRouter(deps.municipality.service, deps.municipality),

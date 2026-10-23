@@ -215,6 +215,11 @@ export class CitizenService {
         if (document.status !== "submitted")
           throw new HttpError(409, "İşleme alınan talep geri çekilemez.");
         document.status = "withdrawn";
+        if (this.config.municipalityConnected)
+          await sql.query(
+            "UPDATE institution_work_order SET state='cancelled',updated_at=now() WHERE report_id=$1 AND state='prepared'",
+            [id],
+          );
         document.events.push({
           id: randomUUID(),
           status: "withdrawn",
