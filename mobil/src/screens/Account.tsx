@@ -287,7 +287,7 @@ export function Account() {
       <div className="app-version">
         <Brand compact />
         <strong>KentYanımda</strong>
-        <small>Sürüm 1.3.1 · Yaşadığın yer için.</small>
+        <small>Sürüm 1.3.2 · Yaşadığın yer için.</small>
       </div>
       {confirm && (
         <Sheet
