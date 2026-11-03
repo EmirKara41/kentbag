@@ -12,7 +12,8 @@
     "migrate": "tsx --env-file=.env scripts/migrate.ts",
     "test": "tsx --test tests/*.test.ts",
     "cleanup": "tsx --env-file=.env scripts/cleanup.ts",
-    "pilot": "tsx --env-file-if-exists=.env scripts/pilot.ts"
+    "pilot": "tsx --env-file-if-exists=.env scripts/pilot.ts",
+    "build:cloud": "esbuild src/index.ts --bundle --platform=node --format=esm --packages=external --outfile=dist/server.js"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.102",
@@ -27,6 +28,7 @@
     "file-type": "^22.2.0",
     "image-size": "^2.0.4",
     "pg": "^8.23.1",
+    "resend": "^6.37.0",
     "zod": "^4.6.7"
   },
   "devDependencies": {
@@ -35,6 +37,7 @@
     "@types/node": "^26.6.5",
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
+    "esbuild": "^0.28.2",
     "supertest": "^7.3.1",
     "tsx": "^4.23.15",
     "typescript": "^7.0.2"

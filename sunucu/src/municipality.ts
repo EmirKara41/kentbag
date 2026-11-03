@@ -16,6 +16,8 @@ import {
 import { ruleTriage, geminiTriage } from "./triage.js";
 import { CommunityService } from "./community.js";
 import { InstitutionService } from "./institutions.js";
+import type { StaffAccess } from "./staff.js";
+import { InstitutionMail } from "./mail.js";
 
 const id = z.string().min(1).max(220);
 const body = z.string().trim().min(3).max(2000);
@@ -423,11 +425,16 @@ export class MunicipalityService {
 }
 export function municipalityRouter(
   service: MunicipalityService,
-  options: { token: string; panelOrigin: string },
+  options: { token: string; panelOrigin: string; staff?: StaffAccess },
 ) {
   const router = express.Router();
   // Local pilot capability is issued only to this computer, never to a citizen or a LAN client.
   router.post("/local-session", (req, res) => {
+    if (process.env.VERCEL)
+      throw new HttpError(
+        403,
+        "Yerel yönetici oturumu internet yayınında kapalı.",
+      );
     const loopback = ["127.0.0.1", "::1", "::ffff:127.0.0.1"].includes(
       req.socket.remoteAddress ?? "",
     );
@@ -443,7 +450,12 @@ export function municipalityRouter(
       );
     res.json({ token: options.token });
   });
-  router.use((req, _res, next) => {
+  router.use(async (req, _res, next) => {
+    const member = await options.staff?.member(req);
+    if (member?.role === "center") {
+      next();
+      return;
+    }
     const supplied = req.headers.authorization?.replace(/^Bearer /, "") ?? "";
     const a = Buffer.from(supplied),
       b = Buffer.from(options.token);
@@ -451,6 +463,26 @@ export function municipalityRouter(
       throw new HttpError(401, "Belediye yetkisi gerekiyor.");
     next();
   });
+  if (options.staff) {
+    router.get("/staff", async (_req, res) =>
+      res.json(await options.staff!.list()),
+    );
+    router.post("/staff", express.json({ limit: "8kb" }), async (req, res) =>
+      res.json(await options.staff!.create(req.body)),
+    );
+    router.post(
+      "/staff/disable",
+      express.json({ limit: "2kb" }),
+      async (req, res) => res.json(await options.staff!.disable(req.body, req)),
+    );
+  }
+  const mail = new InstitutionMail(service.db);
+  router.get("/institutions/mail/:id", async (req, res) =>
+    res.json(await mail.list(String(req.params.id))),
+  );
+  router.post("/institutions/mail/:id/retry", async (req, res) =>
+    res.json(await mail.dispatch(String(req.params.id))),
+  );
   router.get("/workspace", async (_req, res) =>
     res.json({
       data: await service.snapshot(),
@@ -466,7 +498,16 @@ export function municipalityRouter(
     express.json({ limit: "16kb" }),
     async (req, res) => {
       await new InstitutionService(service.db, service).forward(req.body);
-      res.json({ data: await service.snapshot() });
+      let mailError: string | undefined;
+      if (req.body.channel && req.body.channel !== "portal") {
+        try {
+          await mail.dispatch(String(req.body.id));
+        } catch {
+          mailError =
+            "Talep kaydedildi; e-posta hizmetine ulaşılamadı. Gönderim durumunu kontrol edin.";
+        }
+      }
+      res.json({ data: await service.snapshot(), mailError });
     },
   );
   return router;

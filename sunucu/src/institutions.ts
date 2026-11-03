@@ -3,6 +3,7 @@ import express from "express";
 import { z } from "zod";
 import type { Database, Sql } from "./database.js";
 import { HttpError } from "./validation.js";
+import type { StaffAccess } from "./staff.js";
 import { categories, units } from "./municipality-domain.js";
 import type { MunicipalityService } from "./municipality.js";
 import {
@@ -31,7 +32,12 @@ const actionSchema = z.discriminatedUnion("type", [
     audience: z.enum(["citizen", "participants"]),
   }),
 ]);
-const forwardSchema = z.object({ id, unitId: id, instruction: text });
+const forwardSchema = z.object({
+  id,
+  unitId: id,
+  instruction: text,
+  channel: z.enum(["portal", "both", "email"]).default("portal"),
+});
 const iso = (value: any) => (value ? new Date(value).toISOString() : undefined);
 const inactive = (doc: any) =>
   doc.status === "withdrawn" ||
@@ -80,6 +86,8 @@ export class InstitutionService {
   }
   async forward(input: unknown) {
     const data = forwardSchema.parse(input);
+    if (data.channel !== "portal" && !process.env.DEMO_MAIL_TO)
+      throw new HttpError(503, "Demo e-posta alıcısı henüz yapılandırılmadı.");
     return this.db.transaction(async (sql) => {
       const doc = await this.lock(sql, data.id),
         unit = units.find((u) => u.id === data.unitId);
@@ -122,6 +130,21 @@ export class InstitutionService {
         "Merkezden gönderildi",
         `${doc.reference} · ${data.instruction}`,
       );
+      if (data.channel !== "portal") {
+        const profile = institutionProfiles.find((p) => p.id === unit.id)!;
+        await sql.query(
+          "INSERT INTO institution_mail(id,report_id,delivery_id,unit_id,recipient,subject,body) VALUES($1,$2,$3,$4,$5,$6,$7)",
+          [
+            randomUUID(),
+            data.id,
+            deliveryId,
+            unit.id,
+            process.env.DEMO_MAIL_TO,
+            `[KentBağ DEMO] ${doc.reference} · ${profile.name}`,
+            `KENTBAĞ · DEMO KURUM BİLDİRİMİ\n\nKurum: ${profile.name}\nTalep: ${doc.reference}\nKonu: ${categories[doc.category as keyof typeof categories].name}\nAdres: ${doc.location.address}\n\nVatandaş bildirimi:\n${doc.description}\n\nMerkez açıklaması:\n${data.instruction}\n\nBu bir ders projesi test gönderimidir. Gerçek bir kuruma resmi başvuru değildir. E-posta gönderimi kurumun incelemeye aldığı veya sorunun çözüldüğü anlamına gelmez.`,
+          ],
+        );
+      }
       return { ok: true, reused: false };
     });
   }
@@ -335,7 +358,7 @@ export class InstitutionService {
 // Pilot sessions are issued only on the operator's computer. Each capability is bound to one institution.
 export function institutionRouter(
   service: InstitutionService,
-  options: { token: string; panelOrigin: string },
+  options: { token: string; panelOrigin: string; staff?: StaffAccess },
 ) {
   const router = express.Router();
   router.use(express.json({ limit: "16kb" }));
@@ -344,6 +367,11 @@ export function institutionRouter(
       .update("institution:" + payload)
       .digest("base64url");
   router.post("/:unitId/local-session", (req, res) => {
+    if (process.env.VERCEL)
+      throw new HttpError(
+        403,
+        "Yerel pilot oturumları internet yayınında kapalı.",
+      );
     const unitId = String(req.params.unitId);
     const origin = new URL(options.panelOrigin),
       allowed = [
@@ -367,7 +395,15 @@ export function institutionRouter(
     ).toString("base64url");
     res.json({ token: payload + "." + signature(payload) });
   });
-  router.use("/:unitId", (req, res, next) => {
+  router.use("/:unitId", async (req, res, next) => {
+    const member = await options.staff?.member(req);
+    if (member) {
+      if (member.role !== "institution" || member.unitId !== req.params.unitId)
+        throw new HttpError(403, "Bu kurum için yetkiniz bulunmuyor.");
+      res.locals.unitId = member.unitId;
+      next();
+      return;
+    }
     const [payload, supplied, ...extra] = (
       req.headers.authorization?.replace(/^Bearer /, "") ?? ""
     ).split(".");

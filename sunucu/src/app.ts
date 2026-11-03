@@ -16,6 +16,7 @@ import { HttpError } from "./validation.js";
 import { MunicipalityService, municipalityRouter } from "./municipality.js";
 import { CommunityService, sharingSchema } from "./community.js";
 import { InstitutionService, institutionRouter } from "./institutions.js";
+import { staffRouter, type StaffAccess } from "./staff.js";
 
 export function createApp(deps: {
   db: Database;
@@ -23,6 +24,7 @@ export function createApp(deps: {
   photos: PhotoStore;
   authHandler: RequestHandler;
   session: (req: express.Request) => Promise<CitizenUser | null>;
+  staff?: StaffAccess;
   municipality?: {
     service: MunicipalityService;
     token: string;
@@ -84,6 +86,7 @@ export function createApp(deps: {
       req.headers["x-vercel-forwarded-for"] = req.socket.remoteAddress;
     deps.authHandler(req, res, next);
   });
+  if (deps.staff) app.use("/api/staff", staffRouter(deps.staff));
   app.get("/api/photos/:id", async (req, res) => {
     const id = String(req.params.id);
     if (
@@ -113,14 +116,17 @@ export function createApp(deps: {
   if (deps.municipality) {
     app.use(
       "/api/institutions",
-      institutionRouter(
-        new InstitutionService(db, deps.municipality.service),
-        deps.municipality,
-      ),
+      institutionRouter(new InstitutionService(db, deps.municipality.service), {
+        ...deps.municipality,
+        staff: deps.staff,
+      }),
     );
     app.use(
       "/api/municipality",
-      municipalityRouter(deps.municipality.service, deps.municipality),
+      municipalityRouter(deps.municipality.service, {
+        ...deps.municipality,
+        staff: deps.staff,
+      }),
     );
   }
   app.get("/api/community", async (req, res) =>

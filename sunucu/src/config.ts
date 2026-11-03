@@ -3,10 +3,11 @@ export function configFromEnv(env: NodeJS.ProcessEnv) {
     "DATABASE_URL",
     "BETTER_AUTH_URL",
     "BETTER_AUTH_SECRET",
-    "BLOB_READ_WRITE_TOKEN",
   ] as const;
   for (const key of required)
     if (!env[key]) throw new Error(`Missing server configuration: ${key}`);
+  if (!env.BLOB_READ_WRITE_TOKEN && !env.BLOB_STORE_ID)
+    throw new Error("Missing private photo store configuration.");
   if (env.BETTER_AUTH_SECRET!.length < 32)
     throw new Error(
       "BETTER_AUTH_SECRET must contain at least 32 random characters.",

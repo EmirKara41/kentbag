@@ -24,6 +24,7 @@ import {
 import { usePanel } from "./store";
 import { Button, Empty, Icon, Message, Modal, PageHeading } from "./ui";
 import "./institutions.css";
+import { StaffLogin, signOut, staffRequest, type StaffIdentity } from "./Staff";
 
 export function InstitutionCatalog({ reports }: { reports?: CitizenReport[] }) {
   return (
@@ -121,6 +122,7 @@ export function InstitutionForward({ report }: { report: CitizenReport }) {
   const [unitId, setUnitId] = useState(report.unitId ?? ""),
     [instruction, setInstruction] = useState(""),
     [error, setError] = useState("");
+  const [channel, setChannel] = useState<"portal" | "both">("portal");
   const delivery = report.institutionDelivery,
     profile = institutionProfiles.find((p) => p.id === delivery?.unitId);
   const alreadySent =
@@ -203,6 +205,22 @@ export function InstitutionForward({ report }: { report: CitizenReport }) {
           />
         </label>
       )}
+      {!alreadySent && (
+        <label className="field">
+          İletim kanalı
+          <select
+            value={channel}
+            onChange={(e) => setChannel(e.target.value as "portal" | "both")}
+          >
+            <option value="portal">Kurum paneli</option>
+            <option value="both">Kurum paneli + demo e-posta</option>
+          </select>
+          <small>
+            E-posta kopyası yapılandırılmış test alıcısına gider. Kurumun panel
+            kullanması zorunlu değildir.
+          </small>
+        </label>
+      )}
       {error && <Message>{error}</Message>}
       <Button
         icon="send"
@@ -218,6 +236,7 @@ export function InstitutionForward({ report }: { report: CitizenReport }) {
             id: report.id,
             unitId,
             instruction: instruction.trim(),
+            channel,
           })
             .then(() => {
               setInstruction("");
@@ -232,7 +251,90 @@ export function InstitutionForward({ report }: { report: CitizenReport }) {
             ? "Kurum kuyruğunda"
             : "Kurum kuyruğuna gönder"}
       </Button>
+      {delivery && (
+        <InstitutionMailStatus
+          reportId={report.id}
+          updatedAt={delivery.updatedAt}
+        />
+      )}
     </section>
+  );
+}
+function InstitutionMailStatus({
+  reportId,
+  updatedAt,
+}: {
+  reportId: string;
+  updatedAt: string;
+}) {
+  const { staffAdmin } = usePanel();
+  const [items, setItems] = useState<
+      {
+        id: string;
+        recipient: string;
+        subject: string;
+        body: string;
+        state: string;
+        error?: string;
+        attempts: number;
+      }[]
+    >([]),
+    [error, setError] = useState(""),
+    [busy, setBusy] = useState(false);
+  const load = useCallback(async () => {
+    const result = await staffAdmin<{ mails: typeof items }>(
+      `/institutions/mail/${reportId}`,
+    );
+    setItems(result.mails);
+  }, [reportId, staffAdmin]);
+  useEffect(() => {
+    void load().catch((e) => setError(e.message));
+  }, [load, updatedAt]);
+  return (
+    <div className="institution-center-history">
+      <h4>E-posta iletimi</h4>
+      {error && <Message>{error}</Message>}
+      {!items.length && (
+        <p className="field-note">Bu gönderimde e-posta seçilmedi.</p>
+      )}
+      {items.map((m) => (
+        <article key={m.id}>
+          <strong>
+            {
+              {
+                queued: "Gönderim bekliyor",
+                sending: "Gönderiliyor",
+                sent: "E-posta sağlayıcısı kabul etti",
+                failed: "E-posta gönderilemedi",
+              }[m.state]
+            }
+          </strong>
+          <p>{m.recipient}</p>
+          <small>Bu durum kurumun mesajı okuduğu anlamına gelmez.</small>
+          {m.error && <Message>{m.error}</Message>}
+          <details>
+            <summary>Gönderilen metni incele</summary>
+            <strong>{m.subject}</strong>
+            <p style={{ whiteSpace: "pre-wrap" }}>{m.body}</p>
+          </details>
+          {m.state !== "sent" && m.attempts < 3 && (
+            <Button
+              disabled={busy}
+              onClick={() => {
+                setBusy(true);
+                setError("");
+                void staffAdmin(`/institutions/mail/${reportId}/retry`, {})
+                  .then(load)
+                  .catch((e) => setError(e.message))
+                  .finally(() => setBusy(false));
+              }}
+            >
+              Gönderimi yeniden dene
+            </Button>
+          )}
+        </article>
+      ))}
+    </div>
   );
 }
 type Workspace = {
@@ -254,7 +356,7 @@ function useInstitution(profile: InstitutionProfile) {
       const response = await fetch(`/api/institutions/${profile.id}${path}`, {
         method: body === undefined ? "GET" : "POST",
         cache: "no-store",
-        credentials: "omit",
+        credentials: "include",
         signal: AbortSignal.timeout(15000),
         headers: {
           "Content-Type": "application/json",
@@ -294,9 +396,9 @@ function useInstitution(profile: InstitutionProfile) {
     setError("");
     setBusy(true);
     try {
-      const session = await remote<{ token: string }>("/local-session", {});
+      token.current = "";
+      await remote<Workspace>("/workspace");
       if (expected !== epoch.current) return;
-      token.current = session.token;
       await refresh();
     } catch (e) {
       if (expected === epoch.current)
@@ -391,6 +493,20 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
         Date.parse(a.delivery.createdAt) - Date.parse(b.delivery.createdAt),
     );
   const chosen = cases.find((c) => c.id === selected);
+  if (!store.data)
+    return (
+      <StaffLogin
+        title={`${profile.short} · Giriş`}
+        onLogin={async () => {
+          const identity = await staffRequest<StaffIdentity>("/api/staff/me");
+          if (identity.role !== "institution" || identity.unitId !== profile.id)
+            throw new Error(
+              "Bu hesap seçili kuruma yetkili değil. Kendi kurumunuzun sayfasından giriş yapın.",
+            );
+          await store.connect();
+        }}
+      />
+    );
   return (
     <div
       className="institution-app"
@@ -428,11 +544,19 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
           ))}
         </nav>
         <div className="institution-sidebar-bottom">
+          <button
+            className="button secondary"
+            onClick={() =>
+              void signOut().catch(() => location.assign("/giris"))
+            }
+          >
+            Oturumu kapat
+          </button>
           <span
             className={`institution-connection ${store.connected ? "online" : ""}`}
           >
             <i />
-            {store.connected ? "Yerel sunucu bağlı" : "Bağlantı bekleniyor"}
+            {store.connected ? "Sunucu bağlı" : "Bağlantı bekleniyor"}
           </span>
           <p>
             Bu rol yalnız {profile.short.toLocaleLowerCase("tr")} taleplerine
@@ -470,9 +594,9 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
           <div className="institution-pilot-note">
             <Icon name="info" size={19} />
             <p>
-              <strong>Yerel pilot çalışma alanı.</strong> Gerçek kurum oturumu
-              veya dış sistem entegrasyonu değildir. Görev emirleri saklanır;
-              saha uygulaması henüz bağlı değildir.
+              <strong>Kurum çalışma alanı.</strong> Yalnızca bu kuruma yetkili
+              personel erişir. Görev emirleri saklanır; saha uygulaması henüz
+              bağlı değildir.
             </p>
           </div>
           {store.error && <Message>{store.error}</Message>}

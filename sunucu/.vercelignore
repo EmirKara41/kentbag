@@ -1,0 +1,10 @@
+.local
+.local/**
+.env
+.env.*
+node_modules
+tests
+scripts
+migrations
+*.md
+dist

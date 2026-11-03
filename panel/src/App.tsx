@@ -12,6 +12,7 @@ import { usePanel } from "./store";
 import { ReportDetail, Reports, ReportTable } from "./Reports";
 import { Announcements, Works } from "./Announcements";
 import { InstitutionDirectory } from "./Institutions";
+import { StaffManagement, StaffLogin, signOut } from "./Staff";
 import {
   Button,
   Empty,
@@ -30,7 +31,8 @@ type Page =
   | "works"
   | "teams"
   | "history"
-  | "institutions";
+  | "institutions"
+  | "staff";
 const pages: { id: Page; title: string; icon: IconName; group?: string }[] = [
   {
     id: "overview",
@@ -49,6 +51,7 @@ const pages: { id: Page; title: string; icon: IconName; group?: string }[] = [
   },
   { id: "teams", title: "Birimler ve ekipler", icon: "team" },
   { id: "institutions", title: "Kurum çalışma alanları", icon: "link" },
+  { id: "staff", title: "Personel hesapları", icon: "lock" },
   { id: "history", title: "İşlem geçmişi", icon: "history" },
 ];
 export default function App() {
@@ -64,6 +67,7 @@ export default function App() {
     connect,
     demo,
     lastSync,
+    operator,
   } = usePanel();
   const [page, setPage] = useState<Page>("overview"),
     [selected, setSelected] = useState<string | null>(null),
@@ -86,6 +90,8 @@ export default function App() {
     const timer = setTimeout(() => setNotice(""), 4000);
     return () => clearTimeout(timer);
   }, [notice, setNotice]);
+  if (mode === "offline" && location.protocol === "https:")
+    return <StaffLogin title="Merkez paneline giriş" />;
   return (
     <div className="panel-app">
       <aside className="sidebar">
@@ -132,13 +138,22 @@ export default function App() {
           ))}
         </nav>
         <div className="sidebar-bottom">
+          <a href="/giris">Personel girişi</a>
+          <button
+            className="reset-link"
+            onClick={() =>
+              void signOut().catch(() => location.assign("/giris"))
+            }
+          >
+            Oturumu kapat
+          </button>
           <div className="connection-status">
             <i />
             <span>
-              {mode === "live"
-                ? "Yerel sunucu bağlı"
-                : "Örnek / bağlantısız alan"}
-              <small>Oltu · Yerel ağ</small>
+              {mode === "live" ? "Sunucu bağlı" : "Örnek / bağlantısız alan"}
+              <small>
+                Oltu · {operator ? "İnternet demosu" : "Yerel pilot"}
+              </small>
             </span>
           </div>
           <button
@@ -152,8 +167,12 @@ export default function App() {
           <div className="operator">
             <span>YO</span>
             <div>
-              <strong>Yerel Operatör</strong>
-              <small>Bu bilgisayarın pilot oturumu</small>
+              <strong>{operator?.name ?? "Yerel Operatör"}</strong>
+              <small>
+                {operator
+                  ? "Merkez yetkilisi"
+                  : "Bu bilgisayarın pilot oturumu"}
+              </small>
             </div>
           </div>
         </div>
@@ -206,7 +225,7 @@ export default function App() {
           <span>
             <strong>
               {mode === "live"
-                ? "Oltu · Yerel bağlantı"
+                ? `Oltu · ${operator ? "İnternet demosu" : "Yerel bağlantı"}`
                 : mode === "connecting"
                   ? "Yerel sisteme bağlanılıyor…"
                   : "Örnek / bağlantısız alan"}
@@ -267,6 +286,7 @@ export default function App() {
           {page === "works" && <Works onOpen={setSelected} />}
           {page === "teams" && <Teams onOpen={setSelected} />}
           {page === "institutions" && <InstitutionDirectory />}
+          {page === "staff" && <StaffManagement />}
           {page === "history" && (
             <>
               <PageHeading

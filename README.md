@@ -4,6 +4,8 @@ Vatandaş, belediye merkezi ve saha ekiplerini aynı talep sürecinde buluştura
 
 Proje adı KentBağ'dır. Mevcut vatandaş uygulamasının görünen adı KentYanımda, Android paket kimliği `com.kentyanimda.vatandas` olarak korunur; kurulu uygulamalar sonraki paketlerle güncellenebilir.
 
+4 Kasım 2026: Merkez/kurum hesapları, internet üzerindeki demo API ve e-posta kopyası akışı eklendi. [İnternet demosu, bağlantılar ve sınırlar](INTERNET_DEMOSU.md). Android 1.3.2 bu bulut sunucusuna henüz geçirilmedi; aşağıdaki yerel pilot açıklamaları mevcut APK için geçerlidir.
+
 - `mobil/`: Android vatandaş uygulaması. Bölge ana sayfası, aktif olaylar, iyileştirme istekleri, tamamlanan kişisel talepler, kamera/galeri, GPS/harita ve hesap ekranları APK'nın içindedir. [Yeni deneyim ve bağlantı sınırları](mobil/URUN_DENEYIMI.md).
 - `sunucu/`: Vercel üzerinde çalışacak API; Better Auth ile giriş, PostgreSQL kayıtları ve özel Vercel Blob fotoğrafları.
 - `panel/`: Belediye merkez biriminin web paneli. Oltu yerel pilotunda gerçek vatandaş taleplerine bağlıdır; örnek çalışma alanı ayrıca açılabilir. [Panel kılavuzu](panel/README.md).

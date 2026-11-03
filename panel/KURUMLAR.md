@@ -22,6 +22,8 @@ Görev emrinde kurumun pilot ekiplerinden biri, iş talimatı ve görev önceli�
 
 ## Yetki ve pilot sınırı
 
-Kurum oturumu yalnız bu bilgisayardan, izin verilen localhost panel kaynağıyla açılır. Sunucu tek kuruma bağlı, sekiz saatlik imzalı bir yetki üretir; tarayıcıda yalnız bellekte tutulur. Başka kurumun adresini yazmak bu yetkiyi genişletmez; kurum yetkisi merkez API'sini kullanamaz. Bu, gerçek kurum personelinin internetten giriş yaptığı üretim kimlik doğrulaması değildir. Gerçek kullanım öncesi personel hesapları ve kurum üyelikleri gerekir. Kurum/ekip isimleri pilot rollerdir; dış kurumların gerçek sistemlerine gönderim yapılmaz.
+Kurum sayfaları merkezden oluşturulan e-posta/şifre hesaplarını kullanır. Better Auth oturumu `staff_member` tablosundaki aktif kurum üyeliğiyle doğrulanır; kurum hesabı başka kuruma veya merkez API'sine erişemez. Merkez erişimi kapattığında sonraki istekler reddedilir. Yerel pilotun sekiz saatlik kurum yetkisi API uyumluluğu için yalnız localhost üzerinde korunur, internet yayınında kapalıdır. Kurum/ekip isimleri pilot rollerdir; dış kurumların gerçek sistemleriyle entegrasyon yapılmaz.
+
+Merkezde **Kurum paneli + demo e-posta** seçeneği aynı açıklamanın kopyasını `emirkara@lollore.com` test alıcısına gönderir. Gönderen `bildirim@lollore.com` alan adı Resend üzerinden doğrulandı. E-posta seçimi, hata ve tekrar gönderim kaydı kalıcıdır; kurumun mesajı okuduğu veya saha görevinin başladığı iddia edilmez. [İnternet demosu](../INTERNET_DEMOSU.md).
 
 API: merkez için `POST /api/municipality/institutions/forward`; kurum için `POST /api/institutions/:unitId/local-session`, `GET /workspace`, `POST /actions`. Kurum eylemleri: accept, return, note, message, order, cancel-order. Merkez, teslim durumu ve kurum geçmişini kendi talep ayrıntısında görür. Tam sistem saha testleri saha modülü tamamlandıktan sonra yapılacaktır; bu aşamada kurumlar arası erişim, kalıcılık ve merkez → kurum → hazırlık akışı doğrulanmıştır.

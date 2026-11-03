@@ -10,6 +10,7 @@ import { fromNodeHeaders, toNodeHandler } from "better-auth/node";
 import { createAuth } from "./auth.js";
 import { createApp } from "./app.js";
 import { MunicipalityService } from "./municipality.js";
+import { createStaffAccess } from "./staff.js";
 import type { Database } from "./database.js";
 import type { PhotoStore } from "./storage.js";
 
@@ -117,6 +118,8 @@ export async function startPilot(
     "004_owner_shared_updates.sql",
     "005_label_center_messages.sql",
     "006_institutions.sql",
+    "007_staff.sql",
+    "008_institution_mail.sql",
   ])
     await pool.query(
       await readFile(new URL(`../migrations/${file}`, import.meta.url), "utf8"),
@@ -154,14 +157,18 @@ export async function startPilot(
     model: process.env.GEMINI_MODEL?.trim() || "gemini-3.5-flash-lite",
   });
   await service.initialize();
+  const session = async (req: import("express").Request) =>
+    (await auth.api.getSession({ headers: fromNodeHeaders(req.headers) }))
+      ?.user ?? null;
   const app = createApp({
     db,
     config,
     photos,
     authHandler: toNodeHandler(auth),
-    session: async (req) =>
-      (await auth.api.getSession({ headers: fromNodeHeaders(req.headers) }))
-        ?.user ?? null,
+    session,
+    staff: createStaffAccess(db, session, (body) =>
+      auth.api.signUpEmail({ body }),
+    ),
     municipality: {
       service,
       token: await localSecret("panel-token"),

@@ -6,6 +6,10 @@ import { createAuth } from "./auth.js";
 import { createApp } from "./app.js";
 import { privateBlob } from "./storage.js";
 import type { Database } from "./database.js";
+import { MunicipalityService } from "./municipality.js";
+import { createStaffAccess } from "./staff.js";
+import { waitUntil } from "@vercel/functions";
+import express from "express";
 export const config = configFromEnv(process.env);
 const pool = new Pool({
   connectionString: config.databaseUrl,
@@ -32,15 +36,54 @@ const db: Database = {
     }
   },
 };
-export default createApp({
+const session = async (req: import("express").Request) =>
+  (await auth.api.getSession({ headers: fromNodeHeaders(req.headers) }))
+    ?.user ?? null;
+const municipality = new MunicipalityService(db, config, {
+  apiKey: process.env.GEMINI_API_KEY,
+  model: process.env.GEMINI_MODEL || "gemini-3.5-flash-lite",
+});
+const app = createApp({
   db,
   config,
   photos: privateBlob,
   authHandler: toNodeHandler(auth),
-  async session(req) {
-    const session = await auth.api.getSession({
-      headers: fromNodeHeaders(req.headers),
-    });
-    return session?.user ?? null;
+  session,
+  staff: createStaffAccess(db, session, (body) =>
+    auth.api.signUpEmail({ body }),
+  ),
+  municipality: {
+    service: municipality,
+    token: config.secret,
+    panelOrigin: process.env.PANEL_ORIGIN || config.baseUrl,
   },
 });
+// Initialize once per process, keep analysis alive after the receipt is returned on Vercel.
+let initialized: Promise<void> | undefined;
+const handler = express();
+handler.use((req, res) => {
+  initialized ??= municipality.initialize().catch((error) => {
+    initialized = undefined;
+    throw error;
+  });
+  void initialized
+    .then(() => {
+      res.once("finish", () => {
+        if (
+          req.method === "POST" &&
+          req.path === "/api/reports" &&
+          res.statusCode < 300
+        ) {
+          const pending = municipality
+            .analyzePending()
+            .catch(() => console.error("Analysis failed; receipt retained."));
+          if (process.env.VERCEL) waitUntil(pending);
+        }
+      });
+      app(req, res);
+    })
+    .catch(() =>
+      res.status(503).json({ error: "Veri servisi şu anda hazır değil." }),
+    );
+});
+export default handler;

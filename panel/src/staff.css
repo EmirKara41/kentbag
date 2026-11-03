@@ -1,0 +1,94 @@
+.staff-login-shell {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  background: #edf2f1;
+  padding: 24px;
+  color: #28434a;
+}
+.staff-login {
+  width: min(100%, 440px);
+  padding: 36px;
+  background: white;
+  border: 1px solid #dde6e3;
+  border-radius: 20px;
+  box-shadow: 0 20px 65px #203a3510;
+  display: grid;
+  gap: 20px;
+}
+.staff-login h1 {
+  font-size: 28px;
+  line-height: 1.2;
+  margin: 0;
+}
+.staff-login p {
+  margin: 0;
+  color: #687f83;
+  line-height: 1.65;
+}
+.staff-login small {
+  color: #6b8085;
+  line-height: 1.5;
+}
+.staff-eyebrow {
+  font-size: 10px;
+  letter-spacing: 1.8px;
+  color: #719087;
+  margin-top: 8px;
+}
+.staff-layout {
+  display: grid;
+  grid-template-columns: minmax(270px, 370px) 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.staff-form,
+.staff-list {
+  padding: 24px;
+  background: white;
+  border: 1px solid #dde5e3;
+  border-radius: 14px;
+}
+.staff-form {
+  display: grid;
+  gap: 16px;
+}
+.staff-form h2,
+.staff-list h2 {
+  font-size: 18px;
+  margin: 0 0 8px;
+}
+.staff-list article {
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 0;
+  border-bottom: 1px solid #e9efec;
+}
+.staff-list article div {
+  display: grid;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+.staff-list article span,
+.staff-list article small {
+  color: #74898d;
+}
+.staff-notice {
+  background: #e4f0e9;
+  border-radius: 10px;
+  padding: 16px;
+  color: #39674f;
+}
+@media (max-width: 850px) {
+  .staff-layout {
+    grid-template-columns: 1fr;
+  }
+  .staff-list article {
+    flex-wrap: wrap;
+  }
+  .staff-login {
+    padding: 26px;
+  }
+}

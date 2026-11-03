@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  useCallback,
   type ReactNode,
 } from "react";
 import { applyAction, type Action, type PanelState } from "./domain";
@@ -26,13 +27,17 @@ function usePanelStore() {
     [ai, setAi] = useState("no_key");
   const [busy, setBusy] = useState(false),
     [lastSync, setLastSync] = useState("");
+  const [operator, setOperator] = useState<{ name: string } | null>(null);
   const token = useRef(""),
     revision = useRef(0),
     mutation = useRef(false);
-  async function remote<T>(path: string, body?: unknown): Promise<T> {
+  const remote = useCallback(async function remote<T>(
+    path: string,
+    body?: unknown,
+  ): Promise<T> {
     const response = await fetch("/api/municipality" + path, {
       method: body === undefined ? "GET" : "POST",
-      credentials: "omit",
+      credentials: "include",
       cache: "no-store",
       signal: AbortSignal.timeout(15000),
       headers: {
@@ -45,7 +50,7 @@ function usePanelStore() {
     if (!response.ok)
       throw new Error(result.error || "Yerel sisteme ulaşılamadı.");
     return result;
-  }
+  }, []);
   async function refresh() {
     if (mutation.current) return;
     const expected = revision.current;
@@ -71,8 +76,13 @@ function usePanelStore() {
     setData(blank());
     setError("");
     try {
-      const session = await remote<{ token: string }>("/local-session", {});
-      token.current = session.token;
+      token.current = "";
+      try {
+        await remote("/workspace");
+      } catch {
+        const session = await remote<{ token: string }>("/local-session", {});
+        token.current = session.token;
+      }
       const result = await remote<{ data: PanelState; ai: string }>(
         "/workspace",
       );
@@ -80,6 +90,10 @@ function usePanelStore() {
       setData(result.data);
       setAi(result.ai);
       setMode("live");
+      const identity = await fetch("/api/staff/me", { credentials: "include" })
+        .then((r) => (r.ok ? r.json() : null))
+        .catch(() => null);
+      if (expected === revision.current) setOperator(identity);
       setLastSync(new Date().toISOString());
     } catch {
       if (expected === revision.current) {
@@ -168,6 +182,7 @@ function usePanelStore() {
     id: string;
     unitId: string;
     instruction: string;
+    channel?: "portal" | "both";
   }) {
     if (mode !== "live")
       throw new Error("Kurumlara gönderim gerçek yerel bağlantı gerektirir.");
@@ -176,13 +191,16 @@ function usePanelStore() {
     setBusy(true);
     revision.current++;
     try {
-      const result = await remote<{ data: PanelState }>(
+      const result = await remote<{ data: PanelState; mailError?: string }>(
         "/institutions/forward",
         input,
       );
       setData(result.data);
       setError("");
-      setNotice("Talep kurum çalışma alanına gönderildi.");
+      setNotice(
+        result.mailError ||
+          "Talep kurum çalışma alanına kaydedildi. E-posta seçtiysen gönderim durumunu ayrıntıdan kontrol edebilirsin.",
+      );
       setLastSync(new Date().toISOString());
     } finally {
       mutation.current = false;
@@ -203,6 +221,8 @@ function usePanelStore() {
     connect,
     demo,
     forward,
+    staffAdmin: remote,
+    operator,
   };
 }
 const Context = createContext<ReturnType<typeof usePanelStore> | null>(null);

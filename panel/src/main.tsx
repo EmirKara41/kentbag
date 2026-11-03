@@ -3,6 +3,7 @@ import { createRoot } from "react-dom/client";
 import { PanelProvider } from "./store";
 import App from "./App";
 import { InstitutionApp } from "./Institutions";
+import { StaffLogin } from "./Staff";
 import "./style.css";
 import "./styles.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -28,7 +29,9 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Boundary>
-      {location.pathname.startsWith("/kurumlar") ? (
+      {location.pathname.startsWith("/giris") ? (
+        <StaffLogin />
+      ) : location.pathname.startsWith("/kurumlar") ? (
         <InstitutionApp />
       ) : (
         <PanelProvider>
