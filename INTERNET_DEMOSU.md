@@ -22,7 +22,8 @@ Panel e-posta durumunu ve gönderilen metni gösterir. Sağlayıcının kabulü,
 - İnternet sunucusunda demo vatandaş kaydı → merkez → Fen İşleri → e-posta kopyası → kurumsal yanıt → vatandaş akışı doğrulandı. Demo talep: **KY-E88CBA33**. Bu kaydın Gemini analizi `source=gemini`, `aiState=done` döndürdü.
 - Alan adı doğrulandı; bağlantı testi ve kurum yönlendirme e-postası için sağlayıcı `delivered` bildirdi. Bu, alıcının okuduğu anlamına gelmez.
 - Önceki yerel pilot verileri bilgisayarda korundu; bulut demosuna aktarılmadı.
-- Mevcut Android 1.3.2 hâlâ eski yerel API adresini kullanır. Buluta bağlı yeni APK henüz hazırlanmadı.
+- Android **1.4.0 / versionCode 20** sabit internet API'sine bağlıdır. [İndirme ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/). Eski 1.3.2 ile aynı imzaya/paket kimliğine sahiptir; üzerine güncellenebilir. Yeni bir vatandaş hesabı oluşturulmalıdır. APK'nın arayüzü gömülü, bağlantısı HTTPS ve HTTP istisnaları kapalıdır.
+- İnternet sunucusunda Android WebView kaynağı (`https://localhost`), imzalı bearer oturumu, örnek fotoğraf yükleme/özel imzalı fotoğraf okuma, aynı gönderimin tekrarında tek makbuz ve merkez kuyruğuna düşme doğrulandı. Bu sürümün fiziksel telefonda kurulum/kamera/GPS denemesi ayrıca kullanıcı tarafından yapılmalıdır. Test kaydı: **KY-0C669A95**, açıkça etiketlenmiş demo verisi.
 - Saha uygulaması, fotoğraflı ekip sonucu ve kurum onayı bir sonraki aşamadır. Saha hesabı oluşturma seçeneği arayüzde bu aşamaya kadar kapalıdır.
 
 ## Yeniden yayınlama

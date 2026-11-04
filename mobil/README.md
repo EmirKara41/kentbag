@@ -2,7 +2,7 @@
 
 18 Ekim 2026. Önceki mobil uygulama bırakıldı. Bu klasör sıfırdan kurulan vatandaş uygulamasıdır; Pusula projesinde hiçbir değişiklik yapılmamıştır.
 
-Kullanıcı APK'yı telefonuna kurup açar. Ana sayfa, bildirim formu, talepler, güncellemeler, hesap, profil, yardım ve gizlilik ekranları uygulamanın içindedir. Expo Go, Metro, tarayıcı kurulumu veya arayüzün açılması için açık bilgisayar gerekmez. Yerel pilotta veri işlemleri için bilgisayardaki API açık olmalıdır. Android 7 ve üzeri desteklenir.
+Kullanıcı APK'yı telefonuna kurup açar. Ana sayfa, bildirim formu, talepler, güncellemeler, hesap, profil, yardım ve gizlilik ekranları uygulamanın içindedir. Expo Go, Metro, tarayıcı kurulumu veya açık bilgisayar gerekmez. Android 7 ve üzeri desteklenir. 1.4.0 internet demosu sabit HTTPS API'ye bağlanır; telefon Wi-Fi veya mobil veri kullanabilir.
 
 ## Bu pakette
 
@@ -20,17 +20,18 @@ Kullanıcı APK'yı telefonuna kurup açar. Ana sayfa, bildirim formu, talepler,
 - Bağlantı yokken açıklayıcı durum; sunucu onayı olmadan gönderildi denmez.
 - Android Keystore ile şifrelenen oturum; sırlar mobil pakete girmez.
 
-1.2.3 LAN paketi gerçek yerel API'ye bağlıdır. Hesap oluşturma, fotoğraf/talep gönderme ve belediye panelinden durum/açıklama/çözüm alma çalışır. Kurulum, ağ ve Gemini ayrıntıları: [Oltu yerel deneme](../YEREL_DENEME.md). İnternet üzerindeki üretim API'si henüz dağıtılmadı.
+1.4.0 internet demosu: https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/ . Eski yerel hesaplar ve kayıtlar bilgisayarda korunur; buluta aktarılmadılar. Yeni sunucuda vatandaş hesabı oluşturulmalıdır. [İnternet demosu](../INTERNET_DEMOSU.md). Yerel geliştirme ayrıca [Oltu yerel deneme](../YEREL_DENEME.md) ile sürdürülebilir.
 
 ## Android paketi
 
 ```powershell
 npm ci
 npm run android:apk
+node scripts/prepare-download.cjs
 npm run phone
 ```
 
-Çıktı: `artifacts/KentYanimda-Android-1.2.3.apk`. `phone` yalnız indirme sayfasını ve QR kodunu sunar. İndirme sırasında telefon ve bilgisayar aynı ağda olmalıdır. Arayüz gömülüdür; LAN API işlemleri için bilgisayarın açık olması gerekir.
+Çıktı: `artifacts/KentYanimda-Android-1.4.0.apk`. Varsayılan API adresi `production-service.json` dosyasından alınır; PowerShell oturumundaki `VITE_PRODUCTION_API_URL` ile başka bir HTTPS sunucu seçilebilir. Yerel `.env.local` içindeki eski LAN adresi APK derlemesinde kullanılmaz. `prepare-download.cjs` sürümlü APK, internet QR kodu, SHA-256 makbuzu ve indirme sayfasını `artifacts/download` altında hazırlar. Panelin `prepare-cloud.mjs` betiği bunları Vercel statik dosyalarına ekler. Yayınlanan `/indir/` adresi ve APK herhangi bir ağdan erişilir; `npm run phone` yalnız isteğe bağlı yerel indirme yedeğidir.
 
 Derleme bu bilgisayarda `%USERPROFILE%/.cache/kentyanimda-android/tools.json` ile kayıtlı JDK 21 ve Android SDK'yı kullanır. Yeni bilgisayarda Node.js 22+, JDK 21 ve SDK 36 hazırlayıp bu dosyadaki `javaHome` / `sdkRoot` yollarını ayarlayın. Sistem PATH ayarlarını değiştirmez. Anahtar önbellekte `signing/kent-mobile-preview.keystore` altında saklanır; kaynak veya APK içine konmaz. Aynı anahtar sonraki test güncellemeleri için korunmalıdır. APK iç deneme anahtarıyla imzalıdır; mağaza yayını değildir.
 
@@ -38,7 +39,7 @@ Derleme bu bilgisayarda `%USERPROFILE%/.cache/kentyanimda-android/tools.json` il
 
 ## Canlı hizmeti bağlama
 
-`sunucu/README.md` içindeki Vercel/Neon/özel Blob kurulumunu tamamlayın. APK derleme ortamı (veya PowerShell oturumunda `$env:VITE_PRODUCTION_API_URL`):
+API ve bulut kaynakları bağlıdır. Başka bir sunucuya geçmek için `production-service.json` adresini değiştirin veya APK derleme ortamında PowerShell oturumundaki `$env:VITE_PRODUCTION_API_URL` değerini ayarlayın:
 
 ```dotenv
 VITE_PRODUCTION_API_URL=https://SABIT-API-ADRESI.vercel.app

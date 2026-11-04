@@ -29,7 +29,11 @@ try{
     $env:KENT_LAN_HOST=$kentParsedAddress.ToString(); $env:VITE_API_URL="http://$($env:KENT_LAN_HOST):3000"; $env:VITE_LAN_PILOT='true'
     Set-Content -LiteralPath $kentNetworkPath -Value "<?xml version=`"1.0`" encoding=`"utf-8`"?><network-security-config><base-config cleartextTrafficPermitted=`"false`"/><domain-config cleartextTrafficPermitted=`"true`"><domain includeSubdomains=`"false`">$($env:KENT_LAN_HOST)</domain></domain-config></network-security-config>"
   }else{
-    $env:KENT_LAN_HOST=$null; $env:VITE_LAN_PILOT='false'; $env:VITE_API_URL=$env:VITE_PRODUCTION_API_URL
+    $kentProductionApi=$env:VITE_PRODUCTION_API_URL
+    if(-not $kentProductionApi){$kentProductionApi=(Get-Content -LiteralPath 'production-service.json' -Raw|ConvertFrom-Json).apiUrl}
+    $kentServiceUri=[Uri]$kentProductionApi
+    if(-not $kentServiceUri.IsAbsoluteUri -or $kentServiceUri.Scheme -ne 'https' -or $kentServiceUri.AbsolutePath -ne '/' -or $kentServiceUri.UserInfo -or $kentServiceUri.Query -or $kentServiceUri.Fragment){throw 'Production build requires an HTTPS API origin'}
+    $env:KENT_LAN_HOST=$null; $env:VITE_LAN_PILOT='false'; $env:VITE_API_URL=$kentServiceUri.GetLeftPart([UriPartial]::Authority)
     Set-Content -LiteralPath $kentNetworkPath -Value '<?xml version="1.0" encoding="utf-8"?><network-security-config><base-config cleartextTrafficPermitted="false"/></network-security-config>'
   }
   if(-not $SkipWebBuild){& npm.cmd run build;if($LASTEXITCODE -ne 0){throw 'UI build failed'}}
@@ -39,7 +43,7 @@ try{
   if($LASTEXITCODE -ne 0){throw 'APK build failed'}
   New-Item -ItemType Directory -Force -Path artifacts | Out-Null
   Copy-Item -LiteralPath 'android\app\build\outputs\apk\release\app-release.apk' -Destination "artifacts\KentYanimda-Android-$kentVersion.apk"
-  & (Join-Path $PSScriptRoot 'verify-apk.ps1')
+  & (Join-Path $PSScriptRoot 'verify-apk.ps1') -ExpectedApiUrl $env:VITE_API_URL
   if($LASTEXITCODE -ne 0){throw 'APK verification failed'}
   $kentApkPath=(Resolve-Path -LiteralPath "artifacts\KentYanimda-Android-$kentVersion.apk").Path
   $kentHasher=[System.Security.Cryptography.SHA256]::Create()

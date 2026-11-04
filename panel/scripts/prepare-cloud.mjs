@@ -1,14 +1,21 @@
 import { cp, mkdir, writeFile, rm } from "node:fs/promises";
+import { existsSync } from "node:fs";
 // This path is generated CLI metadata from a previous failed Windows builder run.
 await rm(".vercel/output/builds.json", { force: true });
 await mkdir(".vercel/output/static", { recursive: true });
 await cp("dist", ".vercel/output/static", { recursive: true });
+if (existsSync("../mobil/artifacts/download/index.html")) {
+  await cp("../mobil/artifacts/download", ".vercel/output/static/indir", {
+    recursive: true,
+  });
+}
 await writeFile(
   ".vercel/output/config.json",
   JSON.stringify(
     {
       version: 3,
       routes: [
+        { src: "/indir/?$", dest: "/indir/index.html" },
         {
           src: "/api/(.*)",
           dest: "https://kentbag-api-emir-kara-s-projects.vercel.app/api/$1",

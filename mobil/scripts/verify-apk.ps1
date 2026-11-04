@@ -1,3 +1,4 @@
+param([string]$ExpectedApiUrl)
 $ErrorActionPreference='Stop'
 $kentRoot=(Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $kentVersion=(Get-Content -LiteralPath (Join-Path $kentRoot 'package.json') -Raw | ConvertFrom-Json).version
@@ -22,6 +23,17 @@ try{
   try{$kentConfig=$kentReader.ReadToEnd()|ConvertFrom-Json}finally{$kentReader.Dispose()}
   if($kentConfig.server.url){throw 'APK must not load its interface from an external server'}
   if($kentConfig.appId -ne 'com.kentyanimda.vatandas'){throw 'Unexpected Android application ID'}
+  if($ExpectedApiUrl){
+    $kentFoundApi=$false
+    foreach($kentAsset in $kentZip.Entries|Where-Object {$_.FullName -like 'assets/public/assets/*.js'}){
+      $kentAssetReader=[System.IO.StreamReader]::new($kentAsset.Open())
+      try{$kentAssetText=$kentAssetReader.ReadToEnd()}finally{$kentAssetReader.Dispose()}
+      if($kentAssetText.Contains($ExpectedApiUrl)){$kentFoundApi=$true}
+    }
+    if(-not $kentFoundApi){throw 'APK does not embed the expected API endpoint'}
+    if($ExpectedApiUrl.StartsWith('https://') -and $kentConfig.android.allowMixedContent){throw 'Cloud APK must not allow mixed HTTP content'}
+    Write-Output "Verified embedded API: $ExpectedApiUrl"
+  }
 }finally{$kentZip.Dispose()}
 $kentTools=Get-Content (Join-Path $env:USERPROFILE '.cache\kentyanimda-android\tools.json') -Raw | ConvertFrom-Json
 $env:JAVA_HOME=$kentTools.javaHome

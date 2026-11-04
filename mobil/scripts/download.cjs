@@ -4,6 +4,7 @@ const http = require("node:http"),
   os = require("node:os"),
   QR = require("qrcode");
 const version = require("../package.json").version;
+const { downloadUrl } = require("../production-service.json");
 const root = path.resolve(__dirname, "../artifacts"),
   apkName = `KentYanimda-Android-${version}.apk`,
   apk = path.join(root, apkName);
@@ -19,7 +20,7 @@ const ip =
   url = `http://${ip}:8181`;
 (async () => {
   fs.mkdirSync(root, { recursive: true });
-  const qr = await QR.toBuffer(url, {
+  const qr = await QR.toBuffer(downloadUrl, {
     width: 400,
     margin: 2,
     color: { dark: "#1d4b8f", light: "#ffffff" },
@@ -34,7 +35,7 @@ const ip =
         res.writeHead(200, { "Content-Type": "image/png", "Cache-Control": "no-store" }).end(qr);
         return;
       }
-      if (route === "/KentYanimda.apk") {
+      if (route === "/KentYanimda.apk" || route === `/${apkName}`) {
         if (!fs.existsSync(apk)) {
           res.writeHead(503).end("APK hazirlaniyor");
           return;
@@ -59,12 +60,15 @@ const ip =
           "Cache-Control": "no-store",
         })
         .end(
+          fs.existsSync(path.join(root, "download/index.html"))
+            ? fs.readFileSync(path.join(root, "download/index.html"), "utf8")
+            :
           `<!doctype html><html lang="tr"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>KentYanımda · Android</title><style>body{margin:0;min-height:100vh;display:grid;place-items:center;background:#f1f5fb;font:15px/1.7 system-ui;color:#223955;padding:20px;box-sizing:border-box}main{max-width:430px;text-align:center;border:1px solid #dce6f2;border-radius:24px;background:white;padding:32px}h1{margin:0;font-size:29px;letter-spacing:-1px}img{width:220px}a{display:block;background:#216ce5;border-radius:12px;padding:15px;color:white;text-decoration:none;font-weight:650}p{color:#7c8da3}small{font-size:12px;color:#90a0b5}.note{background:#f0f5fd;padding:14px;border-radius:12px;text-align:left;font-size:12px}</style><main><h1>KentYanımda</h1><p>Yeni Android uygulaması · ${version}</p><img src="/qr.png" alt="Android uygulamasını indirme bağlantısı"><a href="/KentYanimda.apk">Android uygulamasını indir</a><p>APK'yı indir, telefonuna kur ve aç.<br>Yardımcı uygulama gerekmez.</p><p class="note">Bu paket iç deneme sürümüdür. Kamera, konum, menüler ve taslak hazırlama kullanılabilir. Hesap açma ve talep gönderimi Oltu yerel sunucusuna bağlıdır. Telefon ve bilgisayar aynı Wi-Fi ağında olmalı.</p><small>İndirirken telefon ve bilgisayar aynı ağda olmalı. Uygulama kendi menüleriyle açılır; talep gönderme ve güncellemeleri almak için bu bilgisayardaki sunucu açık olmalıdır. Test imzalı APK; mağaza yayını değildir.</small></main></html>`,
         );
     })
     .listen(8181, "0.0.0.0", () =>
       console.log(
-        `Android download: ${url}\nQR: ${path.join(root, qrName)}`,
+        `Android internet download: ${downloadUrl}\nLocal fallback: ${url}\nQR: ${path.join(root, qrName)}`,
       ),
     );
 })().catch((e) => {
