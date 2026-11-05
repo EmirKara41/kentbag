@@ -16,6 +16,8 @@ Kurum yalnız kendisine gönderilen talepleri, konum ve fotoğraflarını, merke
 
 Görev emrinde kurumun pilot ekiplerinden biri, iş talimatı ve görev önceliği seçilir. Aynı talepte tek etkin hazırlık emri tutulur; değiştirmek için gerekçeyle iptal edilip yenisi hazırlanır. Kurum talebi gerekçeyle merkeze iade edebilir; bu durumda hazır görev iptal edilir. Vatandaşın geri çektiği veya merkezin sonuçlandırdığı talepte de hazır emir iptal edilir. Kayıtlar PostgreSQL uyumlu yerel veritabanında kalır; sayfa yenileme veya sunucu yeniden başlatma ile kaybolmaz.
 
+**Ekipler** menüsü kurumun demo ekiplerini ve hazır görev sayılarını gösterir. Elektrik için Elektrik arıza ekibi (`elektrik-ariza`), Şebeke bakım ekibi (`elektrik-bakim`) ve Trafo müdahale ekibi (`elektrik-trafo`) tanımlıdır. Ekip seçimi için talep önce **İncelemeye al** işleminden geçmelidir. Bu ekip tanımları personel hesabı oluşturmaz; hazırlanan emir saha teslimi olarak gösterilmez.
+
 ## Saha bağlantısına bırakılan sözleşme
 
 `institution_work_order` kaydı: id, report_id, delivery_id, unit_id, team_id, instruction, priority, state, created_at, updated_at. Şimdilik durumlar `prepared` ve `cancelled`. Bu bir görev hazırlığıdır; cihaz teslimi, çalışan kabulü veya çalışma başladı iddiası taşımaz. Saha modülü eklendiğinde kurum ve ekip hesabı eşleştirmesi, teslim/kabul, çalışma aşamaları ve fotoğraflı sonuç eklenmelidir. Saha tüketicisi görevi teslim etmeden önce güncel talebin hâlâ işlem yapılabilir olduğunu ve kurum tesliminin geçerliliğini doğrulamalıdır.

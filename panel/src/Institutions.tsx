@@ -529,7 +529,7 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
           {[
             { id: "requests", name: "Gelen talepler", icon: "inbox" },
             { id: "orders", name: "Görev emirleri", icon: "work" },
-            { id: "teams", name: "Ekip hazırlığı", icon: "team" },
+            { id: "teams", name: "Ekipler", icon: "team" },
           ].map((item) => (
             <button
               key={item.id}
@@ -541,6 +541,7 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
               {item.id === "requests" && pending.length > 0 && (
                 <i>{pending.length}</i>
               )}
+              {item.id === "teams" && <i>{profile.teams.length}</i>}
             </button>
           ))}
         </nav>
@@ -577,7 +578,7 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                 ? "Gelen talepler"
                 : page === "orders"
                   ? "Görev emirleri"
-                  : "Ekip hazırlığı"}
+                  : "Ekipler"}
             </strong>
           </span>
           <button
@@ -773,8 +774,8 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
             <>
               <PageHeading
                 eyebrow="KURUM EKİPLERİ"
-                title="Saha ekiplerine hazırlık"
-                body="Bu ekipler pilot görev hedefleridir. Henüz çalışan hesabı, mobil uygulama veya teslim bağlantısı yoktur."
+                title="Ekipler"
+                body={`${profile.teams.length} demo ekip tanımlı. Görev hazırlamak için talebi açın, incelemeye alın ve hedef ekibi seçin.`}
               />
               <div className="institution-order-grid">
                 {profile.teams.map((team) => (
@@ -790,10 +791,19 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                       {prepared.filter((o) => o.teamId === team.id).length}{" "}
                       görev emri hazır
                     </p>
-                    <small>Pilot ekip tanımı · Saha oturumu bağlı değil</small>
+                    <small>Demo ekip · Saha uygulaması henüz bağlı değil</small>
                   </article>
                 ))}
               </div>
+              <Button
+                variant="secondary"
+                onClick={() => {
+                  setPage("requests");
+                  setFilter("all");
+                }}
+              >
+                Görev hazırlamak için taleplere git
+              </Button>
             </>
           )}
           <footer className="institution-footer">
@@ -956,7 +966,8 @@ function InstitutionDetail({
                 <h3>Talebi teslim alın</h3>
                 <p>
                   İncelemeye aldığınızda merkez paneli kurumun kaydı gördüğünü
-                  gösterecek. Bu işlem vatandaşa otomatik mesaj göndermez.
+                  gösterecek. Talep sahibi ve katılanlar, kurumun incelemeye
+                  başladığını uygulamadaki gelişmelerden takip edebilir.
                 </p>
                 <Button
                   disabled={busy}

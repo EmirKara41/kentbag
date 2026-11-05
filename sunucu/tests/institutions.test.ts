@@ -363,11 +363,16 @@ test(
         .send({
           type: "order",
           id: electric.id,
-          teamId: "elektrik-ariza",
+          teamId: "elektrik-trafo",
           instruction: "Şebekeyi kontrol edip arıza kaynağını raporlayın.",
           priority: "high",
         })
         .expect(200);
+      assert.equal(
+        (await workspace("electricity-external", electricRole)).cases[0]
+          .orders[0].teamId,
+        "elektrik-trafo",
+      );
       await request(pilot.app)
         .post(`/api/reports/${electric.id}/withdraw`)
         .set(citizen)

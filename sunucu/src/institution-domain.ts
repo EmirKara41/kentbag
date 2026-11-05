@@ -23,6 +23,7 @@ export const institutionProfiles = [
     teams: [
       { id: "elektrik-ariza", name: "Elektrik arıza ekibi" },
       { id: "elektrik-bakim", name: "Şebeke bakım ekibi" },
+      { id: "elektrik-trafo", name: "Trafo müdahale ekibi" },
     ],
   },
   {
