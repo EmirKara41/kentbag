@@ -225,7 +225,7 @@ export function StaffManagement() {
             Yetki
             <select value={role} onChange={(e) => setRole(e.target.value)}>
               <option value="institution">Kurum sorumlusu</option>
-            <option value="crew" disabled>Saha personeli · Sonraki aşama</option>
+              <option value="crew">Saha personeli</option>
               <option value="center">Merkez yetkilisi</option>
             </select>
           </label>

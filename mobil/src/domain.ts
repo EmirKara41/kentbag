@@ -198,6 +198,7 @@ export const publicAreas = [
   "Ayyıldız",
 ];
 export type SharedIssue = {
+  resolution?: { body: string; photos: Photo[]; completedAt: string };
   id: string;
   title: string;
   category: CategoryId;

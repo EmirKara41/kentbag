@@ -687,6 +687,7 @@
   gap: 12px;
   margin: 14px 0;
 }
+.field-result-photos{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0}.field-result-photos img{width:130px;height:110px;object-fit:cover;border-radius:10px}.field-review>.button{margin:8px 8px 0 0}
 .institution-prepared-order > .institution-stage {
   justify-self: start;
 }

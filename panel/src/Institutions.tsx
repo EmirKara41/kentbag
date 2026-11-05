@@ -24,6 +24,7 @@ import {
 import { usePanel } from "./store";
 import { Button, Empty, Icon, Message, Modal, PageHeading } from "./ui";
 import "./institutions.css";
+import { fieldStages, InstitutionFieldReview } from "./FieldReview";
 import { StaffLogin, signOut, staffRequest, type StaffIdentity } from "./Staff";
 
 export function InstitutionCatalog({ reports }: { reports?: CitizenReport[] }) {
@@ -153,9 +154,7 @@ export function InstitutionForward({ report }: { report: CitizenReport }) {
           {delivery.returnReason && (
             <p>İade gerekçesi: {delivery.returnReason}</p>
           )}
-          <span>
-            {delivery.preparedCount} hazır görev emri · Saha teslimi bekliyor
-          </span>
+          <span>{delivery.preparedCount} etkin saha görevi</span>
           {profile && (
             <a
               href={`/kurumlar/${profile.slug}`}
@@ -341,7 +340,7 @@ function InstitutionMailStatus({
 type Workspace = {
   cases: InstitutionCase[];
   profile: InstitutionProfile;
-  crewConnected: false;
+  crewConnected: boolean;
 };
 function useInstitution(profile: InstitutionProfile) {
   const [data, setData] = useState<Workspace | null>(null),
@@ -411,11 +410,11 @@ function useInstitution(profile: InstitutionProfile) {
   useEffect(() => {
     void connect();
     const timer = setInterval(() => {
-      if (document.visibilityState === "visible" && token.current)
+      if (document.visibilityState === "visible")
         void refresh();
     }, 5000);
     const focus = () => {
-      if (token.current) void refresh();
+      void refresh();
     };
     window.addEventListener("focus", focus);
     return () => {
@@ -597,8 +596,8 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
             <Icon name="info" size={19} />
             <p>
               <strong>Kurum çalışma alanı.</strong> Yalnızca bu kuruma yetkili
-              personel erişir. Görev emirleri saklanır; saha uygulaması henüz
-              bağlı değildir.
+              personel erişir. Kurum görevi atar; ekip sonucu önce kuruma,
+              ardından belediye merkezinin onayına gönderilir.
             </p>
           </div>
           {store.error && <Message>{store.error}</Message>}
@@ -628,9 +627,9 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                   <small>Kurum tarafından teslim alınan</small>
                 </button>
                 <button onClick={() => setFilter("orders")}>
-                  <span>Hazır görev emri</span>
+                  <span>Açık saha görevi</span>
                   <strong>{prepared.length}</strong>
-                  <small>Saha uygulamasına teslim bekliyor</small>
+                  <small>Ekip ve sonuç kontrolü süreçleri</small>
                 </button>
               </div>
               <section className="content-panel institution-queue">
@@ -722,7 +721,7 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
               <PageHeading
                 eyebrow="SAHA İÇİN HAZIRLIK"
                 title="Görev emirleri"
-                body="Kurumun hazırladığı işler burada saklanır. Saha uygulaması bağlandığında teslim ve sonuç akışı eklenecek."
+                body="Ekibin kabulünü, saha çalışmasını ve iki aşamalı sonuç kontrolünü takip edin."
               />
               {prepared.length ? (
                 <div className="institution-order-grid">
@@ -735,7 +734,7 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                           key={order.id}
                         >
                           <span className="institution-stage accepted">
-                            Hazır · Teslim bekliyor
+                            {fieldStages[order.crewState]}
                           </span>
                           <h2>
                             {
@@ -791,7 +790,9 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                       {prepared.filter((o) => o.teamId === team.id).length}{" "}
                       görev emri hazır
                     </p>
-                    <small>Demo ekip · Saha uygulaması henüz bağlı değil</small>
+                    <small>
+                      Demo ekip · Yalnız bu ekibin personeli görevleri görebilir
+                    </small>
                   </article>
                 ))}
               </div>
@@ -988,18 +989,29 @@ function InstitutionDetail({
                 işlem için merkezin yeniden göndermesi gerekiyor.
               </Message>
             ) : null}
+            {item.orders
+              .filter((o) => !!o.result)
+              .map((order) => (
+                <InstitutionFieldReview
+                  key={order.id}
+                  order={order}
+                  reportId={item.id}
+                  busy={busy}
+                  act={act}
+                />
+              ))}
             {accepted && (
               <>
                 <section className="form-section">
                   <h3>Saha görevini hazırla</h3>
                   <p className="field-note">
-                    Hazırlanan emir kaydedilir. Saha çalışanına gönderim, teslim
-                    ve fotoğraflı sonuç bir sonraki aşamada bağlanacak.
+                    Görev ekibin uygulamasına düşer. Ekip kabul edip fotoğraflı
+                    sonucunu kurum kontrolüne gönderir.
                   </p>
                   {active ? (
                     <div className="institution-prepared-order">
                       <span className="institution-stage accepted">
-                        Görev emri hazır · Saha teslimi bekliyor
+                        {fieldStages[active.crewState]}
                       </span>
                       <strong>
                         {
@@ -1096,7 +1108,7 @@ function InstitutionDetail({
                               instruction,
                               priority,
                             },
-                            "Görev emri kaydedildi. Saha uygulamasına teslim henüz yapılmadı.",
+                            "Görev ekibe atandı. Ekibin kabulü bekleniyor.",
                           )
                         }
                       >

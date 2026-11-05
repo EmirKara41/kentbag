@@ -231,7 +231,7 @@ export default function App() {
                   : "Örnek / bağlantısız alan"}
             </strong>
             {mode === "live"
-              ? ` — Telefon talepleri ve vatandaş güncellemeleri sunucuda. ${ai === "no_key" ? "Gemini anahtarı yok; kural tabanlı öneriler açık." : "Gemini analizi açık."} Saha uygulaması henüz bağlı değil.`
+              ? ` — Vatandaş, kurum ve saha akışı bağlı. ${ai === "no_key" ? "Gemini anahtarı yok; kural tabanlı öneriler açık." : "Gemini analizi açık."} Sonuçlar kurum ve merkez kontrolünden sonra paylaşılır.`
               : " — Örnek işlemler gerçek kayıtlara eklenmez."}
             {lastSync && mode === "live" && (
               <small> Son eşitleme: {dateText(lastSync)}</small>
@@ -653,7 +653,7 @@ function Teams({ onOpen }: { onOpen: (id: string) => void }) {
                   aktif görev
                   <small>
                     {mode === "live"
-                      ? "Kurum ataması · Saha uygulaması henüz bağlı değil"
+                      ? "Merkez birim kaydı · Kurumun saha görevlerinden ayrı"
                       : "Örnek atama kayıtları"}
                   </small>
                 </span>

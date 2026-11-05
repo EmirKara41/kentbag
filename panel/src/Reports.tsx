@@ -19,6 +19,7 @@ import {
 } from "./domain";
 import { usePanel } from "./store";
 import { InstitutionForward } from "./Institutions";
+import { CenterFieldReview } from "./FieldReview";
 import {
   Button,
   CategoryIcon,
@@ -580,6 +581,7 @@ export function ReportDetail({
                 </section>
               )}
               {ongoing(report) && <InstitutionForward report={report} />}
+              <CenterFieldReview report={report} />
               <section className="form-section">
                 <h3>Açıklama ekle</h3>
                 <label className="field">
@@ -674,8 +676,8 @@ export function ReportDetail({
                     : "Çözümü kaydet"}
                 </Button>
                 <p className="field-note">
-                  Çözüm bildirimi vatandaş onayı sayılmaz. Saha fotoğrafları ve
-                  ekip uygulaması üçüncü aşamada bağlanacak.
+                  Çözüm bildirimi vatandaş onayı sayılmaz. Saha sonucu ve
+                  fotoğrafları kurum ve merkez kontrolünden sonra paylaşılır.
                 </p>
               </section>
             </>

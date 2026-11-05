@@ -4,13 +4,14 @@ Vatandaş, belediye merkezi ve saha ekiplerini aynı talep sürecinde buluştura
 
 Proje adı KentBağ'dır. Mevcut vatandaş uygulamasının görünen adı KentYanımda, Android paket kimliği `com.kentyanimda.vatandas` olarak korunur; kurulu uygulamalar sonraki paketlerle güncellenebilir.
 
-4 Kasım 2026: Merkez/kurum hesapları, internet üzerindeki demo API ve e-posta kopyası akışı eklendi. Android **1.4.0** bu sunucuya bağlıdır; [internet üzerinden APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/). [İnternet demosu, bağlantılar ve sınırlar](INTERNET_DEMOSU.md). Aşağıdaki yerel pilot açıklamaları eski 1.3.x paketlerine ve yerel geliştirmeye aittir.
+5 Kasım 2026: Ayrı **KentBağ Saha 0.1.0** Android uygulaması ve kurum → ekip → kurum kontrolü → merkez onayı → talep sahibi/takipçiler akışı eklendi. [Saha APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/indir/), [saha kılavuzu](saha/README.md). Vatandaş Android **1.4.1** onaylanan sonuç fotoğraflarını takipçilere de gösterir; [vatandaş APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/). [İnternet demosu, bağlantılar ve sınırlar](INTERNET_DEMOSU.md). Aşağıdaki yerel pilot açıklamaları eski 1.3.x paketlerine ve yerel geliştirmeye aittir.
 
 - `mobil/`: Android vatandaş uygulaması. Bölge ana sayfası, aktif olaylar, iyileştirme istekleri, tamamlanan kişisel talepler, kamera/galeri, GPS/harita ve hesap ekranları APK'nın içindedir. [Yeni deneyim ve bağlantı sınırları](mobil/URUN_DENEYIMI.md).
 - `sunucu/`: Vercel üzerinde çalışacak API; Better Auth ile giriş, PostgreSQL kayıtları ve özel Vercel Blob fotoğrafları.
 - `panel/`: Belediye merkez biriminin web paneli. Oltu yerel pilotunda gerçek vatandaş taleplerine bağlıdır; örnek çalışma alanı ayrıca açılabilir. [Panel kılavuzu](panel/README.md).
+- `saha/`: Kurum ve ekip hesabına göre görev gösteren ayrı Android saha uygulaması; görev kabulü, kamera/galeri, sonuç gönderimi ve kontrol durumları.
 
-Oltu pilotunda vatandaş → yerel API → belediye paneli ve panel → vatandaş durum/açıklama/çözüm akışı bağlıdır. Gerçek hesaplar, talepler ve fotoğraflar bilgisayarda kalıcı saklanır. Aciliyet önerisi Gemini anahtarı yokken gerekçeli kurallarla, anahtar eklenince Gemini ile üretilir; yetkili kararı ayrı tutulur. İnternetteki Vercel/Neon/Blob üretim kaynakları henüz dağıtılmadı. Saha uygulaması üçüncü bloktur.
+İnternet demosunda Vercel API, Neon veritabanı ve özel Blob fotoğraf deposu kullanılır; bilgisayarın açık olması gerekmez. Yerel geliştirmede kalıcı yerel veritabanı ayrıca desteklenir. Aciliyet önerisi Gemini anahtarı yokken gerekçeli kurallarla, anahtar eklenince Gemini ile üretilir; yetkili kararı ayrı tutulur.
 
 Android menüleri APK içine gömülüdür; yardımcı uygulama gerekmez. Bu yerel pilotta kayıt göndermek ve güncelleme almak için telefon aynı ağda olmalı ve bilgisayardaki API açık kalmalıdır. [Yerel deneme ve yeniden başlatma](YEREL_DENEME.md). APK hazırlama/indirme: [mobil kılavuzu](mobil/README.md). [Vercel kurulumu](sunucu/README.md). Kabul edilen ürün kapsamı: [kapsam](URUN_KAPSAMI.md).
 

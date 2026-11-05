@@ -4,6 +4,7 @@ import { z } from "zod";
 import type { Database, Sql } from "./database.js";
 import { HttpError } from "./validation.js";
 import type { StaffAccess } from "./staff.js";
+import { FieldService, fieldOrderView } from "./field.js";
 import { categories, units } from "./municipality-domain.js";
 import type { MunicipalityService } from "./municipality.js";
 import {
@@ -14,6 +15,13 @@ import {
 const id = z.string().min(1).max(220);
 const text = z.string().trim().min(5).max(2000);
 const actionSchema = z.discriminatedUnion("type", [
+  z.object({
+    type: z.literal("review-result"),
+    id,
+    orderId: id,
+    decision: z.enum(["forward", "return"]),
+    body: z.string().trim().min(15).max(2000),
+  }),
   z.object({ type: z.literal("accept"), id }),
   z.object({ type: z.literal("return"), id, body: text }),
   z.object({ type: z.literal("note"), id, body: text }),
@@ -218,14 +226,11 @@ export class InstitutionService {
             preparedCount: currentOrders.filter((o) => o.state === "prepared")
               .length,
           },
-          orders: currentOrders.map((o) => ({
-            id: o.id,
-            teamId: o.team_id,
-            instruction: o.instruction,
-            priority: o.priority,
-            state: o.state,
-            createdAt: iso(o.created_at)!,
-          })),
+          orders: await Promise.all(
+            currentOrders.map((o) =>
+              fieldOrderView(this.db, this.municipality.config, o),
+            ),
+          ),
           events: events
             .filter((e) => e.delivery_id === c.id)
             .map((e) => ({
@@ -240,11 +245,25 @@ export class InstitutionService {
     return {
       cases,
       profile: institutionProfiles.find((p) => p.id === unitId),
-      crewConnected: false,
+      crewConnected: true,
     };
   }
   async action(unitId: string, input: unknown) {
     const action = actionSchema.parse(input);
+    if (action.type === "review-result") {
+      const order = (
+        await this.db.query(
+          "SELECT report_id FROM institution_work_order WHERE id=$1 AND unit_id=$2",
+          [action.orderId, unitId],
+        )
+      ).rows[0];
+      if (!order || order.report_id !== action.id)
+        throw new HttpError(404, "Sonuç bu talebe veya kuruma ait değil.");
+      return new FieldService(this.db, this.municipality).reviewInstitution(
+        unitId,
+        action,
+      );
+    }
     if (action.type === "message") {
       await this.municipality.action(
         {
@@ -352,7 +371,7 @@ export class InstitutionService {
             sql,
             delivery,
             "Görev emri hazırlandı",
-            `${action.instruction} · Saha uygulamasına teslim henüz yapılmadı.`,
+            `${action.instruction} · Ekip hesabında görülebilir; ekibin kabulü bekleniyor.`,
           );
         }
         if (action.type === "cancel-order") {

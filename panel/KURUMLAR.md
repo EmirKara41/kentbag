@@ -1,5 +1,7 @@
 # Kurum çalışma alanları · Panel 0.3.0
 
+**5 Kasım 2026 saha bağlantısı:** Kurumun hazırladığı görev artık ilgili kurum/ekip hesabının KentBağ Saha uygulamasına düşer. Ekip kabul eder, 1–3 sonuç fotoğrafı ve açıklama gönderir. Kurum sonucu düzeltmeye iade eder veya merkeze iletir; merkez onayından önce vatandaş ve takipçiler sonucu göremez. Aşağıdaki eski “hazırlık / henüz teslim yok” açıklamaları saha bağlantısından önceki aşamaya aittir. Güncel sözleşme: `crew_state` assigned → accepted → in_progress → institution_review → center_review → published; `state` prepared/cancelled/completed. [Güncel saha kılavuzu](../saha/README.md).
+
 Beş kurum rolü aynı arayüz ve sunucu üzerinden ayrı kuyruklarla çalışır:
 
 | Alan | Adres | Kurum kimliği |

@@ -17,6 +17,7 @@ import { ruleTriage, geminiTriage } from "./triage.js";
 import { CommunityService } from "./community.js";
 import { InstitutionService } from "./institutions.js";
 import type { StaffAccess } from "./staff.js";
+import { FieldService, fieldOrderView } from "./field.js";
 import { InstitutionMail } from "./mail.js";
 
 const id = z.string().min(1).max(220);
@@ -216,6 +217,11 @@ export class MunicipalityService {
     );
   }
   async snapshot(sql: Sql = this.db): Promise<PanelState> {
+    const fieldOrders = (
+      await sql.query(
+        "SELECT * FROM institution_work_order ORDER BY created_at DESC",
+      )
+    ).rows;
     const state = (
       await sql.query("SELECT document FROM municipality_state WHERE id='oltu'")
     ).rows[0].document as PanelState;
@@ -248,6 +254,18 @@ export class MunicipalityService {
           supports: Number(row.subscriptions),
           shared: d.sharePublicly === true,
           institutionDelivery: row.institution_delivery ?? undefined,
+          fieldOrders: await Promise.all(
+            fieldOrders
+              .filter((o) => o.report_id === d.id)
+              .map((o) =>
+                fieldOrderView(
+                  sql,
+                  this.config,
+                  o,
+                  ["center_review", "published"].includes(o.crew_state),
+                ),
+              ),
+          ),
           status: d.status,
           priority: m.priority ?? m.triage?.priority ?? "normal",
           prioritySource: m.prioritySource ?? "suggestion",
@@ -284,7 +302,11 @@ export class MunicipalityService {
     );
     return state;
   }
-  async action(input: unknown, actor?: { unitId: string }) {
+  async action(
+    input: unknown,
+    actor?: { unitId: string },
+    fieldReview?: { orderId: string; actorId?: string },
+  ) {
     const action = actionSchema.parse(input) as Action;
     await this.db.transaction(async (sql) => {
       let institutionDeliveryId: string | undefined;
@@ -292,6 +314,102 @@ export class MunicipalityService {
         "SELECT id FROM municipality_state WHERE id='oltu' FOR UPDATE",
       );
       await sql.query("SELECT id FROM citizen_report ORDER BY id FOR UPDATE");
+      if (action.type === "resolve" && !fieldReview) {
+        const pending = (
+          await sql.query(
+            "SELECT id FROM institution_work_order WHERE report_id=$1 AND state='prepared' AND result IS NOT NULL LIMIT 1",
+            [action.id],
+          )
+        ).rows[0];
+        if (pending)
+          throw new HttpError(
+            409,
+            "Fotoğraflı saha sonucu kurum ve merkez kontrolünden geçmeli. Saha sonucu bölümünü kullanın.",
+          );
+      }
+      let publishing: any;
+      if (fieldReview) {
+        if (action.type !== "resolve" || actor)
+          throw new HttpError(
+            403,
+            "Sonuç paylaşımı merkez yetkisi gerektirir.",
+          );
+        const delivery = (
+          await sql.query(
+            "SELECT * FROM institution_case WHERE report_id=$1 FOR UPDATE",
+            [action.id],
+          )
+        ).rows[0];
+        publishing = (
+          await sql.query(
+            "SELECT * FROM institution_work_order WHERE id=$1 FOR UPDATE",
+            [fieldReview.orderId],
+          )
+        ).rows[0];
+        if (!publishing || publishing.report_id !== action.id)
+          throw new HttpError(404, "Saha sonucu bulunamadı.");
+        if (
+          publishing.state === "completed" &&
+          publishing.crew_state === "published"
+        )
+          return;
+        const current = (
+          await sql.query("SELECT document FROM citizen_report WHERE id=$1", [
+            action.id,
+          ])
+        ).rows[0]?.document;
+        if (
+          publishing.state !== "prepared" ||
+          publishing.crew_state !== "center_review" ||
+          !publishing.result ||
+          delivery?.id !== publishing.delivery_id ||
+          delivery?.state !== "accepted" ||
+          current?.municipality.unitId !== publishing.unit_id
+        )
+          throw new HttpError(
+            409,
+            "Sonuç önce kurum tarafından belediye merkezine iletilmeli.",
+          );
+        const validPhotos = (
+          await sql.query(
+            "SELECT id FROM citizen_photo WHERE report_id=$1 AND owner_id=$2 AND id=ANY($3::text[])",
+            [
+              action.id,
+              publishing.result.submittedBy,
+              publishing.result.photos,
+            ],
+          )
+        ).rows;
+        if (
+          !validPhotos.length ||
+          validPhotos.length !== publishing.result.photos.length
+        )
+          throw new HttpError(409, "Sonuç fotoğrafları doğrulanamadı.");
+        await sql.query(
+          "UPDATE institution_work_order SET state='completed',crew_state='published',review_note=$1,completed_at=now(),updated_at=now() WHERE id=$2",
+          [action.body, publishing.id],
+        );
+        const eventId = randomUUID();
+        await sql.query(
+          "INSERT INTO field_work_event(id,order_id,stage,body,actor_id) VALUES($1,$2,'published',$3,$4)",
+          [
+            eventId,
+            publishing.id,
+            "Belediye merkezi kontrol edilen sonucu vatandaş ve takipçilerle paylaştı.",
+            fieldReview.actorId ?? null,
+          ],
+        );
+        await sql.query(
+          "INSERT INTO institution_case_event(id,report_id,delivery_id,unit_id,kind,body) VALUES($1,$2,$3,$4,'Merkez sonucu paylaştı',$5)",
+          [
+            eventId,
+            action.id,
+            publishing.delivery_id,
+            publishing.unit_id,
+            action.body,
+          ],
+        );
+      }
       if (actor) {
         if (action.type !== "note" || action.audience === "internal")
           throw new HttpError(403, "Bu işlem kurum yetkisi kapsamında değil.");
@@ -373,7 +491,10 @@ export class MunicipalityService {
         if (action.type === "resolve") {
           doc.resolution = {
             body: after.resolution,
-            photos: [],
+            photos: publishing?.result.photos ?? [],
+            ...(publishing
+              ? { sharedByCenter: true, orderId: publishing.id }
+              : {}),
             completedAt: after.updatedAt,
           };
           delete doc.feedback;
@@ -385,13 +506,24 @@ export class MunicipalityService {
             sql,
             doc,
             event.body,
-            !(doc.sharePublicly && previous.status !== after.status),
+            publishing
+              ? true
+              : !(doc.sharePublicly && previous.status !== after.status),
             action.type === "note" ? "message" : "status",
           );
         const community = new CommunityService(this.db);
         if (action.type === "note" && action.audience === "participants")
           await community.update(sql, doc, action.body, true);
-        if (previous.status !== after.status) await community.status(sql, doc);
+        if (previous.status !== after.status) {
+          if (publishing)
+            await community.update(
+              sql,
+              doc,
+              "Çözüm bildirildi: " + after.resolution,
+              true,
+            );
+          else await community.status(sql, doc);
+        }
         if (actor && institutionDeliveryId && action.type === "note") {
           await sql.query(
             "INSERT INTO institution_case_event(id,report_id,delivery_id,unit_id,kind,body) VALUES($1,$2,$3,$4,$5,$6)",
@@ -477,6 +609,7 @@ export function municipalityRouter(
   router.use(async (req, _res, next) => {
     const member = await options.staff?.member(req);
     if (member?.role === "center") {
+      _res.locals.staff = member;
       next();
       return;
     }
@@ -501,6 +634,17 @@ export function municipalityRouter(
     );
   }
   const mail = new InstitutionMail(service.db);
+  router.post(
+    "/field-review",
+    express.json({ limit: "8kb" }),
+    async (req, res) =>
+      res.json({
+        data: await new FieldService(service.db, service).reviewCenter(
+          req.body,
+          res.locals.staff?.userId,
+        ),
+      }),
+  );
   router.get("/institutions/mail/:id", async (req, res) =>
     res.json(await mail.list(String(req.params.id))),
   );

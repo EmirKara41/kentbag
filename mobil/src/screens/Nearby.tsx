@@ -342,7 +342,7 @@ export function SharedDetail({ id }: { id: string }) {
           )}
           <p className="field-note">
             Gösterilen konum yaklaşıktır. Bildirenin kişisel bilgileri, özel
-            açıklaması ve fotoğrafları paylaşılmaz.
+            açıklaması ve ilk bildirim fotoğrafları paylaşılmaz.
           </p>
           {item.own ? (
             <Button variant="secondary" onClick={() => nav.tab("reports")}>
@@ -373,6 +373,29 @@ export function SharedDetail({ id }: { id: string }) {
             Kurumun ortak açıklamaları ve durum değişiklikleri Güncellemeler’e
             gelir.
           </p>
+          {item.resolution && (
+            <section className="content-card resolution-card">
+              <h2>Merkezin onayladığı sonuç</h2>
+              <p>{item.resolution.body}</p>
+              <small>{dateText(item.resolution.completedAt, true)}</small>
+              <div className="photo-grid">
+                {item.resolution.photos.map((p) => (
+                  <a
+                    className="photo-open"
+                    key={p.id}
+                    href={p.uri}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    <img
+                      src={p.uri}
+                      alt="Merkezin onayladığı sonuç fotoğrafı"
+                    />
+                  </a>
+                ))}
+              </div>
+            </section>
+          )}
           <section className="content-card">
             <h2>Ortak gelişmeler</h2>
             {item.events?.length ? (

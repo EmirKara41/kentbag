@@ -84,7 +84,20 @@ export type InstitutionOrder = {
   teamId: string;
   instruction: string;
   priority: "low" | "normal" | "high" | "urgent";
-  state: "prepared" | "cancelled";
+  state: "prepared" | "cancelled" | "completed";
+  crewState:
+    | "assigned"
+    | "accepted"
+    | "in_progress"
+    | "institution_review"
+    | "center_review"
+    | "published";
+  reviewNote?: string;
+  result?: {
+    body: string;
+    submittedAt: string;
+    photos: { id: string; uri: string; width?: number; height?: number }[];
+  };
   createdAt: string;
 };
 export type InstitutionCase = {

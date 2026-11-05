@@ -3,6 +3,8 @@ import { z } from "zod";
 import type { Database, Sql } from "./database.js";
 import { HttpError } from "./validation.js";
 import { categories, statuses } from "./municipality-domain.js";
+import type { Config } from "./config.js";
+import { resultPhotos } from "./result-photos.js";
 
 export const publicAreas = [
   "Oltu",
@@ -38,7 +40,10 @@ const active = (d: any) =>
   !["withdrawn", "closed", "resolved"].includes(d.status) ||
   (d.feedback?.outcome === "persists" && d.status !== "withdrawn");
 export class CommunityService {
-  constructor(readonly db: Database) {}
+  constructor(
+    readonly db: Database,
+    readonly config?: Pick<Config, "baseUrl" | "secret">,
+  ) {}
   async publish(sql: Sql, doc: any, enabled: boolean, area: string) {
     if (enabled && doc.status === "withdrawn")
       throw new HttpError(409, "Geri çekilmiş talep paylaşılamaz.");
@@ -170,7 +175,26 @@ export class CommunityService {
       status: e.status,
       createdAt: new Date(e.created_at).toISOString(),
     }));
-    return { ...this.view(row, userId, joined), events };
+    const resolution =
+      this.config &&
+      (joined || row.document.ownerId === userId) &&
+      row.document.resolution?.sharedByCenter
+        ? {
+            body: row.document.resolution.body,
+            completedAt: row.document.resolution.completedAt,
+            photos: await resultPhotos(
+              this.db,
+              this.config,
+              row.report_id,
+              row.document.resolution.photos ?? [],
+            ),
+          }
+        : undefined;
+    return {
+      ...this.view(row, userId, joined),
+      events,
+      ...(resolution ? { resolution } : {}),
+    };
   }
   async mine(userId: string) {
     const ids = new Set(

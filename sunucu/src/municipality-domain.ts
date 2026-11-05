@@ -45,6 +45,7 @@ export type Event = {
   audience: "internal" | "citizen" | "participants";
 };
 export type CitizenReport = {
+  fieldOrders?: import("./institution-domain.js").InstitutionOrder[];
   institutionDelivery?: import("./institution-domain.js").InstitutionDelivery;
   shared?: boolean;
   triage?: {

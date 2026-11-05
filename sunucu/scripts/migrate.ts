@@ -59,7 +59,8 @@ try {
       "utf8",
     ),
   );
-  console.log("Authentication and citizen database schema is ready.");
+  await pool.query(await readFile(new URL("../migrations/009_field_work.sql", import.meta.url), "utf8"));
+  console.log("Authentication, citizen and field-work database schema is ready.");
 } finally {
   await pool.end();
 }

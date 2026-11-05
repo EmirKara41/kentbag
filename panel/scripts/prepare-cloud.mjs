@@ -4,6 +4,10 @@ import { existsSync } from "node:fs";
 await rm(".vercel/output/builds.json", { force: true });
 await mkdir(".vercel/output/static", { recursive: true });
 await cp("dist", ".vercel/output/static", { recursive: true });
+await cp("../saha/dist", ".vercel/output/static/saha", { recursive: true });
+if (existsSync("../saha/artifacts/download/index.html")) {
+  await cp("../saha/artifacts/download", ".vercel/output/static/saha/indir", { recursive: true });
+}
 if (existsSync("../mobil/artifacts/download/index.html")) {
   await cp("../mobil/artifacts/download", ".vercel/output/static/indir", {
     recursive: true,
@@ -15,6 +19,9 @@ await writeFile(
     {
       version: 3,
       routes: [
+        { src: "/saha$", status: 308, headers: { Location: "/saha/" } },
+        { src: "/saha/indir/?$", dest: "/saha/indir/index.html" },
+        { src: "/saha/$", dest: "/saha/index.html" },
         { src: "/indir/?$", dest: "/indir/index.html" },
         {
           src: "/api/(.*)",

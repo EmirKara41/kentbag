@@ -4,6 +4,7 @@ import { HttpError, reportSchema, profileSchema } from "./validation.js";
 import { photoUrl } from "./storage.js";
 import type { Config } from "./config.js";
 import { CommunityService } from "./community.js";
+import { resultPhotos } from "./result-photos.js";
 export type CitizenUser = {
   id: string;
   name: string;
@@ -29,6 +30,22 @@ export class CitizenService {
     const { municipality: _privateMunicipalNotes, ...visible } = report;
     return {
       ...visible,
+      ...(report.resolution
+        ? {
+            resolution: {
+              body: report.resolution.body,
+              completedAt: report.resolution.completedAt,
+              photos: await resultPhotos(
+                sql,
+                this.config,
+                report.id,
+                (report.resolution.photos ?? []).map((p: any) =>
+                  typeof p === "string" ? p : p.id,
+                ),
+              ),
+            },
+          }
+        : {}),
       photos: report.photos.map((id: string) => {
         const photo = byId.get(id);
         if (!photo) throw new Error("Photo metadata missing");

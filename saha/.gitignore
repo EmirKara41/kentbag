@@ -1,0 +1,8 @@
+node_modules/
+dist/
+artifacts/
+.env*
+android/.gradle/
+android/**/build/
+android/local.properties
+*.keystore

@@ -1,5 +1,7 @@
 # KentBağ internet demosu
 
+5 Kasım güncellemesi: [KentBağ Saha 0.1.0 APK/QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/indir/) ve [web önizlemesi](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/) eklendi. Beş kurum için birer demo saha hesabı hazırlandı; merkez hesabı yeni saha personeli oluştururken kurum ve ekip seçebilir. Ekip kabulü → fotoğraflı sonuç → kurum kontrolü → merkez yayını zorunludur. Sonuç yayınlanınca hem talep sahibi hem takipçiler görür. [Vatandaş Android 1.4.1](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/) takip edilen sorunların sonuç fotoğraflarını da gösterir. Ayrıntılar: [saha kılavuzu](saha/README.md).
+
 Merkez ve kurum girişi: https://kentbag-panel-emir-kara-s-projects.vercel.app/giris
 
 API: https://kentbag-api-emir-kara-s-projects.vercel.app/api/health

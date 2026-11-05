@@ -223,6 +223,34 @@ function usePanelStore() {
     forward,
     staffAdmin: remote,
     operator,
+    async reviewField(input: {
+      orderId: string;
+      decision: "publish" | "return";
+      body: string;
+    }) {
+      if (mode !== "live" || mutation.current)
+        throw new Error(
+          "Sunucuya bağlı olmalı ve önceki işlemi tamamlamalısınız.",
+        );
+      mutation.current = true;
+      setBusy(true);
+      revision.current++;
+      try {
+        const result = await remote<{ data: PanelState }>(
+          "/field-review",
+          input,
+        );
+        setData(result.data);
+        setNotice(
+          input.decision === "publish"
+            ? "Sonuç talep sahibi ve takipçilerle paylaşıldı."
+            : "Sonuç kuruma geri gönderildi.",
+        );
+      } finally {
+        mutation.current = false;
+        setBusy(false);
+      }
+    },
   };
 }
 const Context = createContext<ReturnType<typeof usePanelStore> | null>(null);

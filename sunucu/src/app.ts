@@ -17,6 +17,7 @@ import { MunicipalityService, municipalityRouter } from "./municipality.js";
 import { CommunityService, sharingSchema } from "./community.js";
 import { InstitutionService, institutionRouter } from "./institutions.js";
 import { staffRouter, type StaffAccess } from "./staff.js";
+import { FieldService, fieldRouter } from "./field.js";
 
 export function createApp(deps: {
   db: Database;
@@ -32,7 +33,7 @@ export function createApp(deps: {
   };
 }) {
   const { db, config, photos } = deps;
-  const community = new CommunityService(db);
+  const community = new CommunityService(db, config);
   const service = new CitizenService(db, {
     ...config,
     municipalityConnected: !!deps.municipality,
@@ -114,6 +115,14 @@ export function createApp(deps: {
     res.type(mime?.mime || "application/octet-stream").send(buffer);
   });
   if (deps.municipality) {
+    if (deps.staff)
+      app.use(
+        "/api/field",
+        fieldRouter(
+          new FieldService(db, deps.municipality.service),
+          deps.staff,
+        ),
+      );
     app.use(
       "/api/institutions",
       institutionRouter(new InstitutionService(db, deps.municipality.service), {

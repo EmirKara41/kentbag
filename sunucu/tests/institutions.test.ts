@@ -197,7 +197,7 @@ test(
       assert.equal(roadWs.cases[0].id, road.id);
       assert.equal(roadWs.cases[0].events.length, 1);
       assert.equal(roadWs.cases[0].delivery.state, "queued");
-      assert.equal(roadWs.crewConnected, false);
+      assert.equal(roadWs.crewConnected, true);
       assert.equal(
         (await workspace("electricity-external", electricRole)).cases[0].id,
         electric.id,
