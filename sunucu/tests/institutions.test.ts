@@ -33,6 +33,19 @@ test(
         Authorization: `Bearer ${signup.headers["set-auth-token"]}`,
         Origin: "https://localhost",
       };
+      const participantAccount = await request(pilot.app)
+        .post("/api/auth/sign-up/email")
+        .set("Origin", "https://localhost")
+        .send({
+          name: "Katılan vatandaş",
+          email: "institution-participant@example.test",
+          password: "Test-only-password123!",
+        })
+        .expect(200);
+      const participant = {
+        Origin: "https://localhost",
+        Authorization: `Bearer ${participantAccount.headers["set-auth-token"]}`,
+      };
       const adminSession = await request(pilot.app)
         .post("/api/municipality/local-session")
         .set("Origin", "http://localhost:4280")
@@ -126,6 +139,14 @@ test(
       const before = (
         await request(pilot.app).get("/api/workspace").set(citizen)
       ).body;
+      const issueId = (
+        await request(pilot.app).get("/api/community?category=road").expect(200)
+      ).body.items[0].id;
+      await request(pilot.app)
+        .put(`/api/community/${issueId}/subscription`)
+        .set(participant)
+        .send({ subscribed: true })
+        .expect(200);
       const forward = (id: string, unitId: string) =>
         request(pilot.app)
           .post("/api/municipality/institutions/forward")
@@ -148,6 +169,22 @@ test(
       await forward(road.id, "public-works").expect(200);
       await forward(road.id, "public-works").expect(200);
       await forward(electric.id, "electricity-external").expect(200);
+      const joinedAfterForward = (
+        await request(pilot.app)
+          .get("/api/workspace")
+          .set(participant)
+          .expect(200)
+      ).body;
+      assert.equal(joinedAfterForward.inbox.length, 1);
+      assert.equal(joinedAfterForward.inbox[0].issueId, issueId);
+      assert.match(
+        joinedAfterForward.inbox[0].body,
+        /Yol ve Fen İşleri kurumuna iletildi/,
+      );
+      assert.doesNotMatch(
+        JSON.stringify(joinedAfterForward),
+        /Talebi inceleyip uygun bir saha görevi|gizli değerlendirmesi/,
+      );
       const workspace = async (unit: string, role: Record<string, string>) =>
         (
           await request(pilot.app)
@@ -206,8 +243,39 @@ test(
       const after = (
         await request(pilot.app).get("/api/workspace").set(citizen)
       ).body;
-      assert.deepEqual(after.inbox, before.inbox);
-      assert.deepEqual(after.reports, before.reports);
+      assert.equal(after.inbox.length, before.inbox.length + 3);
+      assert.equal(
+        after.inbox.filter((i: any) =>
+          i.body.includes("Yol ve Fen İşleri kurumuna iletildi"),
+        ).length,
+        1,
+      );
+      assert.equal(
+        after.inbox.filter(
+          (i: any) =>
+            i.body === "Yol ve Fen İşleri bildiriminizi incelemeye aldı.",
+        ).length,
+        1,
+      );
+      assert.equal(
+        after.reports.find((r: any) => r.id === road.id).status,
+        "in_review",
+      );
+      assert.doesNotMatch(JSON.stringify(after), /saha görevi hazırlayın/);
+      const joinedAfterAccept = (
+        await request(pilot.app)
+          .get("/api/workspace")
+          .set(participant)
+          .expect(200)
+      ).body;
+      assert.equal(joinedAfterAccept.inbox.length, 2);
+      assert.equal(
+        joinedAfterAccept.inbox.filter(
+          (i: any) =>
+            i.body === "Yol ve Fen İşleri bildiriminizi incelemeye aldı.",
+        ).length,
+        1,
+      );
       await act(roadRole, "public-works", {
         type: "note",
         body: "Kurumun özel saha hazırlık notu.",
@@ -304,6 +372,20 @@ test(
         .post(`/api/reports/${electric.id}/withdraw`)
         .set(citizen)
         .send({})
+        .expect(409);
+      assert.equal(
+        (await workspace("electricity-external", electricRole)).cases[0]
+          .orders[0].state,
+        "prepared",
+      );
+      await request(pilot.app)
+        .post("/api/municipality/actions")
+        .set(admin)
+        .send({
+          type: "resolve",
+          id: electric.id,
+          body: "Test kapsamında inceleme sonucu merkez tarafından kaydedildi.",
+        })
         .expect(200);
       const withdrawn = await workspace("electricity-external", electricRole);
       assert.equal(withdrawn.cases[0].orders[0].state, "cancelled");

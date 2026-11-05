@@ -16,6 +16,8 @@ Talep ayrıntısında **Kurum paneli + demo e-posta** seçilince kurum kuyruğu 
 
 Panel e-posta durumunu ve gönderilen metni gösterir. Sağlayıcının kabulü, kurumun okuduğu veya işlemi başlattığı anlamına gelmez. Başarısız gönderimde kurum kaydı korunur; sınırlı tekrar gönderim aynı sağlayıcı idempotency anahtarıyla yapılır. Gerçek kullanımda kurum başına adres ve iletişim tercihi ayrıca tanımlanmalıdır; demo alıcısı tek sunucu ayarıdır.
 
+5 Kasım düzeltmesi: Kuruma yönlendirme ve kurumun incelemeye alması artık talep sahibine ve katılan hesaplara ayrı uygulama içi gelişmeler olarak yansır. Yeni talepler inceleme durumuna geçer; daha ileri durumlar korunur. Tekrar kaydetme bildirimleri çoğaltmaz. Bu düzeltme Android 1.4.0 ile uyumludur; APK güncellemesi gerekmez.
+
 ## Doğrulananlar ve kalanlar
 
 - 18 sunucu testi, 8 panel testi ve panel üretim derlemesi geçti.

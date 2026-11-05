@@ -134,8 +134,9 @@ export function InstitutionForward({ report }: { report: CitizenReport }) {
         <h3>Kurum çalışma alanına gönder</h3>
       </div>
       <p className="field-note">
-        Bu gönderim ilgili kurumun pilot kuyruğuna düşer. Vatandaşa otomatik
-        bildirim veya saha ekibine teslim anlamına gelmez.
+        Bu gönderim ilgili kurumun kuyruğuna düşer. Talep sahibi ve katılanlar
+        iletim gelişmesini uygulamada görür. Saha ekibi görevi ayrıca
+        hazırlanır.
       </p>
       {delivery && (
         <div className={`institution-delivery ${delivery.state}`}>

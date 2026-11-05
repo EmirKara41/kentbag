@@ -162,10 +162,11 @@ export class MunicipalityService {
     message: string,
     notify = true,
     kind: "status" | "message" = "status",
+    eventId: string = randomUUID(),
   ) {
     const now = new Date().toISOString();
     doc.events.push({
-      id: randomUUID(),
+      id: eventId,
       status: doc.status,
       body: message,
       kind,
@@ -189,6 +190,29 @@ export class MunicipalityService {
           read: false,
         }),
       ],
+    );
+  }
+  async institutionProgress(
+    sql: Sql,
+    doc: any,
+    deliveryId: string,
+    institutionName: string,
+    phase: "forwarded" | "accepted",
+  ) {
+    // The institution service holds the report and center locks. A delivery produces each milestone once.
+    const eventId = `institution-${phase}:${deliveryId}`;
+    if (doc.events.some((event: any) => event.id === eventId)) return;
+    if (doc.status === "submitted") doc.status = "in_review";
+    doc.municipality.updatedAt = new Date().toISOString();
+    const message =
+      phase === "forwarded"
+        ? `Talebiniz ${institutionName} kurumuna iletildi. Gelişmeleri buradan takip edebilirsiniz.`
+        : `${institutionName} bildiriminizi incelemeye aldı.`;
+    await this.publicEvent(sql, doc, message, true, "status", eventId);
+    await new CommunityService(this.db).update(sql, doc, message, true);
+    await sql.query(
+      "UPDATE citizen_report SET document=$1::jsonb WHERE id=$2",
+      [JSON.stringify(doc), doc.id],
     );
   }
   async snapshot(sql: Sql = this.db): Promise<PanelState> {

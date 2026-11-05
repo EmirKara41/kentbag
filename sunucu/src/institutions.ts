@@ -102,8 +102,16 @@ export class InstitutionService {
           [data.id],
         )
       ).rows[0];
-      if (existing?.unit_id === unit.id && existing.state !== "returned")
+      if (existing?.unit_id === unit.id && existing.state !== "returned") {
+        await this.municipality.institutionProgress(
+          sql,
+          doc,
+          existing.id,
+          institutionProfiles.find((p) => p.id === unit.id)!.name,
+          "forwarded",
+        );
         return { ok: true, reused: true };
+      }
       if (doc.municipality.teamId && doc.municipality.unitId !== unit.id)
         throw new HttpError(
           409,
@@ -129,6 +137,13 @@ export class InstitutionService {
         { report_id: data.id, id: deliveryId, unit_id: unit.id },
         "Merkezden gönderildi",
         `${doc.reference} · ${data.instruction}`,
+      );
+      await this.municipality.institutionProgress(
+        sql,
+        doc,
+        deliveryId,
+        institutionProfiles.find((p) => p.id === unit.id)!.name,
+        "forwarded",
       );
       if (data.channel !== "portal") {
         const profile = institutionProfiles.find((p) => p.id === unit.id)!;
@@ -272,6 +287,13 @@ export class InstitutionService {
           delivery,
           "Kurum teslim aldı",
           `${doc.reference} kurum tarafından incelemeye alındı.`,
+        );
+        await this.municipality.institutionProgress(
+          sql,
+          doc,
+          delivery.id,
+          institutionProfiles.find((p) => p.id === unitId)!.name,
+          "accepted",
         );
       } else {
         if (delivery.state !== "accepted")

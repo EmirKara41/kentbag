@@ -90,8 +90,54 @@ test(
       const after = (
         await request(pilot.app).get("/api/workspace").set(citizen).expect(200)
       ).body;
-      assert.equal(after.inbox.length, before);
+      assert.equal(after.inbox.length, before + 1);
+      assert.equal(
+        after.inbox.filter((item: any) =>
+          item.body.includes("kurumuna iletildi"),
+        ).length,
+        1,
+      );
       assert.ok(!JSON.stringify(after).includes("demo@example.test"));
+      // Existing deliveries from the previous release lack a citizen milestone.
+      // Reusing that delivery repairs the visible history without resending its mail.
+      const legacy = (
+        await pilot.db.query(
+          "SELECT document FROM citizen_report WHERE id=$1",
+          [report.id],
+        )
+      ).rows[0].document;
+      legacy.status = "submitted";
+      legacy.events = legacy.events.filter(
+        (event: any) => !event.id.startsWith("institution-forwarded:"),
+      );
+      await pilot.db.query(
+        "UPDATE citizen_report SET document=$1::jsonb WHERE id=$2",
+        [JSON.stringify(legacy), report.id],
+      );
+      await pilot.db.query(
+        "DELETE FROM citizen_inbox WHERE report_id=$1 AND document->>'body' LIKE '%kurumuna iletildi%'",
+        [report.id],
+      );
+      const attempts = result.mails[0].attempts;
+      assert.equal(
+        (await institutions.forward({ ...input, channel: "portal" })).reused,
+        true,
+      );
+      await institutions.forward({ ...input, channel: "portal" });
+      const repaired = (
+        await request(pilot.app).get("/api/workspace").set(citizen).expect(200)
+      ).body;
+      assert.equal(
+        repaired.inbox.filter((item: any) =>
+          item.body.includes("kurumuna iletildi"),
+        ).length,
+        1,
+      );
+      assert.equal(repaired.reports[0].status, "in_review");
+      const preservedMail = (await mail.list(report.id)).mails;
+      assert.equal(preservedMail.length, 1);
+      assert.equal(preservedMail[0].attempts, attempts);
+      assert.equal(preservedMail[0].providerId, "test-provider-id");
     } finally {
       if (previous === undefined) delete process.env.DEMO_MAIL_TO;
       else process.env.DEMO_MAIL_TO = previous;
