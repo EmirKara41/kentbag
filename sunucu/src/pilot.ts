@@ -121,6 +121,7 @@ export async function startPilot(
     "007_staff.sql",
     "008_institution_mail.sql",
     "009_field_work.sql",
+    "010_crew_enrollment.sql",
   ])
     await pool.query(
       await readFile(new URL(`../migrations/${file}`, import.meta.url), "utf8"),

@@ -1,0 +1,48 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {mkdtemp,rm} from 'node:fs/promises';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+import request from 'supertest';
+import {startPilot} from '../src/pilot.js';
+test('self-created crew account requires explicit center approval; retries, rejection, stale review and revocation preserve scope',{timeout:90000},async()=>{
+ const dataDir=await mkdtemp(join(tmpdir(),'kent-enrollment-'));
+ const pilot=await startPilot({dataDir,host:'127.0.0.1',port:4330,pgPort:5448,listenHost:'127.0.0.1'});
+ try{
+ const origin='http://localhost:4280';
+ const signed=await request(pilot.app).post('/api/auth/sign-up/email').set('Origin',origin).send({name:'Saha başvuru testi',email:'enroll@example.test',password:'Test-enroll-password123!'}).expect(200);
+ const user={Origin:origin,Authorization:`Bearer ${signed.headers['set-auth-token']}`};
+ const adminLogin=await request(pilot.app).post('/api/municipality/local-session').set('Origin',origin).send({}).expect(200);
+ const admin={Origin:origin,Authorization:`Bearer ${adminLogin.body.token}`};
+ const submit=(unitId='water',teamId='su-ariza')=>request(pilot.app).post('/api/staff/enrollment').set(user).send({unitId,teamId,role:'center'});
+ const status=()=>request(pilot.app).get('/api/staff/enrollment').set(user).expect(200);
+ const list=()=>request(pilot.app).get('/api/municipality/staff').set(admin).expect(200);
+ await request(pilot.app).get('/api/staff/enrollment').expect(401);
+ assert.equal((await status()).body.state,'unassigned');
+ await submit('water','elektrik-trafo').expect(400);
+ await submit().expect(200);await submit().expect(200);
+ assert.equal((await status()).body.state,'pending');
+ await submit('public-works','fen-yol').expect(409);
+ await request(pilot.app).get('/api/field/workspace').set(user).expect(401);
+ const pending=(await list()).body.applications[0];assert.equal(pending.teamId,'su-ariza');
+ const review=(decision:string,updatedAt=pending.updatedAt)=>request(pilot.app).post('/api/municipality/staff/enrollment-review').set(admin).send({id:pending.id,updatedAt,decision,note:'Başvuru test değerlendirmesi'});
+ await request(pilot.app).post('/api/municipality/staff/enrollment-review').set(user).send({...pending,decision:'approve'}).expect(401);
+ await review('approve','2020-01-01T00:00:00.000Z').expect(409);
+ await review('reject').expect(200);
+ assert.equal((await status()).body.state,'rejected');
+ await submit().expect(200);
+ await review('approve').expect(409);
+ const next=(await list()).body.applications[0];
+ await review('approve',next.updatedAt).expect(200);
+ assert.equal((await status()).body.state,'approved');
+ const me=(await request(pilot.app).get('/api/staff/me').set(user).expect(200)).body;
+ assert.equal(me.role,'crew');assert.equal(me.unitId,'water');assert.equal(me.teamId,'su-ariza');
+ await request(pilot.app).get('/api/field/workspace').set(user).expect(200);
+ await request(pilot.app).get('/api/municipality/workspace').set(user).expect(401);
+ await request(pilot.app).get('/api/institutions/water/workspace').set(user).expect(403);
+ await submit().expect(409);
+ assert.equal((await list()).body.applications.length,0);
+ await request(pilot.app).post('/api/municipality/staff/disable').set(admin).send({id:me.userId}).expect(200);
+ assert.equal((await status()).body.state,'disabled');await submit().expect(409);
+ }finally{await pilot.close();await rm(dataDir,{recursive:true,force:true});}
+});

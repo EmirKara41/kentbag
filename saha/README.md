@@ -1,6 +1,8 @@
-# KentBağ Saha · Android 0.1.0
+# KentBağ Saha · Android 0.1.1
 
-Elektrik, su, yol, temizlik ve park ekipleri aynı uygulamayı kullanır. Hesabın kurum ve ekip üyeliği sunucuda denetlenir. Vatandaş hesabı saha yetkisi vermez. Personel hesaplarını belediye merkezinin **Hesaplar** ekranından `Saha personeli` rolüyle oluşturun; kurum ve ekip seçin.
+Elektrik, su, yol, temizlik ve park ekipleri aynı uygulamayı kullanır. Giriş ekranındaki **Hesabım yok · Hesap oluştur** ile ad, e-posta ve en az 12 karakter şifre girilir. Ardından kurum ve ekip seçilip başvuru gönderilir. Mevcut vatandaş hesabıyla da giriş yapılarak aynı başvuru yapılabilir. Hesap açmak görev yetkisi vermez; merkez **Personel hesapları → Saha hesabı başvuruları** bölümünden başvuruyu onaylar veya gerekçeyle reddeder. Onaylandığında açık saha uygulaması görev ekranına geçer; yeniden giriş gerekmez. Bekleyen başvuru uygulama yeniden açıldığında korunur.
+
+Merkez doğrudan `Saha personeli` rolüyle hesap oluşturmayı da sürdürebilir. Kapatılmış personel erişimi yeni başvuruyla tekrar açılamaz. Başvuru onayı yalnız saha rolü verir; merkez veya kurum sorumlusu yetkisi vermez. Sunucuda `010_crew_enrollment.sql` göçü gerekir. `sunucu/tests/enrollment.test.ts` onay, ret, yeniden başvuru, eski onay isteği ve erişim kapatma sınırlarını denetler.
 
 - [Android APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/indir/)
 - [Tarayıcı önizlemesi](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/)

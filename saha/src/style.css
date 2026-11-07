@@ -5,6 +5,9 @@
   font-synthesis: none;
   font-weight: 400;
 }
+select {font:inherit;width:100%;padding:13px 15px;border:1px solid #dce4da;border-radius:12px;background:white;color:inherit;}
+select:focus-visible {outline:3px solid #c4a04e;outline-offset:3px;}
+.enrollment h1 {font-size:32px;}
 * {
   box-sizing: border-box;
 }

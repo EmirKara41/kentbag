@@ -1,6 +1,6 @@
 import service from "../../mobil/production-service.json";
 import { sessionStore } from "./native";
-import type { Draft, Workspace } from "./domain";
+import type { Account, Draft, Enrollment, Workspace } from "./domain";
 const base = import.meta.env.VITE_API_URL?.trim() || service.apiUrl;
 const url = new URL(base);
 if (
@@ -58,9 +58,20 @@ async function request<T>(
   return data;
 }
 export const api = {
+  async account():Promise<Account> {
+    const enrollment=await request<Enrollment>('/api/staff/enrollment');
+    return enrollment.state==='approved'?request<Workspace>('/api/field/workspace'):enrollment;
+  },
+  async register(name:string,email:string,password:string) {
+    epoch++;token=null;await sessionStore.clear();
+    await request('/api/auth/sign-up/email',{name:name.trim(),email:email.trim().toLowerCase(),password});
+    if(!token) throw new Error('Hesap oluşturuldu. E-posta ve şifrenle giriş yap.');
+    return api.account();
+  },
+  enroll:(unitId:string,teamId:string)=>request<Enrollment>('/api/staff/enrollment',{unitId,teamId}),
   async restore() {
     token = await sessionStore.get();
-    return token ? request<Workspace>("/api/field/workspace") : null;
+    return token ? api.account() : null;
   },
   async login(email: string, password: string) {
     epoch++;
@@ -71,7 +82,7 @@ export const api = {
       password,
     });
     if (!token) throw new Error("Giriş tamamlanamadı.");
-    return request<Workspace>("/api/field/workspace");
+    return api.account();
   },
   workspace: () => request<Workspace>("/api/field/workspace"),
   act: (orderId: string, type: "accept" | "start") =>

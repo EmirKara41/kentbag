@@ -124,9 +124,11 @@ type Member = {
   teamId: string | null;
   active: boolean;
 };
+type Application={id:string;name:string;email:string;unitId:string;teamId:string;updatedAt:string};
 export function StaffManagement() {
   const { staffAdmin, mode } = usePanel();
   const [members, setMembers] = useState<Member[]>([]),
+    [applications,setApplications]=useState<Application[]>([]),
     [error, setError] = useState(""),
     [notice, setNotice] = useState(""),
     [busy, setBusy] = useState(false);
@@ -137,8 +139,9 @@ export function StaffManagement() {
     [unitId, setUnitId] = useState<string>(institutionProfiles[0].id),
     [teamId, setTeamId] = useState("");
   const refresh = useCallback(async () => {
-    const result = await staffAdmin<{ members: Member[] }>("/staff");
+    const result = await staffAdmin<{ members: Member[];applications?:Application[] }>("/staff");
     setMembers(result.members);
+    setApplications(result.applications??[]);
   }, [staffAdmin]);
   useEffect(() => {
     if (mode === "live") void refresh().catch((e) => setError(e.message));
@@ -176,7 +179,7 @@ export function StaffManagement() {
       <PageHeading
         eyebrow="ERİŞİM YÖNETİMİ"
         title="Personel hesapları"
-        body="Kurum ve saha hesaplarını merkez oluşturur. Vatandaş kayıtları personel yetkisi vermez."
+        body="Saha başvurularını onaylayın veya doğrudan personel hesabı oluşturun. Yeni kayıtlar onaylanmadan görev yetkisi almaz."
       />
       {error && <Message>{error}</Message>}
       {notice && (
@@ -184,6 +187,17 @@ export function StaffManagement() {
           {notice}
         </p>
       )}
+      <section className="staff-list" aria-label="Saha hesabı başvuruları">
+        <h2>Saha hesabı başvuruları <small>{applications.length}</small></h2>
+        <Button variant="secondary" disabled={busy||mode!=='live'} onClick={()=>{setError('');void refresh().catch(e=>setError(e.message));}}>Başvuruları yenile</Button>
+        {!applications.length&&<p>Onay bekleyen başvuru yok.</p>}
+        {applications.map(application=><CrewApplication key={`${application.id}:${application.updatedAt}`} application={application} busy={busy} review={async(decision,note)=>{
+          setBusy(true);setError('');setNotice('');
+          try{await staffAdmin('/staff/enrollment-review',{id:application.id,updatedAt:application.updatedAt,decision,note});setNotice(decision==='approve'?'Saha hesabı onaylandı. Personel uygulamadan görevlerine erişebilir.':'Başvuru reddedildi. Açıklama başvuru sahibine gösterilir.');await refresh();}
+          catch(e){setError(e instanceof Error?e.message:'Başvuru değerlendirilemedi.');}
+          finally{setBusy(false);}
+        }}/>) }
+      </section>
       <div className="staff-layout">
         <form onSubmit={(e) => void create(e)} className="staff-form">
           <h2>Yeni personel hesabı</h2>
@@ -309,4 +323,8 @@ export function StaffManagement() {
       </div>
     </div>
   );
+}
+function CrewApplication({application:a,busy,review}:{application:Application;busy:boolean;review:(decision:'approve'|'reject',note:string)=>Promise<void>}){
+ const [note,setNote]=useState('');const profile=institutionProfiles.find(p=>p.id===a.unitId);
+ return <article><div><strong>{a.name}</strong><span>{a.email}</span><small>{profile?.name} · {profile?.teams.find(t=>t.id===a.teamId)?.name}</small><label className="field">Başvuru sahibine açıklama<input maxLength={500} value={note} onChange={e=>setNote(e.target.value)} placeholder="İsteğe bağlı değerlendirme notu"/></label><Button disabled={busy} onClick={()=>void review('approve',note)}>Saha erişimini onayla</Button>{' '}<Button variant="secondary" disabled={busy} onClick={()=>void review('reject',note)}>Başvuruyu reddet</Button></div></article>;
 }

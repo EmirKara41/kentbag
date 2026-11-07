@@ -4,6 +4,8 @@ Vatandaş, belediye merkezi ve saha ekiplerini aynı talep sürecinde buluştura
 
 Proje adı KentBağ'dır. Mevcut vatandaş uygulamasının görünen adı KentYanımda, Android paket kimliği `com.kentyanimda.vatandas` olarak korunur; kurulu uygulamalar sonraki paketlerle güncellenebilir.
 
+7 Kasım 2026: **Saha 0.1.1** giriş ekranına hesap oluşturma eklendi. Yeni veya mevcut vatandaş hesabı kurum/ekip başvurusu yapabilir; merkez **Personel hesapları → Saha hesabı başvuruları** bölümünden onaylayınca saha görevlerine erişir. Başvurunun bekleme/ret durumu kalıcıdır; onay merkez/kurum yetkisi vermez. [Güncel hesap açma ve deneme adımları](SAHA_DENEME.md).
+
 5 Kasım 2026: Ayrı **KentBağ Saha 0.1.0** Android uygulaması ve kurum → ekip → kurum kontrolü → merkez onayı → talep sahibi/takipçiler akışı eklendi. [Saha APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/indir/), [saha kılavuzu](saha/README.md). Vatandaş Android **1.4.1** onaylanan sonuç fotoğraflarını takipçilere de gösterir; [vatandaş APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/). [İnternet demosu, bağlantılar ve sınırlar](INTERNET_DEMOSU.md). Aşağıdaki yerel pilot açıklamaları eski 1.3.x paketlerine ve yerel geliştirmeye aittir.
 
 - `mobil/`: Android vatandaş uygulaması. Bölge ana sayfası, aktif olaylar, iyileştirme istekleri, tamamlanan kişisel talepler, kamera/galeri, GPS/harita ve hesap ekranları APK'nın içindedir. [Yeni deneyim ve bağlantı sınırları](mobil/URUN_DENEYIMI.md).

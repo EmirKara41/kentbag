@@ -1,5 +1,7 @@
 # Saha uygulamasını deneme · 5 Kasım 2026
 
+7 Kasım güncellemesi: Saha **0.1.1** sürümünde **Hesabım yok · Hesap oluştur** düğmesi var. Kendi adın, e-postan ve şifrenle kayıt ol; kurum ve ekip seçerek başvurunu gönder. Mevcut vatandaş hesabınla giriş yapıp da başvurabilirsin. Merkez hesabında **Personel hesapları → Saha hesabı başvuruları → Saha erişimini onayla** işlemini yap. Uygulamada **Durumu yenile** düğmesiyle görevlerine geçebilirsin. Aşağıdaki hazır hesaplar alternatif deneme yoludur.
+
 1. [KentBağ Saha Android 0.1.0](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/indir/) sayfasından APK'yı indir. Vatandaş uygulamasından ayrı kurulur; Expo Go veya aynı Wi-Fi gerekmez.
 2. Yerel [demo hesapları](sunucu/.local/KENTBAG_DEMO_HESAPLARI.md) dosyasındaki **Yol bakım ekibi** hesabını kullan (`saha-yol@demo.kentbag.test`). Diğer kurumlar için de birer saha hesabı aynı dosyada var.
 3. `KY-E88CBA33` numaralı açık DEMO görev ekibe atandı ve tarayıcıdan kabulü doğrulandı. Yapılan işlem açıklaması ve bir fotoğraf ekleyip **Sonucu kurum kontrolüne gönder** düğmesine bas. Bu bir testtir; açıklamaya DEMO yaz.

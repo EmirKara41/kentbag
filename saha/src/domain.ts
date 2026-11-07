@@ -44,6 +44,13 @@ export type Workspace = {
   jobs: Job[];
 };
 export type Draft = { body: string; photos: Photo[] };
+export type Enrollment = {
+  kind: 'enrollment';
+  state: 'unassigned'|'pending'|'rejected'|'disabled'|'other_role'|'approved';
+  application?: {unitId:string;teamId:string;note?:string};
+  profiles: {id:string;name:string;teams:{id:string;name:string}[]}[];
+};
+export type Account = Workspace | Enrollment;
 export const priorities = {
   urgent: "Acil",
   high: "Yüksek",

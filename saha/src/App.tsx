@@ -26,6 +26,7 @@ import {
 import { get, set, del } from "idb-keyval";
 import { api, ApiError } from "./api";
 import { capturePhoto, preparePhoto, native } from "./native";
+import { EnrollmentPage } from './Enrollment';
 import {
   date,
   stages,
@@ -33,16 +34,23 @@ import {
   type Draft,
   type Job,
   type Workspace,
+  type Enrollment,
+  type Account,
 } from "./domain";
 const empty: Draft = { body: "", photos: [] };
 export default function App() {
   const [data, setData] = useState<Workspace | null>(null),
+    [enrollment,setEnrollment]=useState<Enrollment|null>(null),
     [loading, setLoading] = useState(true),
     [error, setError] = useState(""),
     [selected, setSelected] = useState<string | null>(null),
     [tab, setTab] = useState("active"),
     [sync, setSync] = useState("");
   const identity = useRef(0);
+  const enter=useCallback((value:Account|null)=>{
+    if(value&&'kind' in value){setEnrollment(value);setData(null);}
+    else{setEnrollment(null);setData(value);}
+  },[]);
   const authenticated=!!data;
   const refresh = useCallback(async () => {
     const expected = identity.current;
@@ -63,7 +71,7 @@ export default function App() {
     void api
       .restore()
       .then((value) => {
-        if (active) setData(value);
+        if (active) enter(value);
       })
       .catch(() => {})
       .finally(() => {
@@ -72,7 +80,7 @@ export default function App() {
     return () => {
       active = false;
     };
-  }, []);
+  }, [enter]);
   useEffect(() => {
     if (!authenticated) return;
     const timer = setInterval(() => {
@@ -107,6 +115,7 @@ export default function App() {
     identity.current++;
     await api.logout().catch(() => {});
     setData(null);
+    setEnrollment(null);
     setSelected(null);
     setError("");
   }
@@ -117,12 +126,13 @@ export default function App() {
         <p>Çalışma alanı açılıyor…</p>
       </main>
     );
+  if(enrollment) return <EnrollmentPage data={enrollment} onAccount={enter} logout={logout}/>;
   if (!data)
     return (
       <Login
         onLogin={(value) => {
           identity.current++;
-          setData(value);
+          enter(value);
           setError("");
         }}
       />
@@ -283,14 +293,16 @@ export default function App() {
               ? `Son yenileme ${date(sync)}`
               : "Kurumundan atanmış gerçek görev kayıtları"}
           </p>
-          <footer className="app-footer">KentBağ Saha · 0.1.0</footer>
+          <footer className="app-footer">KentBağ Saha · 0.1.1</footer>
         </main>
       )}
     </div>
   );
 }
-function Login({ onLogin }: { onLogin: (data: Workspace) => void }) {
+function Login({ onLogin }: { onLogin: (data: Account) => void }) {
   const [email, setEmail] = useState(""),
+    [name,setName]=useState(''),
+    [register,setRegister]=useState(false),
     [password, setPassword] = useState(""),
     [busy, setBusy] = useState(false),
     [error, setError] = useState("");
@@ -299,7 +311,7 @@ function Login({ onLogin }: { onLogin: (data: Workspace) => void }) {
     setBusy(true);
     setError("");
     try {
-      onLogin(await api.login(email, password));
+      onLogin(await (register?api.register(name,email,password):api.login(email, password)));
       setPassword("");
     } catch (e) {
       setError(e instanceof Error ? e.message : "Giriş yapılamadı.");
@@ -317,20 +329,22 @@ function Login({ onLogin }: { onLogin: (data: Workspace) => void }) {
       </div>
       <span className="eyebrow">İŞİN BAŞINDA, EKİBİN YANINDA.</span>
       <h1>
-        Bugünün işleri
+        {register?'Ekibine katıl,':'Bugünün işleri'}
         <br />
-        buradan başlar.
+        {register?'hesabını oluştur.':'buradan başlar.'}
       </h1>
       <p>
-        Kurumunun oluşturduğu saha hesabıyla giriş yap. Yalnızca kendi ekibinin
-        görevlerini göreceksin.
+        {register?'Adın, e-postan ve şifrenle kayıt ol. Sonraki adımda kurumunu ve ekibini seçerek merkez onayına gönderebilirsin.':'Saha hesabınla giriş yap. Hesabın yoksa aşağıdan hesap oluşturabilirsin.'}
       </p>
       <form onSubmit={(e) => void submit(e)}>
+        {register&&<label>Ad soyad<input required minLength={2} maxLength={100} autoComplete="name" value={name} onChange={e=>setName(e.target.value)}/></label>}
         <label>
           E-posta
           <input
             type="email"
             autoComplete="username"
+            maxLength={254}
+            disabled={busy}
             autoCapitalize="none"
             required
             value={email}
@@ -342,11 +356,15 @@ function Login({ onLogin }: { onLogin: (data: Workspace) => void }) {
           Şifre
           <input
             type="password"
-            autoComplete="current-password"
+            autoComplete={register?'new-password':'current-password'}
+            minLength={register?12:undefined}
+            maxLength={128}
+            disabled={busy}
             required
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          {register&&<small>En az 12 karakter kullan.</small>}
         </label>
         {error && (
           <div className="notice error" role="alert">
@@ -354,18 +372,19 @@ function Login({ onLogin }: { onLogin: (data: Workspace) => void }) {
           </div>
         )}
         <button className="primary" disabled={busy}>
-          {busy ? "Giriş yapılıyor…" : "Çalışma alanına gir"}
+          {busy ? "İşlem yapılıyor…" : register?'Hesap oluştur':"Çalışma alanına gir"}
           <ArrowUpRight size={19} />
         </button>
       </form>
+      <button className="secondary full" disabled={busy} onClick={()=>{setRegister(!register);setPassword('');setError('');}}>{register?'Zaten hesabım var · Giriş yap':'Hesabım yok · Hesap oluştur'}</button>
       <div className="login-note">
         <ShieldCheck size={20} />
         <span>
-          Hesabın yoksa kurum sorumluna başvur. Vatandaş hesabı bu uygulamada
-          görev yetkisi vermez.
+          Hesap oluşturmak tek başına görev yetkisi vermez. Kurum ve ekip
+          başvurun belediye merkezi tarafından onaylanır. Mevcut vatandaş hesabınla da giriş yapıp saha başvurusu yapabilirsin.
         </span>
       </div>
-      <small>İnternet bağlantısı gerekir · KentBağ Saha 0.1.0</small>
+      <small>İnternet bağlantısı gerekir · KentBağ Saha 0.1.1</small>
     </main>
   );
 }

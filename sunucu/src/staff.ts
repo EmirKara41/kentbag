@@ -4,6 +4,7 @@ import type { Database } from "./database.js";
 import type { CitizenUser } from "./citizen.js";
 import { HttpError } from "./validation.js";
 import { institutionProfiles } from "./institution-domain.js";
+import { CrewEnrollment } from './enrollment.js';
 
 export type Staff = {
   userId: string;
@@ -14,6 +15,8 @@ export type Staff = {
   teamId: string | null;
 };
 export type StaffAccess = {
+  enrollment(req: express.Request, input?: unknown): Promise<unknown>;
+  reviewEnrollment(input: unknown): Promise<unknown>;
   member(req: express.Request): Promise<Staff | null>;
   create(input: unknown): Promise<{ ok: true }>;
   list(): Promise<unknown>;
@@ -50,8 +53,16 @@ export function createStaffAccess(
   };
   return {
     member,
+    async enrollment(req,input) {
+      const user=await session(req);
+      if(!user) throw new HttpError(401,'Hesabınızla giriş yapın.');
+      const service=new CrewEnrollment(db);
+      return input===undefined?service.status(user.id):service.submit(user.id,input);
+    },
+    reviewEnrollment: input=>new CrewEnrollment(db).review(input),
     async list() {
       return {
+        applications: await new CrewEnrollment(db).list(),
         members: (
           await db.query(
             'SELECT u.id,u.name,u.email,s.role,s.unit_id AS "unitId",s.team_id AS "teamId",s.active FROM staff_member s JOIN "user" u ON u.id=s.user_id ORDER BY s.created_at DESC',
@@ -130,6 +141,8 @@ export function createStaffAccess(
 }
 export function staffRouter(access: StaffAccess) {
   const router = express.Router();
+  router.get('/enrollment',async(req,res)=>res.json(await access.enrollment(req)));
+  router.post('/enrollment',express.json({limit:'2kb'}),async(req,res)=>res.json(await access.enrollment(req,req.body)));
   router.get("/me", async (req, res) => {
     const member = await access.member(req);
     if (!member)

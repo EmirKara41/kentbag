@@ -621,6 +621,7 @@ export function municipalityRouter(
     next();
   });
   if (options.staff) {
+    router.post('/staff/enrollment-review',express.json({limit:'2kb'}),async(req,res)=>res.json(await options.staff!.reviewEnrollment(req.body)));
     router.get("/staff", async (_req, res) =>
       res.json(await options.staff!.list()),
     );
