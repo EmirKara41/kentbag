@@ -1473,6 +1473,22 @@ input[type="search"]::-webkit-search-cancel-button {
 .auth-page form > .button {
   margin-top: 28px;
 }
+.auth-recovery {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  min-height: 44px;
+  margin-top: 4px;
+  color: var(--primary, #2467d9);
+  font-size: 14px;
+  font-weight: 600;
+  text-underline-offset: 3px;
+}
+.auth-recovery:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
 .auth-footer {
   display: flex;
   align-items: center;

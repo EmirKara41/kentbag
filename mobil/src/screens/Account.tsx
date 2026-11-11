@@ -144,6 +144,16 @@ export function Auth({ onComplete }: { onComplete: () => void }) {
             </button>
           </div>
         </label>
+        {mode === "login" && (
+          <a
+            className="auth-recovery"
+            href="https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla"
+            target="_blank"
+            rel="noreferrer"
+          >
+            Şifremi unuttum
+          </a>
+        )}
         {mode === "register" && (
           <label className="field">
             <span>
@@ -287,7 +297,7 @@ export function Account() {
       <div className="app-version">
         <Brand compact />
         <strong>KentYanımda</strong>
-        <small>Sürüm 1.4.1 · Yaşadığın yer için.</small>
+        <small>Sürüm 1.4.2 · Yaşadığın yer için.</small>
       </div>
       {confirm && (
         <Sheet

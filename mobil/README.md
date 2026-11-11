@@ -1,5 +1,7 @@
 # KentYanımda · Yeni Android uygulaması
 
+Android **1.4.2**: Vatandaş giriş ekranında şifre alanının altında **Şifremi unuttum** bağlantısı bulunur. Mevcut güvenli [şifre kurtarma sayfasını](https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla) açar; hesap adresine gelen 30 dakikalık bağlantıyla yeni şifre belirlendikten sonra uygulamaya dönülür. Kurulu uygulamanın üzerine güncellenir; vatandaşın kayıtları korunur. Bu değişiklik saha uygulamasını değiştirmez.
+
 18 Ekim 2026. Önceki mobil uygulama bırakıldı. Bu klasör sıfırdan kurulan vatandaş uygulamasıdır; Pusula projesinde hiçbir değişiklik yapılmamıştır.
 
 Kullanıcı APK'yı telefonuna kurup açar. Ana sayfa, bildirim formu, talepler, güncellemeler, hesap, profil, yardım ve gizlilik ekranları uygulamanın içindedir. Expo Go, Metro, tarayıcı kurulumu veya açık bilgisayar gerekmez. Android 7 ve üzeri desteklenir. 1.4.0 internet demosu sabit HTTPS API'ye bağlanır; telefon Wi-Fi veya mobil veri kullanabilir.

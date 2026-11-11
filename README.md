@@ -4,6 +4,8 @@ Vatandaş, belediye merkezi ve saha ekiplerini aynı talep sürecinde buluştura
 
 Proje adı KentBağ'dır. Mevcut vatandaş uygulamasının görünen adı KentYanımda, Android paket kimliği `com.kentyanimda.vatandas` olarak korunur; kurulu uygulamalar sonraki paketlerle güncellenebilir.
 
+Vatandaş **Android 1.4.2** giriş ekranına şifre alanının altında **Şifremi unuttum** bağlantısı eklendi. [Güncel vatandaş APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/). Mevcut kurulumun üzerine güncellenir. Bu geliştirmede saha uygulaması değiştirilmedi.
+
 11 Kasım 2026: **Saha 0.1.2** girişine **Şifremi unuttum** eklendi. [Web kurtarma sayfası](https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla) APK güncellenmeden de kullanılabilir. E-posta bağlantısı doğrudan hesap sahibine gider, 30 dakika geçerlidir ve tek kullanımlıktır. Şifre yenilenirken eski oturumlar kapatılır; kayıtlar ve personel yetkisi korunur.
 
 7 Kasım 2026: **Saha 0.1.1** giriş ekranına hesap oluşturma eklendi. Yeni veya mevcut vatandaş hesabı kurum/ekip başvurusu yapabilir; merkez **Personel hesapları → Saha hesabı başvuruları** bölümünden onaylayınca saha görevlerine erişir. Başvurunun bekleme/ret durumu kalıcıdır; onay merkez/kurum yetkisi vermez. [Güncel hesap açma ve deneme adımları](SAHA_DENEME.md).

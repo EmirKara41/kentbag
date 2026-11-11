@@ -1,5 +1,7 @@
 # KentBağ internet demosu
 
+Vatandaş Android **1.4.2** giriş ekranına **Şifremi unuttum** bağlantısı eklendi. [Vatandaş APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/) günceldir; aynı imzayla mevcut kurulumun üzerine yüklenir. Ortak kurtarma sayfasındaki sonuç metni vatandaş hesabına da uygundur. Saha uygulamasında değişiklik yapılmadı.
+
 11 Kasım 2026: [Şifremi unuttum](https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla) web akışı ve Saha Android 0.1.2 bağlantısı eklendi. Better Auth tek kullanımlık, 30 dakikalık doğrulama anahtarını denetler; Resend e-postayı doğrudan hesap adresine gönderir. Üretimde e-posta görevi `waitUntil` ile tamamlanır, hata günlüklerine anahtar/adres yazılmaz. Şifre sıfırlama mevcut oturumları kapatır. Yeni servis veya veritabanı göçü gerekmez.
 
 7 Kasım 2026: Saha Android 0.1.1 ve web önizlemesinde hesap oluşturma, kurum/ekip başvurusu, onay bekleme ekranı ve merkezde başvuru onayı/ret eklendi. Başvuru yeni görev yetkisi oluşturmaz; merkez açıkça onayladığında yalnız ilgili ekibin saha erişimi verilir. Mevcut vatandaş hesabı da başvurabilir. Bekleme ve ret durumları hesap bazında kalıcıdır.
