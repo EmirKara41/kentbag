@@ -1,5 +1,7 @@
 # Saha uygulamasını deneme · 5 Kasım 2026
 
+11 Kasım güncellemesi: **Saha 0.1.2** giriş ekranındaki **Şifremi unuttum** bağlantısından şifre yenilenebilir. APK güncellenmeden de [web kurtarma sayfası](https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla) kullanılabilir. Hesabın e-postasına gelen bağlantı 30 dakika geçerlidir; spam klasörünü de kontrol et. Şifre belirlendikten sonra uygulamaya yeni şifreyle giriş yap. Kurum/ekip onayı yeniden istenmez. Merkez/kurum web girişi de aynı kurtarma sayfasına bağlanır.
+
 7 Kasım güncellemesi: Saha **0.1.1** sürümünde **Hesabım yok · Hesap oluştur** düğmesi var. Kendi adın, e-postan ve şifrenle kayıt ol; kurum ve ekip seçerek başvurunu gönder. Mevcut vatandaş hesabınla giriş yapıp da başvurabilirsin. Merkez hesabında **Personel hesapları → Saha hesabı başvuruları → Saha erişimini onayla** işlemini yap. Uygulamada **Durumu yenile** düğmesiyle görevlerine geçebilirsin. Aşağıdaki hazır hesaplar alternatif deneme yoludur.
 
 1. [KentBağ Saha Android 0.1.0](https://kentbag-panel-emir-kara-s-projects.vercel.app/saha/indir/) sayfasından APK'yı indir. Vatandaş uygulamasından ayrı kurulur; Expo Go veya aynı Wi-Fi gerekmez.

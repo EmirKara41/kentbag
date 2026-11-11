@@ -293,7 +293,7 @@ export default function App() {
               ? `Son yenileme ${date(sync)}`
               : "Kurumundan atanmış gerçek görev kayıtları"}
           </p>
-          <footer className="app-footer">KentBağ Saha · 0.1.1</footer>
+          <footer className="app-footer">KentBağ Saha · 0.1.2</footer>
         </main>
       )}
     </div>
@@ -377,6 +377,7 @@ function Login({ onLogin }: { onLogin: (data: Account) => void }) {
         </button>
       </form>
       <button className="secondary full" disabled={busy} onClick={()=>{setRegister(!register);setPassword('');setError('');}}>{register?'Zaten hesabım var · Giriş yap':'Hesabım yok · Hesap oluştur'}</button>
+      {!register&&<a className="back" href="https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla" target="_blank" rel="noreferrer">Şifremi unuttum</a>}
       <div className="login-note">
         <ShieldCheck size={20} />
         <span>
@@ -384,7 +385,7 @@ function Login({ onLogin }: { onLogin: (data: Account) => void }) {
           başvurun belediye merkezi tarafından onaylanır. Mevcut vatandaş hesabınla da giriş yapıp saha başvurusu yapabilirsin.
         </span>
       </div>
-      <small>İnternet bağlantısı gerekir · KentBağ Saha 0.1.1</small>
+      <small>İnternet bağlantısı gerekir · KentBağ Saha 0.1.2</small>
     </main>
   );
 }

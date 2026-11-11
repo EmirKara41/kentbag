@@ -1,4 +1,6 @@
-# KentBağ Saha · Android 0.1.1
+# KentBağ Saha · Android 0.1.2
+
+11 Kasım 2026: Giriş ekranında **Şifremi unuttum** bağlantısı var. [Şifre kurtarma sayfasına](https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla) hesabın e-postası girilir; varsa doğrudan o adrese Resend üzerinden 30 dakika geçerli ve tek kullanımlık bağlantı gönderilir. Kurum demo posta yönlendirmesi bu e-postaya uygulanmaz. Yeni şifre belirlenince eski oturumlar kapatılır; vatandaş kayıtları ve saha kurum/ekip yetkisi değişmez. Şifreler geri okunmaz. Testler e-posta göndermeden sahte taşıyıcıyla yapılır. Gerçek gelen kutusu teslimi kullanıcı tarafından kontrol edilmelidir.
 
 Elektrik, su, yol, temizlik ve park ekipleri aynı uygulamayı kullanır. Giriş ekranındaki **Hesabım yok · Hesap oluştur** ile ad, e-posta ve en az 12 karakter şifre girilir. Ardından kurum ve ekip seçilip başvuru gönderilir. Mevcut vatandaş hesabıyla da giriş yapılarak aynı başvuru yapılabilir. Hesap açmak görev yetkisi vermez; merkez **Personel hesapları → Saha hesabı başvuruları** bölümünden başvuruyu onaylar veya gerekçeyle reddeder. Onaylandığında açık saha uygulaması görev ekranına geçer; yeniden giriş gerekmez. Bekleyen başvuru uygulama yeniden açıldığında korunur.
 

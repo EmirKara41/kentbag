@@ -4,6 +4,7 @@ import { PanelProvider } from "./store";
 import App from "./App";
 import { InstitutionApp } from "./Institutions";
 import { StaffLogin } from "./Staff";
+import { PasswordReset } from './PasswordReset';
 import "./style.css";
 import "./styles.css";
 class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
@@ -29,7 +30,7 @@ class Boundary extends Component<{ children: ReactNode }, { failed: boolean }> {
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <Boundary>
-      {location.pathname.startsWith("/giris") ? (
+      {location.pathname.startsWith('/sifre-sifirla') ? <PasswordReset/> : location.pathname.startsWith("/giris") ? (
         <StaffLogin />
       ) : location.pathname.startsWith("/kurumlar") ? (
         <InstitutionApp />

@@ -111,6 +111,7 @@ export function StaffLogin({
         <small>
           Hesap veya erişim sorunu için merkez sorumlusuna başvurun.
         </small>
+        <a href="/sifre-sifirla">Şifremi unuttum</a>
       </form>
     </div>
   );

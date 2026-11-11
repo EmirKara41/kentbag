@@ -19,6 +19,7 @@ await writeFile(
     {
       version: 3,
       routes: [
+        {src:'/sifre-sifirla/?$',dest:'/index.html',headers:{'Cache-Control':'no-store','Referrer-Policy':'no-referrer'}},
         { src: "/saha$", status: 308, headers: { Location: "/saha/" } },
         { src: "/saha/indir/?$", dest: "/saha/indir/index.html" },
         { src: "/saha/$", dest: "/saha/index.html" },
