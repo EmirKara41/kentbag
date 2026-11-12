@@ -12,6 +12,7 @@ import { createAgent, type Agent, type AsyncTravel, type Classify } from "./agen
 import type { ChangeHook } from "./requests.ts";
 import { citizenRoutes } from "./citizen.ts";
 import { crewRoutes } from "./crew.ts";
+import { staffRoutes } from "./staff.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -89,6 +90,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
 
   app.use("/api", citizenRoutes(ctx));
   app.use("/api", crewRoutes(ctx));
+  app.use("/api", staffRoutes(ctx));
   app.use("/api", (_req, res) => void res.status(404).json({ error: "Bulunamadı." }));
   app.use(errorHandler);
   return { app, ctx };
