@@ -1,0 +1,27 @@
+{
+  "name": "@kentbag/web",
+  "version": "2.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1 --port 5173 --strictPort",
+    "build": "tsc -p tsconfig.json && vite build",
+    "typecheck": "tsc -p tsconfig.json",
+    "test:ui": "playwright test"
+  },
+  "dependencies": {
+    "@fontsource/atkinson-hyperlegible": "^5.2.6",
+    "@kentbag/shared": "*",
+    "leaflet": "1.9.4",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.64.1",
+    "@types/leaflet": "1.9.22",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.1.2",
+    "vite": "8.3.4"
+  }
+}
