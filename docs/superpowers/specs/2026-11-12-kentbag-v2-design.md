@@ -47,8 +47,8 @@ Hedefler:
 Hedef olmayanlar:
 - Gerçek belediye/dağıtım şirketi sistemleriyle entegrasyon.
 - iOS uygulaması, Google Play yayını.
-- Telefon konumundan canlı araç takibi (ekip konumu yalnız durum adımlarında
-  ve iş adreslerinden hesaplanır).
+- Vatandaşa haritada canlı araç takibi göstermek (ekibin telefon konumu
+  yalnız atama ve tahmini süre hesabında kullanılır, bkz. bölüm 10).
 
 Kaçınılacaklar (teknik olarak çalışsa bile başarısızlık sayılır):
 - Bir sonucun vatandaşa ulaşması için ayrı kurum ve merkez onaylarının
@@ -123,7 +123,8 @@ Kurallar:
   2 sa, özel).
 - Sıradaki bir işin tahmini varışı = elindeki işin kalan süresi + sıradaki
   işler için tahmini iş süreleri + iş adresleri arası yol süresi + %20 gecikme
-  payı (en az 5 dk).
+  payı (en az 5 dk). Elinde iş yoksa yol süresi ekibin telefonundan gelen
+  güncel konumdan hesaplanır (bölüm 10).
 - Yol süresi: ücretsiz bir rota hizmetinden (OSRM) alınır; ulaşılamazsa düz
   çizgi mesafesi × 1,4 / 30 km/s ile tahmin edilir. Adresi haritadan
   işaretlenmemiş talepler için adres metninden konum bulunur; bulunamazsa
@@ -221,6 +222,8 @@ Kullanıcı bunların hepsini istiyor; sıralama yalnızca güvenlik içindir.
   kapanış fotoğrafı ekleyebilir.
 - Tahmini varış ekibin iş sırasından ve konumlar arası yol süresinden
   hesaplanır, gecikme payı eklenir.
+- Boştaki ekip için varsayılan/üs adresi kullanılmaz; ekibin bulunduğu
+  yerden hesaplanır.
 - Bildirim isteğe bağlı; durum her zaman uygulamada görünür.
 - Bölüm 7'deki tüm ek özellikler istenir.
 - Teknik ayrıntılar yapımcıya bırakıldı.
@@ -249,8 +252,13 @@ Kullanıcı bunların hepsini istiyor; sıralama yalnızca güvenlik içindir.
   bir üye ilerletebilir. Ekip saha uygulamasındaki "Mesaideyiz / Mesai dışı"
   anahtarıyla aktif olur; kurum bir ekibi tamamen kapatabilir. Ajan yalnız
   aktif ekiplere atar.
-- Boştaki ekibin konumu: her ekibin bir üs adresi vardır (kurum binası);
-  elinde iş yokken yol süresi üsten hesaplanır.
+- Ekibin konumu: varsayılan/üs adresi yoktur. Saha uygulaması mesai
+  açıkken ekibin güncel konumunu sunucuya iletir (uygulama açıkken birkaç
+  dakikada bir ve her durum değişikliğinde; konum izni istenir). Elinde iş
+  olmayan ekibin yol süresi bu son konumdan hesaplanır. Konum hiç yoksa veya
+  çok eskiyse (30 dk üstü) son iş adresi kullanılır; o da yoksa "varış süresi
+  hesaplanamadı" yazar ve ekip yine atanabilir. Konum yalnız atama ve tahmin
+  için kullanılır; vatandaşa harita üzerinde canlı ekip konumu gösterilmez.
 - Ajan anahtarları: ajan bir talepte yalnız hem merkez anahtarı hem o kurumun
   anahtarı açıksa çalışır. Merkez kapatırsa her yerde kapanır.
 - Demo bölgesi: Oltu (Erzurum), mevcut sistemdeki pilot bölge; demo adresleri
