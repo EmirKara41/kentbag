@@ -95,7 +95,7 @@ export const toQueueJob = (r: CitizenRequest): QueueJob => ({
 });
 
 /** Precomputes travel minutes between all relevant points so chooseTeam can stay synchronous. */
-async function travelTable(points: Point[], travel: AsyncTravel) {
+export async function travelTable(points: Point[], travel: AsyncTravel) {
   const keyOf = (p: Point) => `${p.lat.toFixed(5)},${p.lng.toFixed(5)}`;
   const table = new Map<string, number>();
   const unique = [...new Map(points.map((p) => [keyOf(p), p])).values()];

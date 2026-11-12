@@ -13,6 +13,7 @@ import type { ChangeHook } from "./requests.ts";
 import { citizenRoutes } from "./citizen.ts";
 import { crewRoutes } from "./crew.ts";
 import { staffRoutes } from "./staff.ts";
+import { recomputeTeamEta } from "./eta.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -53,8 +54,11 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     geocode: options.geocode ?? (async () => null),
     hooks: [],
     travel: options.travel ?? (async (a, b) => fallbackTravelMinutes(a, b)),
-    teamChanged: async () => {},
   } as unknown as Context;
+  ctx.teamChanged = (teamId) => recomputeTeamEta(ctx, teamId);
+  ctx.hooks.push(async ({ before, after }) => {
+    for (const teamId of new Set([before.teamId, after.teamId])) if (teamId) await ctx.teamChanged(teamId);
+  });
   ctx.agentService = createAgent({
     db: ctx.db,
     hooks: ctx.hooks,
