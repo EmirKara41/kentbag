@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">KentBağ Ekip</string>
+    <string name="title_activity_main">KentBağ Ekip</string>
+    <string name="package_name">com.kentbag.ekip</string>
+    <string name="custom_url_scheme">com.kentbag.ekip</string>
+</resources>
