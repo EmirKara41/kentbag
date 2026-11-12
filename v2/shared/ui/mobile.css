@@ -1,0 +1,40 @@
+/* Phone layout shared by the citizen and crew apps. */
+body { padding: env(safe-area-inset-top) 0 env(safe-area-inset-bottom); }
+.splash { min-height: 100dvh; display: grid; place-items: center; }
+.app { max-width: 560px; margin: 0 auto; }
+.screen { padding: 16px; display: grid; gap: 20px; align-content: start; min-height: 100dvh; }
+.screen header { min-height: 44px; }
+.title { font-size: 1.15rem; }
+.brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 1.15rem; }
+.brand-mark { width: 22px; height: 22px; border-radius: 50%; background: var(--signal); border: 5px solid var(--ink); }
+.login { align-content: center; gap: 24px; }
+.login h1 { font-size: 1.8rem; }
+button.big { min-height: 56px; font-size: 1.1rem; }
+button.sticky { position: sticky; bottom: 12px; box-shadow: 0 6px 20px rgba(29, 38, 43, 0.25); }
+
+.report-button { display: grid; gap: 4px; text-align: left; padding: 22px 20px; border-radius: var(--radius-m); background: var(--ink); color: #fff; border: 0; font-size: 1.45rem; }
+.report-button small { color: #c9d3d8; font-size: 0.95rem; font-weight: 400; }
+
+.request-card { display: grid; gap: 4px; text-align: left; font-weight: 400; padding: 14px 16px; border-radius: var(--radius-m); border-left: 6px solid var(--line); }
+.request-card.live { border-left-color: var(--signal); }
+.request-card.past { opacity: 0.75; }
+.eta { font-weight: 700; }
+.big-eta { font-size: 1.25rem; }
+.eta.live, .big-eta.live { color: var(--ink); background: #fff4cc; border-radius: var(--radius-s); padding: 8px 12px; }
+
+.category-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.category { min-height: 56px; text-align: left; }
+.category[aria-pressed="true"] { background: var(--ink); color: #fff; border-color: var(--ink); }
+.photo-thumb { padding: 0; border: 0; min-height: 0; }
+.resolved { border-color: #b9dfc8; background: #f2faf5; }
+.switch { border-radius: 999px; min-width: 88px; }
+.switch[aria-pressed="true"] { background: var(--done); color: #fff; border-color: var(--done); }
+.link.danger { color: var(--alert); }
+
+/* Crew */
+.shift { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 14px 16px; border-radius: var(--radius-m); background: var(--ink); color: #fff; }
+.shift .muted { color: #c9d3d8; }
+.current { border: 2px solid var(--ink); }
+.queue-item { display: grid; gap: 2px; text-align: left; font-weight: 400; }
+.minutes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.minutes button[aria-pressed="true"] { background: var(--ink); color: #fff; }
