@@ -14,6 +14,7 @@ import { citizenRoutes } from "./citizen.ts";
 import { crewRoutes } from "./crew.ts";
 import { staffRoutes } from "./staff.ts";
 import { recomputeTeamEta } from "./eta.ts";
+import { pushHook, pushRoutes, type PushSend } from "./push.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -25,6 +26,7 @@ export type ServerOptions = {
   travel?: AsyncTravel;
   classify?: Classify;
   classifyTimeoutMs?: number;
+  pushSend?: PushSend;
 };
 
 export type AgentApi = { processRequest(id: string): Promise<void> };
@@ -59,6 +61,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
   ctx.hooks.push(async ({ before, after }) => {
     for (const teamId of new Set([before.teamId, after.teamId])) if (teamId) await ctx.teamChanged(teamId);
   });
+  if (options.pushSend) ctx.hooks.push(pushHook(ctx.db, options.pushSend));
   ctx.agentService = createAgent({
     db: ctx.db,
     hooks: ctx.hooks,
@@ -95,6 +98,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
   app.use("/api", citizenRoutes(ctx));
   app.use("/api", crewRoutes(ctx));
   app.use("/api", staffRoutes(ctx));
+  app.use("/api", pushRoutes(ctx));
   app.use("/api", (_req, res) => void res.status(404).json({ error: "Bulunamadı." }));
   app.use(errorHandler);
   return { app, ctx };

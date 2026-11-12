@@ -8,6 +8,7 @@ import { blobPhotoStore } from "./photos.ts";
 import { createServer } from "./server.ts";
 import { createGeo } from "./geo.ts";
 import { geminiClassify } from "./agent.ts";
+import { firebaseSend } from "./push.ts";
 
 const config = configFromEnv(process.env);
 const pool = new Pool({ connectionString: config.databaseUrl, max: 5, idleTimeoutMillis: 5000, connectionTimeoutMillis: 10000 });
@@ -26,6 +27,7 @@ const { app } = createServer({
   travel: geo.travel,
   geocode: geo.geocode,
   classify,
+  pushSend: await firebaseSend(process.env.FIREBASE_SERVICE_ACCOUNT),
 });
 
 export default app;
