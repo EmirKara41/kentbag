@@ -22,10 +22,15 @@ test("operator assigns, separates private notes from public updates, and preserv
   await page.getByLabel("Taleplerde ara").fill("Okul önündeki");
   await page.locator(".report-title-button").click();
   const dialog = page.getByRole("dialog");
+  await expect(dialog.locator(".next-step")).toContainText(
+    "İlgili kuruma gönder",
+  );
+  await expect(dialog.locator(".flow-steps .current")).toContainText("Alındı");
+  await dialog.getByText("Merkez kaydını düzelt (birim ve ekip)").click();
   await dialog.getByLabel("Sorumlu birim").selectOption("public-works");
   await dialog.getByLabel("Saha ekibi").selectOption("t2");
   await dialog
-    .getByRole("button", { name: "Yönlendirmeyi kaydet", exact: true })
+    .getByRole("button", { name: "Merkez kaydını güncelle", exact: true })
     .click();
   await expect(dialog.locator(".detail-badges")).toContainText("Ekibe atandı");
   await dialog

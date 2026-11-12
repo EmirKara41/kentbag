@@ -280,6 +280,31 @@ test(
       await request(pilot.app)
         .get(photoPath.pathname + photoPath.search)
         .expect(200);
+      // Closing without field work is recorded as such, visibly to the citizen.
+      await act({
+        type: "reopen",
+        id: reportId,
+        body: "Vatandaş geri dönüşü üzerine yeniden bakılıyor.",
+      }).expect(200);
+      await act({
+        type: "resolve",
+        id: reportId,
+        mode: "field_photo",
+        body: "Geçersiz mod ile sonuçlandırma denemesi.",
+      }).expect(400);
+      await act({
+        type: "resolve",
+        id: reportId,
+        mode: "no_field",
+        body: "Yerinde kontrol edildi; ek saha işi gerekmedi.",
+      }).expect(200);
+      const closed = (
+        await request(pilot.app).get("/api/workspace").set(citizen).expect(200)
+      ).body.reports.find((r: any) => r.id === reportId);
+      assert.equal(closed.status, "resolved");
+      assert.ok(
+        JSON.stringify(closed).includes("Saha işi gerekmeden sonuçlandırıldı"),
+      );
     } finally {
       await pilot.close();
       await rm(dataDir, { recursive: true, force: true });

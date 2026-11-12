@@ -195,6 +195,8 @@ export function matchesQuery(report: CitizenReport, query: string) {
     .includes(query.trim().toLocaleLowerCase("tr"));
 }
 
+// Minimum text lengths shared by the API and the panel forms.
+export const minLength = { note: 5, resolution: 15, reopen: 10 } as const;
 export type Action =
   | { type: "priority"; id: string; priority: Priority }
   | { type: "assign"; id: string; unitId: string; teamId?: string }
@@ -205,7 +207,7 @@ export type Action =
       body: string;
       audience: "internal" | "citizen" | "participants";
     }
-  | { type: "resolve"; id: string; body: string }
+  | { type: "resolve"; id: string; body: string; mode?: "no_field" }
   | { type: "reopen"; id: string; body: string }
   | { type: "team"; id: string; active: boolean }
   | { type: "announcement"; value: Omit<Announcement, "updates"> }
@@ -341,18 +343,27 @@ export function applyAction(
       audience = "citizen";
     }
     if (action.type === "note") {
-      required(action.body, "Açıklama", 5);
+      required(action.body, "Açıklama", minLength.note);
       body = action.body.trim();
       audience = action.audience;
     }
     if (action.type === "resolve") {
       if (!ongoing(report))
         throw new Error("Bu talep için zaten çözüm bildirilmiş.");
-      required(action.body, "Çözüm açıklaması", 15);
+      // "no_field": closed by the center with a reason, without any crew
+      // work (information request, duplicate, external institution reply).
+      const noField = action.mode === "no_field";
+      required(
+        action.body,
+        noField ? "Sonuçlandırma gerekçesi" : "Çözüm açıklaması",
+        minLength.resolution,
+      );
       report.status = "resolved";
       report.resolution = action.body.trim();
       delete report.feedback;
-      body = "Çözüm bildirildi: " + report.resolution;
+      body = noField
+        ? "Saha işi gerekmeden sonuçlandırıldı: " + report.resolution
+        : "Çözüm bildirildi: " + report.resolution;
       audience = "citizen";
     }
     if (action.type === "reopen") {
@@ -360,7 +371,7 @@ export function applyAction(
         throw new Error(
           "Yalnız çözüm bildirilmiş talep yeniden incelemeye alınabilir.",
         );
-      required(action.body, "Yeniden inceleme gerekçesi", 10);
+      required(action.body, "Yeniden inceleme gerekçesi", minLength.reopen);
       report.status = "in_review";
       delete report.teamId;
       body = "Yeniden inceleme: " + action.body.trim();

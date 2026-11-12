@@ -118,11 +118,19 @@ export function InstitutionDirectory() {
   const { data } = usePanel();
   return <InstitutionCatalog reports={data.reports} />;
 }
-export function InstitutionForward({ report }: { report: CitizenReport }) {
+export function InstitutionForward({
+  report,
+  onDirty,
+}: {
+  report: CitizenReport;
+  onDirty?: (dirty: boolean) => void;
+}) {
   const { forward, mode, busy } = usePanel();
   const [unitId, setUnitId] = useState(report.unitId ?? ""),
     [instruction, setInstruction] = useState(""),
     [error, setError] = useState("");
+  const typed = instruction.trim().length > 0;
+  useEffect(() => onDirty?.(typed), [typed, onDirty]);
   const [channel, setChannel] = useState<"portal" | "both">("portal");
   const delivery = report.institutionDelivery,
     profile = institutionProfiles.find((p) => p.id === delivery?.unitId);

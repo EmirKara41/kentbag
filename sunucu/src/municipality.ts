@@ -47,7 +47,12 @@ const actionSchema = z.discriminatedUnion("type", [
     body,
     audience: z.enum(["internal", "citizen", "participants"]),
   }),
-  z.object({ type: z.literal("resolve"), id, body }),
+  z.object({
+    type: z.literal("resolve"),
+    id,
+    body,
+    mode: z.literal("no_field").optional(),
+  }),
   z.object({ type: z.literal("reopen"), id, body }),
   z.object({ type: z.literal("team"), id, active: z.boolean() }),
   z.object({

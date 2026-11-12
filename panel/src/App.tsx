@@ -8,6 +8,7 @@ import {
   units,
   type CitizenReport,
 } from "./domain";
+import { centerStep } from "./centerStep";
 import { usePanel } from "./store";
 import { ReportDetail, Reports, ReportTable } from "./Reports";
 import { Announcements, Works } from "./Announcements";
@@ -76,7 +77,8 @@ export default function App() {
     [searchQuery, setSearchQuery] = useState(""),
     [resetPrompt, setResetPrompt] = useState(false),
     [resetError, setResetError] = useState("");
-  const openCount = data.reports.filter(ongoing).length;
+  const openCount = data.reports.filter(ongoing).length,
+    feedbackCount = data.reports.filter(needsReview).length;
   function navigate(next: Page, initialFilter = "all") {
     setPage(next);
     setFilter(initialFilter);
@@ -119,7 +121,6 @@ export default function App() {
             <strong>Oltu Belediyesi</strong>
             <small>Merkez birim çalışma alanı</small>
           </div>
-          <Icon name="chevron" size={14} />
         </div>
         <nav aria-label="Panel gezinme">
           {pages.map((item) => (
@@ -212,11 +213,20 @@ export default function App() {
           </span>
           <button
             className="top-bell"
-            aria-label="Geri dönüşleri aç"
+            aria-label={
+              feedbackCount
+                ? `${feedbackCount} vatandaş geri dönüşünü aç`
+                : "Geri dönüşleri aç"
+            }
+            title={
+              feedbackCount
+                ? `${feedbackCount} geri dönüş inceleme bekliyor`
+                : "Bekleyen geri dönüş yok"
+            }
             onClick={() => navigate("requests", "feedback")}
           >
             <Icon name="bell" />
-            <i />
+            {feedbackCount > 0 && <i />}
           </button>
           <span className="operator-avatar">YO</span>
         </header>
@@ -379,10 +389,9 @@ function Overview({
 }) {
   const { data } = usePanel();
   const open = data.reports.filter(ongoing),
-    waiting = open.filter((report) => !report.teamId),
-    urgent = open.filter(
-      (report) =>
-        !report.teamId && ["urgent", "high"].includes(report.priority),
+    toForward = open.filter((report) => centerStep(report) === "forward"),
+    urgent = toForward.filter((report) =>
+      ["urgent", "high"].includes(report.priority),
     ),
     feedback = data.reports.filter(needsReview);
   const cards = [
@@ -395,22 +404,20 @@ function Overview({
       action: () => onNavigate("requests", "ongoing"),
     },
     {
-      title: "Atama bekleyen",
-      value: waiting.length,
-      sub: "Sorumlu ekip seçilmesi gereken",
-      icon: "team",
+      title: "Kuruma gönderilecek",
+      value: toForward.length,
+      sub: "Henüz bir kurumun kuyruğunda değil",
+      icon: "send",
       color: "amber",
-      action: () => onNavigate("requests", "waiting"),
+      action: () => onNavigate("requests", "forward"),
     },
     {
-      title: "Ekibe yönlendirilen",
-      value: open.filter((report) =>
-        ["assigned", "in_progress"].includes(report.status),
-      ).length,
-      sub: "Ekibe atanmış veya çalışılan",
+      title: "Onayını bekleyen sonuç",
+      value: open.filter((report) => centerStep(report) === "publish").length,
+      sub: `Kurumda süren: ${open.filter((report) => centerStep(report) === "waiting").length} talep`,
       icon: "work",
       color: "blue",
-      action: () => onNavigate("teams"),
+      action: () => onNavigate("requests", "publish"),
     },
     {
       title: "Çözüm bildirilen",
@@ -445,11 +452,13 @@ function Overview({
                 <Icon name={card.icon} size={19} />
               </span>
             </div>
-            <strong>
-              {card.value}
-              <Icon name="up" size={18} />
-            </strong>
-            <small>{card.sub}</small>
+            <strong>{card.value}</strong>
+            <small>
+              {card.sub}
+              <span className="metric-link">
+                Listeyi aç <Icon name="arrow" size={13} />
+              </span>
+            </small>
           </button>
         ))}
       </div>
@@ -459,15 +468,18 @@ function Overview({
             <Icon name="clock" size={22} />
           </span>
           <p>
-            <strong>{urgent.length} yüksek öncelikli talep</strong> kurumun
-            değerlendirmesini bekliyor.
+            <strong>{toForward.length} talep kuruma gönderilmeyi bekliyor</strong>
+            {urgent.length > 0 && (
+              <>, {urgent.length} tanesi acil veya yüksek öncelikli</>
+            )}
+            . Liste önceliğe göre sıralı açılır.
             <small>
               Otomatik aciliyet önerileri kurumun incelemesine açıktır.
               Yetkilinin belirlediği öncelik esas alınır.
             </small>
           </p>
         </div>
-        <button onClick={() => onNavigate("requests", "waiting")}>
+        <button onClick={() => onNavigate("requests", "forward")}>
           Taleplere git <Icon name="arrow" size={17} />
         </button>
       </div>

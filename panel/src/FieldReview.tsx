@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { type CitizenReport, dateText } from "./domain";
 import type { InstitutionOrder } from "../../sunucu/src/institution-domain";
 import { usePanel } from "./store";
@@ -30,7 +30,13 @@ export function FieldResultPhotos({ order }: { order: InstitutionOrder }) {
     </>
   );
 }
-export function CenterFieldReview({ report }: { report: CitizenReport }) {
+export function CenterFieldReview({
+  report,
+  onDirty,
+}: {
+  report: CitizenReport;
+  onDirty?: (dirty: boolean) => void;
+}) {
   const { reviewField, busy } = usePanel();
   return (
     <>
@@ -40,6 +46,7 @@ export function CenterFieldReview({ report }: { report: CitizenReport }) {
           order={order}
           busy={busy}
           review={reviewField}
+          onDirty={onDirty}
         />
       ))}
     </>
@@ -49,9 +56,11 @@ function CenterOrder({
   order,
   busy,
   review,
+  onDirty,
 }: {
   order: InstitutionOrder;
   busy: boolean;
+  onDirty?: (dirty: boolean) => void;
   review: (input: {
     orderId: string;
     decision: "publish" | "return";
@@ -60,6 +69,8 @@ function CenterOrder({
 }) {
   const [body, setBody] = useState(order.result?.body ?? ""),
     [error, setError] = useState("");
+  const edited = body !== (order.result?.body ?? "");
+  useEffect(() => onDirty?.(edited), [edited, onDirty]);
   async function run(decision: "publish" | "return") {
     setError("");
     try {
