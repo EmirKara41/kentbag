@@ -7,7 +7,8 @@ import type { Db } from "./db.ts";
 import type { PhotoStore } from "./photos.ts";
 import { createAccess, type Access } from "./access.ts";
 import { errorHandler } from "./errors.ts";
-import type { Point } from "@kentbag/shared";
+import { fallbackTravelMinutes, type Point } from "@kentbag/shared";
+import { createAgent, type Agent, type AsyncTravel, type Classify } from "./agent.ts";
 import type { ChangeHook } from "./requests.ts";
 import { citizenRoutes } from "./citizen.ts";
 
@@ -18,6 +19,9 @@ export type ServerOptions = {
   photos: PhotoStore;
   now?: () => Date;
   geocode?: (address: string) => Promise<Point | null>;
+  travel?: AsyncTravel;
+  classify?: Classify;
+  classifyTimeoutMs?: number;
 };
 
 export type AgentApi = { processRequest(id: string): Promise<void> };
@@ -28,6 +32,8 @@ export type Context = ServerOptions & {
   geocode: (address: string) => Promise<Point | null>;
   hooks: ChangeHook[];
   agent: AgentApi;
+  agentService: Agent;
+  travel: AsyncTravel;
 };
 
 /** Wraps async route handlers so thrown errors reach the error handler. */
@@ -42,8 +48,17 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     now: options.now ?? (() => new Date()),
     geocode: options.geocode ?? (async () => null),
     hooks: [],
-    agent: { processRequest: async () => {} },
-  };
+    travel: options.travel ?? (async (a, b) => fallbackTravelMinutes(a, b)),
+  } as unknown as Context;
+  ctx.agentService = createAgent({
+    db: ctx.db,
+    hooks: ctx.hooks,
+    now: ctx.now,
+    travel: ctx.travel,
+    classify: options.classify,
+    classifyTimeoutMs: options.classifyTimeoutMs,
+  });
+  ctx.agent = ctx.agentService;
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", true);
