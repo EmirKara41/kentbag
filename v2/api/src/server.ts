@@ -15,6 +15,7 @@ import { crewRoutes } from "./crew.ts";
 import { staffRoutes } from "./staff.ts";
 import { recomputeTeamEta } from "./eta.ts";
 import { pushHook, pushRoutes, type PushSend } from "./push.ts";
+import { demoRoutes } from "./demo.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -27,6 +28,8 @@ export type ServerOptions = {
   classify?: Classify;
   classifyTimeoutMs?: number;
   pushSend?: PushSend;
+  /** Enables one-tap demo login with this shared demo password. */
+  demoPassword?: string;
 };
 
 export type AgentApi = { processRequest(id: string): Promise<void> };
@@ -99,6 +102,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
   app.use("/api", crewRoutes(ctx));
   app.use("/api", staffRoutes(ctx));
   app.use("/api", pushRoutes(ctx));
+  app.use("/api", demoRoutes(ctx, options.demoPassword));
   app.use("/api", (_req, res) => void res.status(404).json({ error: "Bulunamadı." }));
   app.use(errorHandler);
   return { app, ctx };

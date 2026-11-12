@@ -28,6 +28,7 @@ const { app } = createServer({
   geocode: geo.geocode,
   classify,
   pushSend: await firebaseSend(process.env.FIREBASE_SERVICE_ACCOUNT),
+  demoPassword: process.env.DEMO_LOGIN === "on" ? process.env.DEMO_PASSWORD : undefined,
 });
 
 export default app;
