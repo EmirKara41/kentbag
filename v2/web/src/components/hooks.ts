@@ -14,8 +14,8 @@ export function usePolling<T>(load: () => Promise<T>, ms = 30_000) {
     }
   }, [load]);
   useEffect(() => {
-    void api("/api/agent/sweep", { method: "POST", body: {} }).catch(() => {});
     void refresh();
+    void api("/api/agent/sweep", { method: "POST", body: {} }).catch(() => {});
     const timer = setInterval(() => {
       if (document.visibilityState !== "visible") return;
       void api("/api/agent/sweep", { method: "POST", body: {} }).catch(() => {});

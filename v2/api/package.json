@@ -8,7 +8,8 @@
     "typecheck": "tsc -p tsconfig.json",
     "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
-    "build:cloud": "node scripts/build.mjs"
+    "build:cloud": "node scripts/build.mjs",
+    "dev": "tsx scripts/dev.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.102",

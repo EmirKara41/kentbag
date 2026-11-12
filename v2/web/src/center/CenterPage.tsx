@@ -85,7 +85,7 @@ export function CenterPage() {
         {filters.map((f) => (
           <button key={f.key} className="counter" aria-pressed={filter === f.key} onClick={() => setFilter(filter === f.key ? null : f.key)}>
             <span className="muted">{f.label}</span>
-            <strong className="num">{(data ?? []).filter((r) => f.match(r.status)).length}</strong>
+            <strong className="num">{data ? data.filter((r) => f.match(r.status)).length : "–"}</strong>
           </button>
         ))}
       </div>
@@ -110,6 +110,7 @@ export function CenterPage() {
             <StatusPill status={r.status} label={r.statusLabel} />
           </button>
         ))}
+        {!data && !error && <p className="empty">Talepler yükleniyor…</p>}
         {data && !rows.length && <p className="empty">Bu görünümde talep yok.</p>}
       </div>
       {open && <RequestDrawer id={open} onClose={() => setOpen(null)} nextStep={nextStep} />}
