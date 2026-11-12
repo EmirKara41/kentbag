@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.env*
+!.env.example
+.vercel/
+artifacts/
+android/app/build/
+android/.gradle/
+android/build/
+test-results/
