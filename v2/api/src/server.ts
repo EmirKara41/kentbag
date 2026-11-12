@@ -7,6 +7,9 @@ import type { Db } from "./db.ts";
 import type { PhotoStore } from "./photos.ts";
 import { createAccess, type Access } from "./access.ts";
 import { errorHandler } from "./errors.ts";
+import type { Point } from "@kentbag/shared";
+import type { ChangeHook } from "./requests.ts";
+import { citizenRoutes } from "./citizen.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -14,9 +17,18 @@ export type ServerOptions = {
   config: Config;
   photos: PhotoStore;
   now?: () => Date;
+  geocode?: (address: string) => Promise<Point | null>;
 };
 
-export type Context = ServerOptions & { access: Access; now: () => Date };
+export type AgentApi = { processRequest(id: string): Promise<void> };
+
+export type Context = ServerOptions & {
+  access: Access;
+  now: () => Date;
+  geocode: (address: string) => Promise<Point | null>;
+  hooks: ChangeHook[];
+  agent: AgentApi;
+};
 
 /** Wraps async route handlers so thrown errors reach the error handler. */
 export const handle =
@@ -24,7 +36,14 @@ export const handle =
     fn(req, res).catch(next);
 
 export function createServer(options: ServerOptions): { app: Express; ctx: Context } {
-  const ctx: Context = { ...options, access: createAccess(options.db, options.auth), now: options.now ?? (() => new Date()) };
+  const ctx: Context = {
+    ...options,
+    access: createAccess(options.db, options.auth),
+    now: options.now ?? (() => new Date()),
+    geocode: options.geocode ?? (async () => null),
+    hooks: [],
+    agent: { processRequest: async () => {} },
+  };
   const app = express();
   app.disable("x-powered-by");
   app.set("trust proxy", true);
@@ -49,6 +68,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     }),
   );
 
+  app.use("/api", citizenRoutes(ctx));
   app.use("/api", (_req, res) => void res.status(404).json({ error: "Bulunamadı." }));
   app.use(errorHandler);
   return { app, ctx };
