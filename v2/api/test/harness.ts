@@ -10,6 +10,10 @@ import { seedDemo, seedTeams } from "../src/seed.ts";
 import { createServer, type ServerOptions } from "../src/server.ts";
 import { memoryPhotoStore } from "../src/photos.ts";
 
+export const PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1sAAAAASUVORK5CYII=",
+  "base64",
+);
 export const TEST_PASSWORD = "Test-only-password-123";
 export const ORIGIN = "https://localhost";
 let nextPort = 5600 + Math.floor(Math.random() * 300);

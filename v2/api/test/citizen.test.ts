@@ -1,12 +1,7 @@
 import test, { after, before } from "node:test";
 import assert from "node:assert/strict";
 import request from "supertest";
-import { startTestApi, type Headers, type TestApi } from "./harness.ts";
-
-export const PNG = Buffer.from(
-  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1sAAAAASUVORK5CYII=",
-  "base64",
-);
+import { PNG, startTestApi, type Headers, type TestApi } from "./harness.ts";
 
 let api: TestApi;
 let alice: Headers;

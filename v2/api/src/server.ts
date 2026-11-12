@@ -11,6 +11,7 @@ import { fallbackTravelMinutes, type Point } from "@kentbag/shared";
 import { createAgent, type Agent, type AsyncTravel, type Classify } from "./agent.ts";
 import type { ChangeHook } from "./requests.ts";
 import { citizenRoutes } from "./citizen.ts";
+import { crewRoutes } from "./crew.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -34,6 +35,8 @@ export type Context = ServerOptions & {
   agent: AgentApi;
   agentService: Agent;
   travel: AsyncTravel;
+  /** Called when a team's location, shift or queue changes (ETA refresh). */
+  teamChanged: (teamId: string) => Promise<void>;
 };
 
 /** Wraps async route handlers so thrown errors reach the error handler. */
@@ -49,6 +52,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     geocode: options.geocode ?? (async () => null),
     hooks: [],
     travel: options.travel ?? (async (a, b) => fallbackTravelMinutes(a, b)),
+    teamChanged: async () => {},
   } as unknown as Context;
   ctx.agentService = createAgent({
     db: ctx.db,
@@ -84,6 +88,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
   );
 
   app.use("/api", citizenRoutes(ctx));
+  app.use("/api", crewRoutes(ctx));
   app.use("/api", (_req, res) => void res.status(404).json({ error: "Bulunamadı." }));
   app.use(errorHandler);
   return { app, ctx };
