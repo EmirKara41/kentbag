@@ -238,9 +238,9 @@ Kullanıcı bunların hepsini istiyor; sıralama yalnızca güvenlik içindir.
   sitede, role göre ekran), `citizen/` (Android), `crew/` (Android), `shared/`
   (tipler, durum makinesi, ETA ve ajan kuralları; hem API hem istemciler
   kullanır).
-- Yeni Neon veritabanı ve yeni Vercel projeleri; eski sistemle veri paylaşılmaz.
+- Ayrı veritabanı: mevcut Neon projesinde yeni bir `kentbag2` veritabanı; fotoğraflar mevcut özel Blob deposunda `v2/` önekiyle. Yeni Vercel projeleri (`kentbag2-api`, `kentbag2-web`). Eski sistemle veri paylaşılmaz.
 - Android paket kimlikleri: yeni kimlikler (`com.kentbag.vatandas`,
-  `com.kentbag.saha`), mevcut imza anahtarıyla (`%USERPROFILE%\.cache\
+  `com.kentbag.ekip`), mevcut imza anahtarıyla (`%USERPROFILE%\.cache\
   kentyanimda-android\signing`, yedekte de var) imzalanır. Yeni uygulamalar
   eskilerin yanına kurulur; eski uygulamalar sunumda yedek olarak telefonda
   kalır. Sürüm: vatandaş 2.0.0, saha 1.0.0.
@@ -277,9 +277,9 @@ Kullanıcı bunların hepsini istiyor; sıralama yalnızca güvenlik içindir.
 
 - Firebase: telefon bildirimleri için kullanıcının Google hesabıyla ücretsiz
   bir Firebase projesi açılır ve iki Android uygulaması (`com.kentbag.vatandas`,
-  `com.kentbag.saha`) kaydedilir. Yapımcı adımları Gün 3'te verir; gecikirse
+  `com.kentbag.ekip`; eski saha uygulaması `com.kentbag.saha` kullandığı için) kaydedilir. Yapımcı adımları Gün 3'te verir; gecikirse
   bildirimler Gün 4'e kayar, uygulama içi durum gösterimi etkilenmez.
-- Yeni Neon veritabanı ve Vercel projeleri kullanıcının hesabında açılır;
+- Yeni veritabanı ve Vercel projeleri kullanıcının mevcut hesaplarında açılır;
   Vercel CLI girişi bu bilgisayarda yapıldı.
 
 ## 11. Yapımcıya bırakılanlar
