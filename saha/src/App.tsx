@@ -31,6 +31,8 @@ import {
   date,
   stages,
   priorities,
+  needsFix,
+  workable,
   type Draft,
   type Job,
   type Workspace,
@@ -112,6 +114,13 @@ export default function App() {
     };
   }, [selected]);
   async function logout() {
+    if (
+      data &&
+      !window.confirm(
+        "Oturum kapatılsın mı? Kaydedilmemiş taslakların bu cihazda kalır.",
+      )
+    )
+      return;
     identity.current++;
     await api.logout().catch(() => {});
     setData(null);
@@ -138,17 +147,14 @@ export default function App() {
       />
     );
   const chosen = data.jobs.find((j) => j.id === selected);
+  const rank = { urgent: 0, high: 1, normal: 2, low: 3 };
+  // Results sent back for correction come first, then by priority.
   const jobs = data.jobs
-    .filter((j) =>
-      tab === "active"
-        ? j.actionable &&
-          ["assigned", "accepted", "in_progress"].includes(j.crewState)
-        : true,
-    )
+    .filter((j) => (tab === "active" ? workable(j) : true))
     .sort(
       (a, b) =>
-        ({ urgent: 0, high: 1, normal: 2, low: 3 })[a.priority] -
-        { urgent: 0, high: 1, normal: 2, low: 3 }[b.priority],
+        Number(needsFix(b)) - Number(needsFix(a)) ||
+        rank[a.priority] - rank[b.priority],
     );
   return (
     <div className="field-app">
@@ -212,16 +218,7 @@ export default function App() {
           <section className="shift-card">
             <span>EKİBİNİN İŞ LİSTESİ</span>
             <strong>
-              {
-                data.jobs.filter(
-                  (j) =>
-                    j.actionable &&
-                    ["assigned", "accepted", "in_progress"].includes(
-                      j.crewState,
-                    ),
-                ).length
-              }{" "}
-              aktif görev
+              {data.jobs.filter(workable).length} aktif görev
             </strong>
             <p>
               Kurumundan gelen görevleri kabul et, yapılan işlemi fotoğrafıyla
@@ -249,7 +246,7 @@ export default function App() {
             </button>
           </div>
           <div className="list-heading">
-            <h2>{tab === "active" ? "Görevlerin" : "Görev geçmişi"}</h2>
+            <h2>{tab === "active" ? "Görevlerin" : "Tüm görevler"}</h2>
             <span>{jobs.length} kayıt</span>
           </div>
           {!jobs.length ? (
@@ -271,10 +268,13 @@ export default function App() {
                     {priorities[job.priority]}
                   </span>
                 </div>
+                {needsFix(job) && (
+                  <span className="fix-badge">Düzeltme istendi</span>
+                )}
                 <h3>{job.title}</h3>
                 <p>
                   <MapPin size={15} />
-                  {job.address || "Konum haritada işaretlendi"}
+                  {placeText(job)}
                 </p>
                 <footer>
                   <span>
@@ -299,6 +299,9 @@ export default function App() {
     </div>
   );
 }
+const placeText = (job: Job) =>
+  job.address ||
+  (job.point ? "Konum haritada işaretlendi" : "Adres bilgisi yok");
 function Login({ onLogin }: { onLogin: (data: Account) => void }) {
   const [email, setEmail] = useState(""),
     [name,setName]=useState(''),
@@ -404,7 +407,10 @@ function JobDetail({
     [ready, setReady] = useState(false),
     [busy, setBusy] = useState(false),
     [error, setError] = useState(""),
-    [notice, setNotice] = useState("");
+    [notice, setNotice] = useState(""),
+    [earlyResult, setEarlyResult] = useState(false),
+    [declining, setDeclining] = useState(false),
+    [reason, setReason] = useState("");
   const key = `kent.field.draft:${ownerId}:${job.id}`;
   useEffect(() => {
     let active = true;
@@ -457,6 +463,27 @@ function JobDetail({
       setBusy(false);
     }
   }
+  async function decline() {
+    if (
+      !window.confirm(
+        "Görev kuruma iade edilsin mi? Kurum görevi başka ekibe verebilir veya yeniden hazırlayabilir.",
+      )
+    )
+      return;
+    setBusy(true);
+    setError("");
+    try {
+      await api.decline(job.id, reason.trim());
+      setNotice("Görev gerekçenle birlikte kuruma iade edildi.");
+      setDeclining(false);
+      setReason("");
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Görev iade edilemedi.");
+    } finally {
+      setBusy(false);
+    }
+  }
   async function send() {
     setBusy(true);
     setError("");
@@ -464,7 +491,7 @@ function JobDetail({
       await saves.current;
       await api.result(job.id, draft);
       setNotice(
-        "Fotoğraflı sonuç kurum kontrolüne gönderildi. Belediye merkezi onayından sonra vatandaşla paylaşılacak.",
+        "Sonuç kurum kontrolüne gönderildi. Belediye merkezi onayından sonra vatandaşla paylaşılacak.",
       );
       await del(key).catch(()=>setNotice("Sonuç iletildi. Sunucudaki kayıt korunuyor; yerel taslak temizlenemedi."));
       setDraft(empty);
@@ -480,7 +507,10 @@ function JobDetail({
     }
   }
   const canResult =
-    job.actionable && ["accepted", "in_progress"].includes(job.crewState);
+    job.actionable &&
+    (job.crewState === "in_progress" ||
+      (job.crewState === "accepted" && earlyResult));
+  const photoReady = job.photoOptional || draft.photos.length > 0;
   return (
     <main className="job-detail">
       <button className="back" onClick={back}>
@@ -509,7 +539,7 @@ function JobDetail({
           <MapPin size={18} />
           Konum ve bildirim
         </h2>
-        <p>{job.address || "Konum haritada işaretlenmiş."}</p>
+        <p>{placeText(job)}</p>
         {job.point && (
           <a
             className="map-link"
@@ -530,10 +560,24 @@ function JobDetail({
           ))}
         </div>
       </section>
-      {job.reviewNote && (
-        <div className="notice">
-          <strong>Kontrol notu</strong>
+      {needsFix(job) ? (
+        <div className="notice fix" role="alert">
+          <strong>Kurum düzeltme istedi</strong>
           <p>{job.reviewNote}</p>
+          <small>Sonucu düzeltip aşağıdan yeniden gönder.</small>
+        </div>
+      ) : (
+        job.reviewNote && (
+          <div className="notice">
+            <strong>Kontrol notu</strong>
+            <p>{job.reviewNote}</p>
+          </div>
+        )
+      )}
+      {job.crewState === "declined" && job.declineReason && (
+        <div className="notice">
+          <strong>Kuruma iade ettin</strong>
+          <p>{job.declineReason}</p>
         </div>
       )}
       {error && (
@@ -561,22 +605,37 @@ function JobDetail({
         </section>
       )}
       {job.actionable && job.crewState === "accepted" && (
-        <button
-          className="secondary full"
-          disabled={busy}
-          onClick={() => void run("start")}
-        >
-          Çalışmaya başladım
-          <ArrowUpRight size={18} />
-        </button>
+        <section className="section accept">
+          <h2>Görevi kabul ettin.</h2>
+          <p>Sahaya çıkıp işe başladığında kaydet; kurum ilerlemeyi görür.</p>
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={() => void run("start")}
+          >
+            <ArrowUpRight size={18} />
+            Çalışmaya başladım
+          </button>
+          {!earlyResult && (
+            <button
+              className="link-button"
+              disabled={busy}
+              onClick={() => setEarlyResult(true)}
+            >
+              İş zaten bitti mi? Sonucu şimdi gönder
+            </button>
+          )}
+        </section>
       )}
       {canResult && (
         <section className="section result-form">
           <span className="eyebrow">İŞLEMİN SONUCU</span>
           <h2>Yapılan işi belgeleyelim.</h2>
           <p>
-            En az bir sonuç fotoğrafı ve kısa açıklama ekle. İlk kontrolü
-            kurumun yapacak.
+            {job.photoOptional
+              ? "Kısa bir açıklama yaz. Kesintiler fotoğrafla kanıtlanamadığı için fotoğraf isteğe bağlı."
+              : "En az bir sonuç fotoğrafı ve kısa açıklama ekle."}{" "}
+            İlk kontrolü kurumun yapacak.
           </p>
           <label>
             Yapılan işlem
@@ -650,7 +709,12 @@ function JobDetail({
             </div>
           )}
           <small>
-            {draft.photos.length}/3 fotoğraf · Taslak bu cihazda korunur.
+            {draft.body.trim().length < 15
+              ? `Açıklama: en az 15 karakter · ${15 - draft.body.trim().length} karakter daha · `
+              : ""}
+            {draft.photos.length}/3 fotoğraf
+            {job.photoOptional ? " (isteğe bağlı)" : ""} · Taslak bu cihazda
+            korunur.
           </small>
           <button
             className="primary"
@@ -658,13 +722,67 @@ function JobDetail({
               busy ||
               !ready ||
               draft.body.trim().length < 15 ||
-              !draft.photos.length
+              !photoReady
             }
             onClick={() => void send()}
           >
             <Send size={18} />
             {busy ? "Gönderiliyor…" : "Sonucu kurum kontrolüne gönder"}
           </button>
+        </section>
+      )}
+      {workable(job) && (
+        <section className="section decline">
+          {!declining ? (
+            <button
+              className="link-button"
+              disabled={busy}
+              onClick={() => setDeclining(true)}
+            >
+              Bu görevi yapamıyor musunuz? Kuruma iade et
+            </button>
+          ) : (
+            <>
+              <h2>Görevi kuruma iade et</h2>
+              <p>
+                Adres bulunamadı, malzeme yok veya iş başka bir kurumun gibi
+                durumlarda kullan. Kurum görevi başka ekibe verebilir.
+              </p>
+              <label>
+                İade gerekçesi
+                <textarea
+                  rows={3}
+                  maxLength={2000}
+                  disabled={busy}
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  placeholder="Örn. Adreste böyle bir arıza bulunamadı; vatandaşla iletişim gerekiyor."
+                />
+              </label>
+              <small>
+                {reason.trim().length < 15
+                  ? `En az 15 karakter · ${15 - reason.trim().length} karakter daha`
+                  : `${reason.length}/2000`}
+              </small>
+              <button
+                className="secondary full"
+                disabled={busy || reason.trim().length < 15}
+                onClick={() => void decline()}
+              >
+                Görevi kuruma iade et
+              </button>
+              <button
+                className="link-button"
+                disabled={busy}
+                onClick={() => {
+                  setDeclining(false);
+                  setReason("");
+                }}
+              >
+                Vazgeç
+              </button>
+            </>
+          )}
         </section>
       )}
       {job.result && (

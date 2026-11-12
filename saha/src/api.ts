@@ -87,6 +87,8 @@ export const api = {
   workspace: () => request<Workspace>("/api/field/workspace"),
   act: (orderId: string, type: "accept" | "start") =>
     request("/api/field/actions", { orderId, type }),
+  decline: (orderId: string, body: string) =>
+    request("/api/field/actions", { orderId, type: "decline", body }),
   async result(orderId: string, draft: Draft) {
     const photos: string[] = [];
     for (const photo of draft.photos) {

@@ -71,6 +71,9 @@ export async function startPilot(
         "http://localhost:4173",
         "http://127.0.0.1:4173",
         `http://${host}:4173`,
+        // Field crew app dev server (saha).
+        "http://localhost:4175",
+        "http://127.0.0.1:4175",
         ...(options.webOrigins ?? []),
       ]),
     ],
@@ -122,6 +125,7 @@ export async function startPilot(
     "008_institution_mail.sql",
     "009_field_work.sql",
     "010_crew_enrollment.sql",
+    "011_crew_decline.sql",
   ])
     await pool.query(
       await readFile(new URL(`../migrations/${file}`, import.meta.url), "utf8"),

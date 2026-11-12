@@ -224,7 +224,7 @@ test(
       await action({
         type: "submit-result",
         body: "Gizli saha sonucu inceleme bekliyor.",
-        photos: [],
+        photos: [photoId, photoId],
       }).expect(400);
       const submit = {
         type: "submit-result",

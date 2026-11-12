@@ -91,8 +91,10 @@ export type InstitutionOrder = {
     | "in_progress"
     | "institution_review"
     | "center_review"
-    | "published";
+    | "published"
+    | "declined";
   reviewNote?: string;
+  declineReason?: string;
   result?: {
     body: string;
     submittedAt: string;

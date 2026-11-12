@@ -21,11 +21,15 @@ const crewAction = z.discriminatedUnion("type", [
     body,
     photos: z
       .array(z.string().uuid())
-      .min(1)
       .max(3)
       .refine((a) => new Set(a).size === a.length),
   }),
+  z.object({ type: z.literal("decline"), orderId: id, body }),
 ]);
+// Outages cannot be proven by a photo, so a written result is enough there.
+// Other categories need at least one result photo.
+export const photoOptional = (category: string) =>
+  ["electricity", "water"].includes(category);
 export const resultReviewSchema = z.object({
   orderId: id,
   decision: z.enum(["forward", "return"]),
@@ -47,6 +51,7 @@ export const fieldStageNames = {
   institution_review: "Kurum kontrolünde",
   center_review: "Belediye merkezinin onayında",
   published: "Sonuç vatandaşla paylaşıldı",
+  declined: "Ekip görevi iade etti",
 } as const;
 export async function fieldOrderView(
   sql: Sql,
@@ -63,6 +68,7 @@ export async function fieldOrderView(
     state: row.state,
     crewState: row.crew_state,
     reviewNote: row.review_note ?? undefined,
+    declineReason: row.decline_reason ?? undefined,
     createdAt: new Date(row.created_at).toISOString(),
     acceptedAt: row.accepted_at
       ? new Date(row.accepted_at).toISOString()
@@ -205,6 +211,8 @@ export class FieldService {
           ...(await fieldOrderView(this.db, this.municipality.config, row)),
           reference: doc.reference,
           title: categories[doc.category as keyof typeof categories].name,
+          category: doc.category,
+          photoOptional: photoOptional(doc.category),
           description: doc.description,
           address: doc.location.address,
           point:
@@ -248,7 +256,7 @@ export class FieldService {
       throw new HttpError(403, "Saha ekibi yetkisi gerekiyor.");
     const action = crewAction.parse(input);
     await this.db.transaction(async (sql) => {
-      const { order } = await this.lock(sql, action.orderId, {
+      const { order, doc } = await this.lock(sql, action.orderId, {
         unitId: member.unitId!,
         teamId: member.teamId!,
       });
@@ -280,6 +288,28 @@ export class FieldService {
           "Saha ekibi çalışmaya başladığını kaydetti.",
           member.userId,
         );
+      } else if (action.type === "decline") {
+        if (
+          order.crew_state === "declined" &&
+          order.decline_reason === action.body
+        )
+          return;
+        if (!["assigned", "accepted", "in_progress"].includes(order.crew_state))
+          throw new HttpError(
+            409,
+            "Yalnız üzerinde çalışılan görev kuruma iade edilebilir.",
+          );
+        await sql.query(
+          "UPDATE institution_work_order SET crew_state='declined',decline_reason=$1,review_note=NULL,updated_at=now() WHERE id=$2",
+          [action.body, order.id],
+        );
+        await this.event(
+          sql,
+          order,
+          "declined",
+          `Saha ekibi görevi kuruma iade etti: ${action.body}`,
+          member.userId,
+        );
       } else {
         if (
           ["institution_review", "center_review"].includes(order.crew_state) &&
@@ -292,6 +322,11 @@ export class FieldService {
           throw new HttpError(
             409,
             "Sonuç göndermek için görevi kabul edin veya kontrol sonucunu bekleyin.",
+          );
+        if (!action.photos.length && !photoOptional(doc.category))
+          throw new HttpError(
+            409,
+            "Bu iş türünde en az bir sonuç fotoğrafı gerekir.",
           );
         const photos = (
           await sql.query(
@@ -329,7 +364,9 @@ export class FieldService {
           sql,
           order,
           "institution_review",
-          "Saha ekibi fotoğraflı sonucunu kurum kontrolüne gönderdi. Henüz vatandaşla paylaşılmadı.",
+          action.photos.length
+            ? "Saha ekibi fotoğraflı sonucunu kurum kontrolüne gönderdi. Henüz vatandaşla paylaşılmadı."
+            : "Saha ekibi sonucunu fotoğrafsız olarak kurum kontrolüne gönderdi. Henüz vatandaşla paylaşılmadı.",
           member.userId,
         );
       }

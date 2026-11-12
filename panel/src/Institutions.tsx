@@ -741,7 +741,9 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                           className="content-panel institution-order-card"
                           key={order.id}
                         >
-                          <span className="institution-stage accepted">
+                          <span
+                            className={`institution-stage ${order.crewState === "declined" ? "returned" : "accepted"}`}
+                          >
                             {fieldStages[order.crewState]}
                           </span>
                           <h2>
@@ -754,6 +756,12 @@ function InstitutionWorkspace({ profile }: { profile: InstitutionProfile }) {
                             {item.reference} · {item.title}
                           </small>
                           <p>{order.instruction}</p>
+                          {order.crewState === "declined" && (
+                            <p className="field-note">
+                              <strong>Ekip iade etti:</strong>{" "}
+                              {order.declineReason}
+                            </p>
+                          )}
                           <span
                             className={`institution-priority ${order.priority}`}
                           >
@@ -1018,9 +1026,19 @@ function InstitutionDetail({
                   </p>
                   {active ? (
                     <div className="institution-prepared-order">
-                      <span className="institution-stage accepted">
+                      <span
+                        className={`institution-stage ${active.crewState === "declined" ? "returned" : "accepted"}`}
+                      >
                         {fieldStages[active.crewState]}
                       </span>
+                      {active.crewState === "declined" && (
+                        <Message>
+                          Ekip görevi yapamadığını bildirdi:{" "}
+                          {active.declineReason}. Hazır görevi iptal edip
+                          başka bir ekibe veya güncel talimatla yeniden
+                          hazırlayın.
+                        </Message>
+                      )}
                       <strong>
                         {
                           profile.teams.find((t) => t.id === active.teamId)

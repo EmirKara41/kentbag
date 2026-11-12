@@ -62,6 +62,7 @@ try {
   await pool.query(await readFile(new URL("../migrations/009_field_work.sql", import.meta.url), "utf8"));
   console.log("Authentication, citizen and field-work database schema is ready.");
   await pool.query(await readFile(new URL('../migrations/010_crew_enrollment.sql',import.meta.url),'utf8'));
+  await pool.query(await readFile(new URL('../migrations/011_crew_decline.sql',import.meta.url),'utf8'));
 } finally {
   await pool.end();
 }

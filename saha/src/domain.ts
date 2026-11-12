@@ -10,7 +10,8 @@ export type Phase =
   | "in_progress"
   | "institution_review"
   | "center_review"
-  | "published";
+  | "published"
+  | "declined";
 export const stages: Record<Phase, string> = {
   assigned: "Kabulünü bekliyor",
   accepted: "Görev kabul edildi",
@@ -18,6 +19,7 @@ export const stages: Record<Phase, string> = {
   institution_review: "Kurum kontrolünde",
   center_review: "Merkez onayında",
   published: "Sonuç paylaşıldı",
+  declined: "Kuruma iade edildi",
 };
 export type Job = {
   id: string;
@@ -28,12 +30,16 @@ export type Job = {
   point?: { latitude: number; longitude: number };
   photos: Photo[];
   instruction: string;
+  category: string;
+  // Outages (electricity, water) can be closed with a written result only.
+  photoOptional: boolean;
   priority: "low" | "normal" | "high" | "urgent";
   state: "prepared" | "cancelled" | "completed";
   crewState: Phase;
   actionable: boolean;
   createdAt: string;
   reviewNote?: string;
+  declineReason?: string;
   result?: { body: string; photos: Photo[]; submittedAt: string };
   events: { id: string; stage: string; body: string; createdAt: string }[];
 };
@@ -64,3 +70,9 @@ export const date = (value: string) =>
     hour: "2-digit",
     minute: "2-digit",
   });
+// The institution sent the result back for correction.
+export const needsFix = (job: Job) =>
+  job.actionable && job.crewState === "in_progress" && !!job.reviewNote;
+export const workable = (job: Job) =>
+  job.actionable &&
+  ["assigned", "accepted", "in_progress"].includes(job.crewState);

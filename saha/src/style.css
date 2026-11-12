@@ -621,3 +621,53 @@ textarea::placeholder {
     border-right: 1px solid #dce5d7;
   }
 }
+/* Result sent back for correction */
+.fix-badge {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 5px 9px;
+  border-radius: 7px;
+  background: #f8e9dd;
+  color: #a35f3f;
+}
+.notice.fix {
+  background: #fbf0e6;
+  border-color: #efd5bf;
+  color: #8f5a3c;
+}
+.notice.fix strong {
+  font-size: 14px;
+}
+.notice.fix small {
+  display: block;
+  margin-top: 8px;
+}
+.link-button {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px 0;
+  background: transparent;
+  color: #5f7a6e;
+  font-size: 12px;
+  text-decoration: underline;
+  text-align: center;
+}
+.section.decline {
+  background: transparent;
+  border-style: dashed;
+}
+.section.decline label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 12px;
+}
+.section.decline small {
+  display: block;
+  margin: 8px 0 12px;
+  font-size: 11px;
+  color: #8a978a;
+}

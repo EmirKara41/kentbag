@@ -10,6 +10,7 @@ export const fieldStages = {
   institution_review: "Kurum kontrolünde",
   center_review: "Belediye merkezinin onayında",
   published: "Sonuç vatandaşla paylaşıldı",
+  declined: "Ekip görevi iade etti",
 };
 export function FieldResultPhotos({ order }: { order: InstitutionOrder }) {
   return (

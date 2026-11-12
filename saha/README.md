@@ -14,10 +14,12 @@ Merkez doğrudan `Saha personeli` rolüyle hesap oluşturmayı da sürdürebilir
 
 1. Merkez talebi ilgili kurumun kuyruğuna iletir.
 2. Kurum incelemeye alır, kendi ekibine görev atar.
-3. Saha hesabı görevi kabul eder; isterse çalışmaya başladığını kaydeder.
-4. Ekip en az 15 karakter açıklama ve 1–3 fotoğrafla sonucu kurum kontrolüne gönderir.
-5. Kurum sonucu düzeltme için ekibe iade eder veya belediye merkezine iletir.
+3. Saha hesabı görevi kabul eder, sahaya çıkınca çalışmaya başladığını kaydeder. İş zaten bittiyse sonucu doğrudan gönderebilir.
+4. Ekip en az 15 karakter açıklamayla sonucu kurum kontrolüne gönderir. Elektrik ve su kesintilerinde fotoğraf isteğe bağlıdır (kesinti fotoğrafla kanıtlanamaz); diğer işlerde 1–3 sonuç fotoğrafı gerekir.
+5. Kurum sonucu düzeltme için ekibe iade eder veya belediye merkezine iletir. Düzeltme istenen görev listede **Düzeltme istendi** etiketiyle en üstte görünür.
 6. Merkez kuruma iade eder veya açıklamayı ve fotoğrafları talep sahibi ile takip eden hesaplarla paylaşır. Ancak bu son adım talebi çözüldü durumuna geçirir.
+
+Ekip görevi yapamıyorsa (adres bulunamadı, malzeme yok, başka kurumun işi) **Kuruma iade et** ile en az 15 karakter gerekçe yazar. Görev "Ekip görevi iade etti" durumuna geçer; kurum gerekçeyi görür, hazır görevi iptal edip başka ekibe veya yeniden hazırlar. İade vatandaşa açılmaz. Sunucuda `011_crew_decline.sql` göçü gerekir.
 
 Kurum ve merkez kontrol notları vatandaşlara açılmaz. Vatandaşın ilk fotoğrafları ortak listeye açılmaz. Yalnız merkez tarafından onaylanan sonuç fotoğrafları talep sahibi ve mevcut takipçilere sunulur. Bildirimler uygulama içinde yenilemeyle gelir; işletim sistemi push bildirimi eklenmemiştir.
 
