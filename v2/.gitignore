@@ -9,3 +9,4 @@ android/.gradle/
 android/build/
 test-results/
 .local/
+.deploy/

@@ -152,7 +152,7 @@ export function createAgent(deps: {
   }
 
   async function classify(r: CitizenRequest) {
-    if (!deps.classify) return { priority: "normal" as Priority, note: NO_MODEL, failed: true };
+    if (!deps.classify) return { priority: "normal" as Priority, note: "Kategoriye göre yönlendirildi.", failed: false };
     try {
       const out = await withTimeout(
         deps.classify({ category: r.category, description: r.description, address: r.address }),

@@ -1,6 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "framework": "express",
-  "buildCommand": "npm run build:cloud",
+  "installCommand": "npm install --no-audit --no-fund",
+  "buildCommand": "echo prebuilt dist/server.js",
   "regions": ["fra1"]
 }

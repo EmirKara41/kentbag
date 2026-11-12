@@ -9,11 +9,11 @@
     "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "build:cloud": "node scripts/build.mjs",
-    "dev": "tsx scripts/dev.ts"
+    "dev": "tsx scripts/dev.ts",
+    "stage-deploy": "node scripts/stage-deploy.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^4.0.102",
-    "@kentbag/shared": "*",
     "@vercel/blob": "^2.8.2",
     "@vercel/functions": "^3.10.1",
     "ai": "^7.0.148",
@@ -34,6 +34,7 @@
     "@types/pg": "^8.23.1",
     "@types/supertest": "^7.2.1",
     "esbuild": "^0.28.2",
-    "supertest": "^7.3.1"
+    "supertest": "^7.3.1",
+    "@kentbag/shared": "*"
   }
 }

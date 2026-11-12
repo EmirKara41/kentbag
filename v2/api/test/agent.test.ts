@@ -119,3 +119,23 @@ test("suggest explains without changing anything", async () => {
   assert.ok(s!.teamId);
   assert.equal((await row(r.id)).status, "received");
 });
+
+test("no model configured: plain category routing, no failure wording", async () => {
+  const plain = await startTestApi();
+  try {
+    const who = await plain.signUpCitizen("nomodel@example.test");
+    const r = (
+      await request(plain.app)
+        .post("/api/requests")
+        .set(who)
+        .send({ clientRequestId: crypto.randomUUID(), category: "water", description: "Boru patladı, su akıyor.", address: "Yeni Mah.", point: { lat: 40.546, lng: 41.994 }, photoIds: [] })
+        .expect(201)
+    ).body.request;
+    const db = (await plain.db.query("SELECT agent_reason FROM request WHERE id=$1", [r.id])).rows[0];
+    assert.doesNotMatch(db.agent_reason, /yanıt vermedi/);
+    const route = (await plain.db.query("SELECT body FROM request_event WHERE request_id=$1 AND type='route'", [r.id])).rows[0];
+    assert.ok(route);
+  } finally {
+    await plain.close();
+  }
+});
