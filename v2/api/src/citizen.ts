@@ -131,6 +131,12 @@ export function citizenRoutes(ctx: Context): Router {
     "/requests/mine",
     handle(async (req, res) => {
       const user = await ctx.access.requireUser(req);
+      // Retry the agent for this citizen's stuck requests, so nothing waits for a staff panel to be open.
+      const stuck = await ctx.db.query(
+        `SELECT id FROM request WHERE citizen_id=$1 AND status IN ('received','routed','returned','reopened') AND updated_at <= $2`,
+        [user.userId, new Date(ctx.now().getTime() - 60_000)],
+      );
+      for (const row of stuck.rows) await ctx.agent.processRequest(row.id).catch((e) => console.error("Agent retry failed", e));
       const { rows } = await ctx.db.query(`SELECT id FROM request WHERE citizen_id=$1 ORDER BY created_at DESC LIMIT 100`, [user.userId]);
       res.json({ requests: await Promise.all(rows.map((r) => view(r.id))) });
     }),

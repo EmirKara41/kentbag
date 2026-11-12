@@ -9,6 +9,8 @@ import {
   type Actor,
   type CitizenRequest,
   type RequestEvent,
+  type RequestStatus,
+  TransitionError,
 } from "@kentbag/shared";
 import type { Db, Row } from "./db.ts";
 import { HttpError } from "./errors.ts";
@@ -122,6 +124,8 @@ export async function placeInQueue(q: Db, requestId: string, teamId: string, pos
 }
 
 export type Mutation = {
+  /** Refuse unless the locked row is still in one of these states (guards against races). */
+  expectStatus?: RequestStatus[];
   /** Runs inside the transaction after the transition, e.g. to set the queue position. */
   inside?: (q: Db, after: CitizenRequest) => Promise<void>;
 };
@@ -140,6 +144,8 @@ export async function saveTransition(
   const change = await ctx.db.tx(async (q) => {
     const before = await getRequest(q, id, true);
     if (!before) throw new HttpError(404, "Talep bulunamadı.");
+    if (mutation.expectStatus && !mutation.expectStatus.includes(before.status))
+      throw new TransitionError("invalid_state", "Talep bu arada değişti. Liste yenilendi.");
     const { request: after, event } = applyTransition(before, action, actor, ctx.now());
     await writeRequest(q, after);
     const stored = await insertEvent(q, event);

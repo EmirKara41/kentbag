@@ -38,6 +38,7 @@ const citizenTitle: Partial<Record<RequestStatus, string>> = {
   on_site: "Ekip sahada",
   resolved: "Sorununuz çözüldü",
   returned: "Talebiniz yeniden atanıyor",
+  cancelled: "Talebiniz iptal edildi",
 };
 
 async function tokensFor(db: Db, userIds: string[]) {

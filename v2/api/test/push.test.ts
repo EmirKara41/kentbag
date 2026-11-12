@@ -71,3 +71,11 @@ test("a failing push service never breaks the action", async () => {
   failSend = true;
   await request(api.app).post(`/api/crew/jobs/${r.id}/resolve`).set(trafo).send({ note: "Arıza giderildi, kontrol tamam.", photoIds: [] }).expect(200);
 });
+
+test("staff cancellation notifies the citizen", async () => {
+  const r = await create();
+  sent.length = 0;
+  const center = await api.login("demo-merkez@kentbag.app");
+  await request(api.app).post(`/api/staff/requests/${r.id}/cancel`).set(center).send({ reason: "Mükerrer kayıt, diğer talep işleniyor." }).expect(200);
+  assert.ok(sent.some((s) => s.tokens.includes("citizen-token") && s.msg.title === "Talebiniz iptal edildi"));
+});

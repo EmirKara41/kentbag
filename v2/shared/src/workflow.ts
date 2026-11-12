@@ -170,7 +170,8 @@ export function applyTransition(
     case "cancel":
       clearAssignment(next);
       body = `Talep iptal edildi: ${text(action.reason, 10, "Gerekçe")}`;
-      isPublic = false;
+      // Staff cancellations are shown to the citizen with the reason.
+      isPublic = actor.role !== "citizen";
       break;
     case "decline":
       clearAssignment(next);

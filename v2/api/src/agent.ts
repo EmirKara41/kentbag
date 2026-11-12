@@ -11,6 +11,7 @@ import {
   type Point,
   type Priority,
   type QueueJob,
+  TransitionError,
 } from "@kentbag/shared";
 import type { Db, Row } from "./db.ts";
 import { getRequest, placeInQueue, rowToRequest, saveTransition, type ChangeHook } from "./requests.ts";
@@ -132,7 +133,8 @@ export function createAgent(deps: {
   async function pickTeam(r: CitizenRequest, extraReason = "") {
     if (!r.institution) return null;
     const exclude = await excludedTeam(r);
-    const teams = (await loadTeams(deps.db, r.institution)).filter((t) => t.id !== exclude);
+    const teams = (await loadTeams(deps.db, r.institution)).filter((t) => t.id !== exclude && t.active && t.onShift);
+    if (!teams.length) return null;
     const points = [r.point, ...teams.flatMap((t) => [t.point, ...t.jobs.map((j) => j.point)])].filter(Boolean) as Point[];
     const travel = await travelTable(points, deps.travel);
     const choice = chooseTeam({ now: deps.now(), request: { id: r.id, point: r.point, category: r.category, priority: r.priority }, teams, travel });
@@ -145,9 +147,16 @@ export function createAgent(deps: {
     if (!(await agentEnabled(deps.db, r.institution))) return false;
     const choice = await pickTeam(r, extraReason);
     if (!choice) return false;
-    await saveTransition(ctx, id, { type: "assign", teamId: choice.teamId, reason: choice.reason }, { role: "agent" }, {
-      inside: (q) => placeInQueue(q, id, choice.teamId, choice.position),
-    });
+    try {
+      await saveTransition(ctx, id, { type: "assign", teamId: choice.teamId, reason: choice.reason }, { role: "agent" }, {
+        expectStatus: WAITING,
+        inside: (q) => placeInQueue(q, id, choice.teamId, choice.position),
+      });
+    } catch (error) {
+      // Someone else (a parallel sweep or a person) changed the request first.
+      if (error instanceof TransitionError && error.code === "invalid_state") return false;
+      throw error;
+    }
     return true;
   }
 
@@ -173,9 +182,15 @@ export function createAgent(deps: {
       const result = await classify(r);
       const institution = institutionFor(r.category);
       const reason = `${result.note} ${categories[r.category].name} → ${institutions[institution].name}.`;
-      await saveTransition(ctx, id, { type: "route", institution, reason }, { role: "agent" }, {
-        inside: (q) => q.query("UPDATE request SET priority=$2 WHERE id=$1", [id, result.priority]).then(() => undefined),
-      });
+      try {
+        await saveTransition(ctx, id, { type: "route", institution, reason }, { role: "agent" }, {
+          expectStatus: ["received"],
+          inside: (q) => q.query("UPDATE request SET priority=$2 WHERE id=$1", [id, result.priority]).then(() => undefined),
+        });
+      } catch (error) {
+        if (error instanceof TransitionError && error.code === "invalid_state") return;
+        throw error;
+      }
       await assign(id, result.failed ? `(${NO_MODEL})` : "");
       return;
     }
