@@ -17,10 +17,11 @@ export const categories: Record<
 
 export const institutions: Record<
   InstitutionId,
-  { name: string; teams: { id: string; name: string }[] }
+  { name: string; dative: string; teams: { id: string; name: string }[] }
 > = {
   electricity: {
     name: "Elektrik Dağıtımı",
+    dative: "Elektrik Dağıtımı'na",
     teams: [
       { id: "elk-ariza", name: "Elektrik arıza ekibi" },
       { id: "elk-bakim", name: "Şebeke bakım ekibi" },
@@ -29,6 +30,7 @@ export const institutions: Record<
   },
   water: {
     name: "Su ve Kanalizasyon",
+    dative: "Su ve Kanalizasyon'a",
     teams: [
       { id: "su-ariza", name: "Su arıza ekibi" },
       { id: "su-kanal", name: "Kanalizasyon ekibi" },
@@ -36,6 +38,7 @@ export const institutions: Record<
   },
   cleaning: {
     name: "Temizlik İşleri",
+    dative: "Temizlik İşleri'ne",
     teams: [
       { id: "tmz-toplama", name: "Atık toplama ekibi" },
       { id: "tmz-bolge", name: "Bölge temizlik ekibi" },
@@ -43,6 +46,7 @@ export const institutions: Record<
   },
   "public-works": {
     name: "Yol ve Fen İşleri",
+    dative: "Yol ve Fen İşleri'ne",
     teams: [
       { id: "fen-yol", name: "Yol bakım ekibi" },
       { id: "fen-kis", name: "Kış bakım ekibi" },
@@ -50,6 +54,7 @@ export const institutions: Record<
   },
   parks: {
     name: "Park ve Bahçeler",
+    dative: "Park ve Bahçeler'e",
     teams: [
       { id: "prk-bakim", name: "Park bakım ekibi" },
       { id: "prk-alan", name: "Ortak alan ekibi" },
