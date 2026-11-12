@@ -1,5 +1,7 @@
 # KentBağ internet demosu
 
+12 Kasım 2026: **Saha Android 0.1.3** ve merkez paneli güncellendi. Elektrik ve su kesintilerinde ekip sonucu fotoğrafsız gönderebilir; diğer işlerde 1–3 fotoğraf zorunlu kalır. Ekip yapamadığı görevi gerekçeyle **Kuruma iade et** ile geri verir; kurum gerekçeyi görür. Kurumun düzeltme istediği iş listede öne çıkar. Merkez talep ayrıntısı **Sıradaki adım** düzenine geçti (kuruma gönder → kurumda → saha sonucunu onayla). Merkezin doğrudan sonuçlandırması **Saha işi olmadan sonuçlandır** adıyla gerekçeli ikincil yoldur. Veritabanında `011_crew_decline.sql` göçü uygulanmıştır. Saha APK'sı mevcut kurulumun üzerine yüklenir.
+
 Vatandaş Android **1.4.2** giriş ekranına **Şifremi unuttum** bağlantısı eklendi. [Vatandaş APK ve QR](https://kentbag-panel-emir-kara-s-projects.vercel.app/indir/) günceldir; aynı imzayla mevcut kurulumun üzerine yüklenir. Ortak kurtarma sayfasındaki sonuç metni vatandaş hesabına da uygundur. Saha uygulamasında değişiklik yapılmadı.
 
 11 Kasım 2026: [Şifremi unuttum](https://kentbag-panel-emir-kara-s-projects.vercel.app/sifre-sifirla) web akışı ve Saha Android 0.1.2 bağlantısı eklendi. Better Auth tek kullanımlık, 30 dakikalık doğrulama anahtarını denetler; Resend e-postayı doğrudan hesap adresine gönderir. Üretimde e-posta görevi `waitUntil` ile tamamlanır, hata günlüklerine anahtar/adres yazılmaz. Şifre sıfırlama mevcut oturumları kapatır. Yeni servis veya veritabanı göçü gerekmez.

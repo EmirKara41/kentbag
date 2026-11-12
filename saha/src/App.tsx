@@ -293,7 +293,7 @@ export default function App() {
               ? `Son yenileme ${date(sync)}`
               : "Kurumundan atanmış gerçek görev kayıtları"}
           </p>
-          <footer className="app-footer">KentBağ Saha · 0.1.2</footer>
+          <footer className="app-footer">KentBağ Saha · 0.1.3</footer>
         </main>
       )}
     </div>
@@ -388,7 +388,7 @@ function Login({ onLogin }: { onLogin: (data: Account) => void }) {
           başvurun belediye merkezi tarafından onaylanır. Mevcut vatandaş hesabınla da giriş yapıp saha başvurusu yapabilirsin.
         </span>
       </div>
-      <small>İnternet bağlantısı gerekir · KentBağ Saha 0.1.2</small>
+      <small>İnternet bağlantısı gerekir · KentBağ Saha 0.1.3</small>
     </main>
   );
 }
