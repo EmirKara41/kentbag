@@ -27,6 +27,7 @@ const referenceFor = (id: string) => "KB-" + id.replace(/-/g, "").slice(0, 6).to
 export function citizenRoutes(ctx: Context): Router {
   const router = express.Router();
   const link = photoLinker(ctx.config);
+  const lastRetry = new Map<string, number>();
 
   async function ownPhotos(userId: string, ids: string[], requestId: string | null) {
     if (!ids.length) return;
@@ -132,11 +133,17 @@ export function citizenRoutes(ctx: Context): Router {
     handle(async (req, res) => {
       const user = await ctx.access.requireUser(req);
       // Retry the agent for this citizen's stuck requests, so nothing waits for a staff panel to be open.
-      const stuck = await ctx.db.query(
-        `SELECT id FROM request WHERE citizen_id=$1 AND status IN ('received','routed','returned','reopened') AND updated_at <= $2`,
-        [user.userId, new Date(ctx.now().getTime() - 60_000)],
-      );
-      for (const row of stuck.rows) await ctx.agent.processRequest(row.id).catch((e) => console.error("Agent retry failed", e));
+      // At most once a minute per citizen and 3 requests per retry, so polling cannot multiply the work.
+      const nowMs = ctx.now().getTime();
+      if (nowMs - (lastRetry.get(user.userId) ?? 0) >= 60_000) {
+        lastRetry.set(user.userId, nowMs);
+        const stuck = await ctx.db.query(
+          `SELECT id FROM request WHERE citizen_id=$1 AND status IN ('received','routed','returned','reopened') AND updated_at <= $2
+           ORDER BY created_at LIMIT 3`,
+          [user.userId, new Date(nowMs - 60_000)],
+        );
+        for (const row of stuck.rows) await ctx.agent.processRequest(row.id).catch((e) => console.error("Agent retry failed", e));
+      }
       const { rows } = await ctx.db.query(`SELECT id FROM request WHERE citizen_id=$1 ORDER BY created_at DESC LIMIT 100`, [user.userId]);
       res.json({ requests: await Promise.all(rows.map((r) => view(r.id))) });
     }),

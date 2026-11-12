@@ -86,3 +86,33 @@ test("staff cancellation is visible to the citizen with its reason", async () =>
   const view = (await request(api.app).get(`/api/requests/${r.id}`).set(citizen).expect(200)).body.request;
   assert.ok(view.events.some((e: any) => /Mükerrer kayıt/.test(e.body)));
 });
+
+test("stuck-request retry on 'my requests' is throttled per citizen and capped", async () => {
+  let calls = 0;
+  const original = api.server.ctx.agent.processRequest;
+  api.server.ctx.agent.processRequest = async () => {
+    calls++;
+  };
+  try {
+    const who = await api.signUpCitizen("throttle@example.test");
+    await setAgent(api.db, "center", false);
+    for (let i = 0; i < 5; i++)
+      await request(api.app)
+        .post("/api/requests")
+        .set(who)
+        .send({ clientRequestId: crypto.randomUUID(), category: "water", description: "Su kesintisi devam ediyor.", address: "Yeni Mah.", point: null, photoIds: [] })
+        .expect(201);
+    calls = 0;
+    clock = new Date(clock.getTime() + 61_000);
+    await request(api.app).get("/api/requests/mine").set(who).expect(200);
+    assert.equal(calls, 3);
+    await request(api.app).get("/api/requests/mine").set(who).expect(200);
+    assert.equal(calls, 3);
+    clock = new Date(clock.getTime() + 61_000);
+    await request(api.app).get("/api/requests/mine").set(who).expect(200);
+    assert.equal(calls, 6);
+  } finally {
+    api.server.ctx.agent.processRequest = original;
+    await setAgent(api.db, "center", true);
+  }
+});
