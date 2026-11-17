@@ -1,17 +1,29 @@
-import { clockTime, routeIndex, routeStops, type RequestStatus } from "@kentbag/shared";
+import { clockTime, routeIndex, stopsFor, type RequestKind, type RequestStatus } from "@kentbag/shared";
 
 /** The transit-line strip: one stop per stage, the current stop marked. */
-export function RouteStrip({ status, etaArrival, etaFinish }: { status: RequestStatus; etaArrival?: string | null; etaFinish?: string | null }) {
-  const here = routeIndex(status);
-  if (here < 0) return <p className="muted">Bu talep iptal edildi.</p>;
+export function RouteStrip({
+  status,
+  kind = "issue",
+  etaArrival,
+  etaFinish,
+}: {
+  status: RequestStatus;
+  kind?: RequestKind;
+  etaArrival?: string | null;
+  etaFinish?: string | null;
+}) {
+  const stops = stopsFor(kind);
+  const here = routeIndex(status, kind);
+  if (here < 0) return <p className="muted">{status === "rejected" ? "Bu öneri uygulanmayacak." : "Bu talep iptal edildi."}</p>;
+  const issue = kind === "issue";
   return (
-    <ol className="route" aria-label={`Durum: ${routeStops[here]}`}>
-      {routeStops.map((stop, i) => (
-        <li key={stop} className={`${i < here ? "passed" : i === here ? "here" : ""} ${i === 5 ? "final" : ""}`}>
+    <ol className="route" aria-label={`Durum: ${stops[here]}`}>
+      {stops.map((stop, i) => (
+        <li key={stop} className={`${i < here ? "passed" : i === here ? "here" : ""} ${i === stops.length - 1 ? "final" : ""}`}>
           <i />
           {stop}
-          {i === 3 && here <= 3 && here >= 2 && etaArrival && <small className="num">{clockTime(etaArrival)}</small>}
-          {i === 4 && here === 4 && etaFinish && <small className="num">{clockTime(etaFinish)}</small>}
+          {issue && i === 3 && here <= 3 && here >= 2 && etaArrival && <small className="num">{clockTime(etaArrival)}</small>}
+          {issue && i === 4 && here === 4 && etaFinish && <small className="num">{clockTime(etaFinish)}</small>}
         </li>
       ))}
     </ol>
@@ -19,7 +31,21 @@ export function RouteStrip({ status, etaArrival, etaFinish }: { status: RequestS
 }
 
 /** One plain sentence about what happens next, for cards and headers. */
-export function etaLine(status: RequestStatus, etaArrival?: string | null, etaFinish?: string | null, queuePosition?: number | null) {
+export function etaLine(
+  status: RequestStatus,
+  etaArrival?: string | null,
+  etaFinish?: string | null,
+  queuePosition?: number | null,
+  kind: RequestKind = "issue",
+) {
+  if (kind === "improvement") {
+    if (status === "received") return "Önerin alındı, kuruma iletiliyor";
+    if (status === "routed") return "Kurum önerini değerlendiriyor";
+    if (status === "planned") return "Önerin planlandı";
+    if (status === "resolved") return "Önerin hayata geçirildi";
+    if (status === "rejected") return "Önerin bu dönem uygulanmayacak";
+    return status === "cancelled" ? "İptal edildi" : "Kurum önerini değerlendiriyor";
+  }
   if (status === "assigned")
     return etaArrival ? `Tahmini varış ${clockTime(etaArrival)}` : queuePosition ? `Ekibin sırasında ${queuePosition}. iş` : "Ekip atandı";
   if (status === "en_route") return etaArrival ? `Ekip yolda · tahmini varış ${clockTime(etaArrival)}` : "Ekip yolda";

@@ -30,6 +30,17 @@ export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }
     };
   }, [load]);
 
+  async function unfollow() {
+    setBusy(true);
+    try {
+      await api.call(`/api/requests/${id}/support`, { method: "DELETE" });
+      onBack();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Takip bırakılamadı.");
+      setBusy(false);
+    }
+  }
+
   async function act() {
     setBusy(true);
     setError("");
@@ -58,9 +69,19 @@ export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }
       {r && (
         <>
           <section className="stack">
-            <h1>{r.categoryName}</h1>
-            <p className={`eta big-eta ${isLive(r.status) ? "live" : ""}`}>{etaLine(r.status, r.etaArrival, r.etaFinish, r.queuePosition)}</p>
-            <RouteStrip status={r.status} etaArrival={r.etaArrival} etaFinish={r.etaFinish} />
+            <h1>
+              {r.categoryName}
+              {r.kind === "improvement" && <span className="tag">Öneri</span>}
+            </h1>
+            <p className={`eta big-eta ${isLive(r.status) ? "live" : ""}`}>{etaLine(r.status, r.etaArrival, r.etaFinish, r.queuePosition, r.kind)}</p>
+            <RouteStrip status={r.status} kind={r.kind} etaArrival={r.etaArrival} etaFinish={r.etaFinish} />
+            {r.relation === "following" && <p className="note">Bu sorunu başka bir vatandaş bildirdi; sen de etkilendiğin için takip ediyorsun.</p>}
+            {r.mergedWith && (
+              <p className="note">
+                Aynı sorun için açılmış {r.mergedWith} numaralı taleple birleştirildi. Ekip ikisini tek işte çözüyor; ilerlemeyi buradan izleyebilirsin.
+              </p>
+            )}
+            {r.relation === "own" && r.othersAffected && !r.mergedWith && <p className="note">Bu sorundan başka vatandaşlar da etkilendiğini bildirdi.</p>}
             {(r.teamName || r.institutionName) && (
               <p className="muted">
                 {r.institutionName}
@@ -70,14 +91,14 @@ export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }
           </section>
           {r.status === "resolved" && (
             <section className="panel stack resolved">
-              <h2>Ekip işi tamamladı</h2>
+              <h2>{r.kind === "improvement" ? "Önerin hayata geçirildi" : "Ekip işi tamamladı"}</h2>
               {r.resolutionNote && <p>{r.resolutionNote}</p>}
               <div className="photos">
                 {r.resolutionPhotos.map((p) => (
                   <img key={p} src={p} alt="Ekibin kapanış fotoğrafı" />
                 ))}
               </div>
-              {form !== "reopen" && (
+              {r.canReopen && form !== "reopen" && (
                 <button onClick={() => setForm("reopen")}>Sorun devam ediyor</button>
               )}
             </section>
@@ -109,6 +130,7 @@ export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }
               ))}
             </ol>
           </section>
+          {r.relation === "own" && (
           <section className="stack">
             <h2>Bildirimin</h2>
             <p>{r.description}</p>
@@ -119,7 +141,13 @@ export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }
               ))}
             </div>
           </section>
-          {r.status !== "resolved" && r.status !== "cancelled" && form === "none" && (
+          )}
+          {r.relation === "following" && (
+            <button className="link danger" disabled={busy} onClick={() => void unfollow()}>
+              Takibi bırak
+            </button>
+          )}
+          {r.canCancel && form === "none" && (
             <button className="link danger" onClick={() => setForm("cancel")}>
               Talebi iptal et
             </button>

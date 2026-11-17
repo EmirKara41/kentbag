@@ -1,6 +1,6 @@
 import { createApi } from "../../shared/client/api.ts";
 import { sessionStore } from "../../shared/client/native.ts";
-import type { RequestStatus } from "@kentbag/shared";
+import type { RequestKind, RequestStatus } from "@kentbag/shared";
 
 export const session = sessionStore("kb.citizen.session");
 export const signedOut = new EventTarget();
@@ -16,6 +16,7 @@ export const api = createApi(
 export type CitizenView = {
   id: string;
   reference: string;
+  kind: RequestKind;
   category: string;
   categoryName: string;
   priority: string;
@@ -35,4 +36,34 @@ export type CitizenView = {
   resolutionPhotos: string[];
   createdAt: string;
   events: { id: string; status: string; body: string; at: string }[];
+  /** "own" for the citizen's reports, "following" for problems they joined. */
+  relation: "own" | "following";
+  mergedWith: string | null;
+  othersAffected: boolean;
+  canReopen: boolean;
+  canCancel: boolean;
+};
+
+export type Announcement = {
+  id: string;
+  title: string;
+  body: string;
+  from: string;
+  neighborhood: string | null;
+  requestReference: string | null;
+  endsAt: string;
+};
+
+export type NearbyProblem = {
+  id: string;
+  reference: string;
+  kind: RequestKind;
+  categoryName: string;
+  status: RequestStatus;
+  statusLabel: string;
+  etaArrival: string | null;
+  etaFinish: string | null;
+  createdAt: string;
+  distanceMeters: number;
+  supporting: boolean;
 };

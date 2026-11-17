@@ -55,10 +55,10 @@ export function RequestDrawer({
             </div>
           </div>
           <RouteStrip status={detail.status} kind={detail.kind} etaArrival={detail.etaArrival} etaFinish={detail.etaFinish} />
-          {(detail.supportCount > 0 || detail.merged.length > 0 || detail.mergedIntoReference) && (
+          {((detail.supportCount ?? 0) > 0 || (detail.merged?.length ?? 0) > 0 || detail.mergedIntoReference) && (
             <p className="agent-note">
               {detail.mergedIntoReference && <>Bu talep <strong className="num">{detail.mergedIntoReference}</strong> ile birleştirildi; onunla birlikte kapanır. </>}
-              {detail.merged.length > 0 && (
+              {(detail.merged?.length ?? 0) > 0 && (
                 <>
                   Birleşen talepler: <span className="num">{detail.merged.map((m) => m.reference).join(", ")}</span>.{" "}
                 </>

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { api, session } from "../app.ts";
+import { ForgotPassword } from "../../../shared/client/ForgotPassword.tsx";
 
 type DemoAccount = { key: string; label: string; app: string };
 
@@ -9,6 +10,7 @@ export function Login({ notice, onSignedIn }: { notice: string; onSignedIn: () =
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [demo, setDemo] = useState<DemoAccount[]>([]);
+  const [forgot, setForgot] = useState(false);
 
   useEffect(() => {
     api
@@ -38,6 +40,9 @@ export function Login({ notice, onSignedIn }: { notice: string; onSignedIn: () =
       </div>
       <h1>Sıradaki işin burada.</h1>
       {notice && <p className="agent-note">{notice}</p>}
+      {forgot ? (
+        <ForgotPassword api={api} initialEmail={email} onBack={() => setForgot(false)} />
+      ) : (
       <form
         className="stack"
         onSubmit={(e) => {
@@ -57,7 +62,11 @@ export function Login({ notice, onSignedIn }: { notice: string; onSignedIn: () =
         <button className="primary big" disabled={busy}>
           {busy ? "Bekle…" : "Giriş yap"}
         </button>
+        <button type="button" className="link" onClick={() => setForgot(true)}>
+          Şifremi unuttum
+        </button>
       </form>
+      )}
       {demo.length > 0 && (
         <section className="stack">
           <h2>Demo ekip olarak gir</h2>

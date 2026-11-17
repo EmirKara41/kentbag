@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import { api, session } from "../app.ts";
+import { ForgotPassword } from "../../../shared/client/ForgotPassword.tsx";
 
 export function Login({ onSignedIn }: { onSignedIn: () => void }) {
-  const [mode, setMode] = useState<"in" | "up">("in");
+  const [mode, setMode] = useState<"in" | "up" | "forgot">("in");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -51,6 +52,10 @@ export function Login({ onSignedIn }: { onSignedIn: () => void }) {
         KentBağ
       </div>
       <h1>Mahallendeki sorunu bildir, ekibi yolda gör.</h1>
+      {mode === "forgot" ? (
+        <ForgotPassword api={api} initialEmail={email} onBack={() => setMode("in")} />
+      ) : (
+        <>
       <form className="stack" onSubmit={(e) => void submit(e)}>
         {mode === "up" && (
           <label>
@@ -82,6 +87,13 @@ export function Login({ onSignedIn }: { onSignedIn: () => void }) {
       <button className="link" onClick={() => setMode(mode === "in" ? "up" : "in")}>
         {mode === "in" ? "Hesabın yok mu? Hesap oluştur" : "Hesabın var mı? Giriş yap"}
       </button>
+      {mode === "in" && (
+        <button className="link" onClick={() => setMode("forgot")}>
+          Şifremi unuttum
+        </button>
+      )}
+        </>
+      )}
       {demo && (
         <button className="go" disabled={busy} onClick={() => void demoLogin()}>
           Demo vatandaş olarak gir

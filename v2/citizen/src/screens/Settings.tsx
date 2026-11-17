@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { api } from "../app.ts";
 import { pushAvailable } from "../../../shared/client/native.ts";
+import { Apply } from "./Apply.tsx";
 
 export function Settings({ onBack, onSignOut }: { onBack: () => void; onSignOut: () => void }) {
   const [on, setOn] = useState(localStorage.getItem("kb.push") !== "off");
@@ -41,6 +42,7 @@ export function Settings({ onBack, onSignOut }: { onBack: () => void; onSignOut:
         {!pushAvailable && <small className="muted">Bu sürümde telefon bildirimi yok; durumu uygulamadan izleyebilirsin.</small>}
         {error && <p className="error">{error}</p>}
       </section>
+      <Apply />
       <button onClick={onSignOut}>Çıkış yap</button>
     </main>
   );

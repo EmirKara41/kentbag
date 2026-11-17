@@ -1,12 +1,61 @@
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
-import { categories, oltuCenter, type CategoryId } from "@kentbag/shared";
-import { api, type CitizenView } from "../app.ts";
+import { categories, oltuCenter, type CategoryId, type RequestKind } from "@kentbag/shared";
+import { api, type CitizenView, type NearbyProblem } from "../app.ts";
 import { createDraftStore, validateReport, type ReportDraft } from "../report.ts";
 import { capturePhoto, currentPosition, isNative, preparePhoto, type LocalPhoto } from "../../../shared/client/native.ts";
 
 const drafts = createDraftStore(localStorage);
-const issueCategories = (Object.keys(categories) as CategoryId[]).filter((id) => categories[id].kind === "issue");
+const categoriesOf = (kind: RequestKind) => (Object.keys(categories) as CategoryId[]).filter((id) => categories[id].kind === kind);
+
+/** Open reports of the same problem near the chosen spot; joining one beats a duplicate report. */
+function Nearby({ point, category, onJoined }: { point: { lat: number; lng: number }; category: CategoryId; onJoined: (id: string) => void }) {
+  const [items, setItems] = useState<NearbyProblem[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    const q = new URLSearchParams({ lat: String(point.lat), lng: String(point.lng), category });
+    api
+      .call<{ requests: NearbyProblem[] }>(`/api/requests/nearby?${q}`)
+      .then((r) => setItems(r.requests))
+      .catch(() => setItems([]));
+  }, [point.lat, point.lng, category]);
+  if (!items.length) return null;
+  const improvement = categories[category].kind === "improvement";
+  async function join(id: string) {
+    setBusy(true);
+    setError("");
+    try {
+      const { request } = await api.call<{ request: CitizenView }>(`/api/requests/${id}/support`, { body: { point } });
+      onJoined(request.id);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Katılınamadı.");
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="nearby" aria-label="Yakındaki aynı sorunlar">
+      <strong>{improvement ? "Yakında aynı öneri var" : "Bu sorun yakında zaten bildirilmiş"}</strong>
+      <span className="muted">Aynı sorunsa yeni talep açmak yerine katıl: ilerlemeyi sen de görürsün, bildirim alırsın.</span>
+      {items.map((n) => (
+        <div key={n.id} className="nearby-item">
+          <span>
+            <strong>{n.categoryName}</strong> · yaklaşık {n.distanceMeters} m · {n.statusLabel}
+          </span>
+          {n.supporting ? (
+            <button onClick={() => onJoined(n.id)}>Takip ediyorsun · aç</button>
+          ) : (
+            <button className="go" disabled={busy} onClick={() => void join(n.id)}>
+              {improvement ? "Ben de destekliyorum" : "Ben de etkileniyorum"}
+            </button>
+          )}
+        </div>
+      ))}
+      {error && <p className="error">{error}</p>}
+    </section>
+  );
+}
 
 function PickMap({ point, onPick }: { point: { lat: number; lng: number } | null; onPick: (p: { lat: number; lng: number }) => void }) {
   const ref = useRef<HTMLDivElement>(null);
@@ -39,6 +88,8 @@ export function Report({ onCancel, onSent }: { onCancel: () => void; onSent: (id
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [locating, setLocating] = useState(false);
+  const [kind, setKind] = useState<RequestKind>(() => (draft.category ? categories[draft.category].kind : "issue"));
+  const improvement = kind === "improvement";
   const update = (patch: Partial<ReportDraft>) =>
     setDraft((d) => {
       const next = { ...d, ...patch };
@@ -93,13 +144,22 @@ export function Report({ onCancel, onSent }: { onCancel: () => void; onSent: (id
         <button className="link" onClick={onCancel}>
           Vazgeç
         </button>
-        <h1 className="title">Sorun bildir</h1>
+        <h1 className="title">{improvement ? "Öneri gönder" : "Sorun bildir"}</h1>
         <span />
       </header>
+      <div className="kind-switch" role="group" aria-label="Talep türü">
+        <button aria-pressed={!improvement} onClick={() => (setKind("issue"), update({ category: null }))}>
+          Arıza bildir
+        </button>
+        <button aria-pressed={improvement} onClick={() => (setKind("improvement"), update({ category: null }))}>
+          İyileştirme öner
+        </button>
+      </div>
       <section className="stack">
-        <h2>Ne oldu?</h2>
+        <h2>{improvement ? "Ne önerirsin?" : "Ne oldu?"}</h2>
+        {improvement && <small className="muted">Öneriler ekibe değil ilgili kuruma gider; kurum planlar ya da gerekçesiyle yanıtlar.</small>}
         <div className="category-grid">
-          {issueCategories.map((id) => (
+          {categoriesOf(kind).map((id) => (
             <button key={id} className="category" aria-pressed={draft.category === id} onClick={() => update({ category: id })}>
               {categories[id].name}
             </button>
@@ -111,7 +171,7 @@ export function Report({ onCancel, onSent }: { onCancel: () => void; onSent: (id
             maxLength={1000}
             value={draft.description}
             onChange={(e) => update({ description: e.target.value })}
-            placeholder="Örn. Sokağımızda sabahtan beri elektrik yok."
+            placeholder={improvement ? "Örn. Okul yolundaki sokak çok karanlık, aydınlatma konulsun." : "Örn. Sokağımızda sabahtan beri elektrik yok."}
           />
         </label>
       </section>
@@ -127,6 +187,16 @@ export function Report({ onCancel, onSent }: { onCancel: () => void; onSent: (id
           <input value={draft.address} maxLength={300} onChange={(e) => update({ address: e.target.value })} placeholder="Örn. Cumhuriyet Mah. Lale Sok. No 4" />
         </label>
       </section>
+      {draft.point && draft.category && (
+        <Nearby
+          point={draft.point}
+          category={draft.category}
+          onJoined={(id) => {
+            drafts.clear();
+            onSent(id);
+          }}
+        />
+      )}
       <section className="stack">
         <h2>Fotoğraf (isteğe bağlı)</h2>
         <div className="photos">
