@@ -18,7 +18,7 @@ if (process.env.VERCEL) attachDatabasePool(pool);
 const db = createPgDb(pool);
 await migrateApp(db);
 const mailer = process.env.RESEND_API_KEY
-  ? resendMailer(process.env.RESEND_API_KEY, process.env.RESEND_FROM || "KentBağ <onboarding@resend.dev>")
+  ? resendMailer(process.env.RESEND_API_KEY, process.env.RESEND_FROM || process.env.MAIL_FROM || "KentBağ <bildirim@lollore.com>")
   : undefined;
 const auth = createAuth(pool, config, mailer);
 const geo = createGeo();
