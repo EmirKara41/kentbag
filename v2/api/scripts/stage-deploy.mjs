@@ -1,10 +1,11 @@
 // Stages a self-contained deploy folder (.deploy/) with the prebuilt bundle,
 // the Vercel link and a package.json that lists only runtime dependencies.
-import { cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { cp, mkdir, readdir, readFile, rm, writeFile } from "node:fs/promises";
 
 const out = new URL("../.deploy/", import.meta.url);
-await rm(out, { recursive: true, force: true });
 await mkdir(out, { recursive: true });
+// Empty the folder instead of deleting it: Windows keeps the folder itself busy while a shell sits in it.
+for (const name of await readdir(out)) await rm(new URL(name, out), { recursive: true, force: true });
 const pkg = JSON.parse(await readFile(new URL("../package.json", import.meta.url), "utf8"));
 await writeFile(
   new URL("package.json", out),
