@@ -60,12 +60,17 @@ export type StaffRequest = {
   etaArrival: string | null;
   etaFinish: string | null;
   agentReason: string | null;
+  mergedInto: string | null;
+  supportCount: number;
+  mergedCount: number;
   createdAt: string;
   updatedAt: string;
 };
 
 export type StaffRequestDetail = StaffRequest & {
   citizenName?: string;
+  merged: { id: string; reference: string }[];
+  mergedIntoReference: string | null;
   photos: string[];
   resolutionNote?: string | null;
   resolutionPhotos: string[];
@@ -84,3 +89,75 @@ export type TeamBoard = {
 };
 
 export type AgentSettings = { center: boolean; institutions: Record<string, boolean> };
+
+export type Announcement = {
+  id: string;
+  title: string;
+  body: string;
+  from: string;
+  institution: string | null;
+  neighborhood: string | null;
+  requestReference: string | null;
+  startsAt: string;
+  endsAt: string;
+  active: boolean;
+  canEnd?: boolean;
+};
+
+export type Account = {
+  userId: string;
+  name: string;
+  email: string;
+  role: "center" | "institution" | "crew";
+  roleLabel: string;
+  institution: string | null;
+  institutionName: string | null;
+  teamId: string | null;
+  teamName: string | null;
+  active: boolean;
+};
+
+export type Application = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  note: string;
+  institutionName: string;
+  teamName: string;
+  status: "pending" | "approved" | "rejected";
+  decisionNote: string | null;
+  createdAt: string;
+};
+
+export type Summary = {
+  total: number;
+  open: number;
+  resolved: number;
+  improvements: number;
+  merged: number;
+  avgArrivalMinutes: number | null;
+  avgResolutionMinutes: number | null;
+  reopenRate: number | null;
+};
+
+export type Report = {
+  days: number;
+  summary: Summary;
+  byInstitution: (Summary & { institution: string; name: string })[];
+  byCategory: (Summary & { category: string; name: string; kind: string })[];
+  unrouted: number;
+};
+
+/** Downloads a file from the API with the session token (CSV export). */
+export async function download(path: string, filename: string) {
+  const token = session.get();
+  const response = await fetch(base + path, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+  if (!response.ok) throw new ApiError(response.status, "Dosya indirilemedi.");
+  const url = URL.createObjectURL(await response.blob());
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}

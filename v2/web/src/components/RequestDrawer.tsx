@@ -44,14 +44,28 @@ export function RequestDrawer({
       {detail && (
         <div className="stack">
           <div className="stack tight">
-            <h2>{detail.categoryName}</h2>
+            <h2>
+              {detail.categoryName}
+              {detail.kind === "improvement" && <span className="kind-tag">İyileştirme önerisi</span>}
+            </h2>
             <div className="row">
               <StatusPill status={detail.status} label={detail.statusLabel} />
               <Priority value={detail.priority} />
               <span className="muted">{dateTime(detail.createdAt)}</span>
             </div>
           </div>
-          <RouteStrip status={detail.status} etaArrival={detail.etaArrival} etaFinish={detail.etaFinish} />
+          <RouteStrip status={detail.status} kind={detail.kind} etaArrival={detail.etaArrival} etaFinish={detail.etaFinish} />
+          {(detail.supportCount > 0 || detail.merged.length > 0 || detail.mergedIntoReference) && (
+            <p className="agent-note">
+              {detail.mergedIntoReference && <>Bu talep <strong className="num">{detail.mergedIntoReference}</strong> ile birleştirildi; onunla birlikte kapanır. </>}
+              {detail.merged.length > 0 && (
+                <>
+                  Birleşen talepler: <span className="num">{detail.merged.map((m) => m.reference).join(", ")}</span>.{" "}
+                </>
+              )}
+              {detail.supportCount > 0 && <>{detail.supportCount} vatandaş "Ben de etkileniyorum" dedi.</>}
+            </p>
+          )}
           <section className="next panel stack">{nextStep(detail, refresh)}</section>
           <p>{detail.description}</p>
           <p className="muted">

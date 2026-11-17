@@ -9,6 +9,21 @@ export function Login({ onSignedIn }: { onSignedIn: () => void }) {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [demo, setDemo] = useState<DemoAccount[]>([]);
+  const [forgot, setForgot] = useState<"no" | "form" | "sent">("no");
+
+  async function requestReset(e: FormEvent) {
+    e.preventDefault();
+    setBusy(true);
+    setError("");
+    try {
+      await api("/api/password/forgot", { body: { email } });
+      setForgot("sent");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "İstek gönderilemedi.");
+    } finally {
+      setBusy(false);
+    }
+  }
 
   useEffect(() => {
     api<{ accounts: DemoAccount[] }>("/api/demo/accounts")
@@ -85,6 +100,28 @@ export function Login({ onSignedIn }: { onSignedIn: () => void }) {
             </div>
           </div>
         )}
+        {forgot !== "no" ? (
+          <form className="stack" onSubmit={(e) => void requestReset(e)}>
+            <h2>Şifremi unuttum</h2>
+            {forgot === "sent" ? (
+              <p className="agent-note">Bu adrese kayıtlı bir hesap varsa şifre yenileme bağlantısı gönderildi. E-postanı (gerekirse gereksiz klasörünü) kontrol et.</p>
+            ) : (
+              <>
+                <label>
+                  E-posta
+                  <input type="email" autoComplete="username" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                </label>
+                {error && <p className="error" role="alert">{error}</p>}
+                <button className="primary" disabled={busy}>
+                  Yenileme bağlantısı gönder
+                </button>
+              </>
+            )}
+            <button type="button" className="link" onClick={() => setForgot("no")}>
+              Girişe dön
+            </button>
+          </form>
+        ) : (
         <form className="stack" onSubmit={(e) => void signIn(e)}>
           <h2>Personel girişi</h2>
           <label>
@@ -99,8 +136,12 @@ export function Login({ onSignedIn }: { onSignedIn: () => void }) {
           <button className="primary" disabled={busy}>
             {busy ? "Giriş yapılıyor…" : "Giriş yap"}
           </button>
+          <button type="button" className="link" onClick={() => setForgot("form")}>
+            Şifremi unuttum
+          </button>
           <small>Her hesap tek bir role sahiptir: belediye merkezi, kurum veya saha ekibi. Saha ekipleri Android uygulamasını kullanır.</small>
         </form>
+        )}
       </section>
     </main>
   );

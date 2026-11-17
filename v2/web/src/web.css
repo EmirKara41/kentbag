@@ -58,3 +58,27 @@
 .team { display: grid; gap: 8px; align-content: start; }
 .team.off { opacity: 0.6; }
 .job { display: grid; gap: 2px; text-align: left; font-weight: 400; padding: 8px 10px; min-height: 0; }
+
+/* Faz 2 */
+.kind-tag { display: inline-block; margin-left: 8px; vertical-align: middle; font-size: 0.8rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: #e3f0ea; color: #1f5c43; }
+.similar { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.similar li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--line); border-radius: var(--radius-s); background: var(--surface); }
+.support { font-size: 0.85rem; color: var(--ink-soft); white-space: nowrap; }
+.tabs { display: flex; gap: 4px; flex-wrap: wrap; }
+.tabs a { color: #cfd8dc; text-decoration: none; padding: 8px 12px; border-radius: var(--radius-s); font-weight: 700; }
+.tabs a[aria-current="page"] { color: var(--ink); background: var(--signal); }
+.tabs a:hover:not([aria-current="page"]) { color: #fff; background: #2c3940; }
+.topbar { flex-wrap: wrap; }
+.grid-2 { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.4fr); gap: var(--gap); align-items: start; }
+@media (max-width: 960px) { .grid-2 { grid-template-columns: 1fr; } }
+.tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 8px; }
+.tile { background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); padding: 14px 16px; display: grid; gap: 2px; }
+.tile strong { font-size: 1.8rem; line-height: 1.1; }
+.tile small { color: var(--ink-soft); }
+table.data { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-m); overflow: hidden; }
+table.data th, table.data td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); }
+table.data th { font-size: 0.85rem; color: var(--ink-soft); font-weight: 700; background: #f7f9fa; }
+table.data td.num, table.data th.num { text-align: right; }
+.table-wrap { overflow-x: auto; }
+.notice { display: grid; gap: 4px; }
+.notice.ended { opacity: 0.6; }

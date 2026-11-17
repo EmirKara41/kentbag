@@ -4,11 +4,12 @@ import { api, type StaffRequest, type StaffRequestDetail } from "../api.ts";
 import { usePolling, useAgentSettings } from "../components/hooks.ts";
 import { RequestDrawer } from "../components/RequestDrawer.tsx";
 import { Priority, StatusPill } from "../components/parts.tsx";
-import { CancelRequest, LiveSummary, RouteChoice, TeamChoice } from "../components/Actions.tsx";
+import { NextStep } from "../components/NextStep.tsx";
 
-const filters: { key: string; label: string; match: (s: RequestStatus) => boolean }[] = [
+const filters: { key: string; label: string; match: (s: RequestStatus, kind: string) => boolean }[] = [
   { key: "received", label: "Onay bekleyen", match: (s) => s === "received" },
-  { key: "waiting", label: "Atama bekleyen", match: (s) => s === "routed" || s === "returned" || s === "reopened" },
+  { key: "waiting", label: "Atama bekleyen", match: (s, k) => k === "issue" && (s === "routed" || s === "returned" || s === "reopened") },
+  { key: "ideas", label: "Öneriler", match: (s, k) => k === "improvement" && (s === "routed" || s === "planned") },
   { key: "live", label: "Sahada", match: isLive },
   { key: "resolved", label: "Çözülen", match: (s) => s === "resolved" },
 ];
@@ -25,33 +26,20 @@ export function CenterPage() {
     const f = filters.find((x) => x.key === filter);
     const q = query.trim().toLocaleLowerCase("tr");
     return (data ?? []).filter(
-      (r) => (!f || f.match(r.status)) && (!q || `${r.reference} ${r.address} ${r.description}`.toLocaleLowerCase("tr").includes(q)),
+      (r) => (!f || f.match(r.status, r.kind)) && (!q || `${r.reference} ${r.address} ${r.description}`.toLocaleLowerCase("tr").includes(q)),
     );
   }, [data, filter, query]);
 
-  const nextStep = (d: StaffRequestDetail, done: () => Promise<void>) => {
-    const after = async () => {
-      await done();
-      await refresh();
-    };
-    if (d.status === "received") return <RouteChoice detail={d} refresh={after} />;
-    if (d.status === "routed" || d.status === "returned" || d.status === "reopened")
-      return (
-        <>
-          <TeamChoice detail={d} refresh={after} title={`${d.institutionName} · hangi ekip gitsin?`} />
-          <CancelRequest detail={d} refresh={after} />
-        </>
-      );
-    if (isLive(d.status))
-      return (
-        <>
-          <LiveSummary detail={d} />
-          <TeamChoice detail={d} refresh={after} title="Başka ekibe ver" />
-          <CancelRequest detail={d} refresh={after} />
-        </>
-      );
-    return <p className="muted">{d.status === "resolved" ? "Ekip işi tamamladı. Vatandaş sorun sürerse yeniden açabilir." : "Bu talep iptal edildi."}</p>;
-  };
+  const nextStep = (d: StaffRequestDetail, done: () => Promise<void>) => (
+    <NextStep
+      role="center"
+      detail={d}
+      refresh={async () => {
+        await done();
+        await refresh();
+      }}
+    />
+  );
 
   return (
     <main className="page">
@@ -85,7 +73,7 @@ export function CenterPage() {
         {filters.map((f) => (
           <button key={f.key} className="counter" aria-pressed={filter === f.key} onClick={() => setFilter(filter === f.key ? null : f.key)}>
             <span className="muted">{f.label}</span>
-            <strong className="num">{data ? data.filter((r) => f.match(r.status)).length : "–"}</strong>
+            <strong className="num">{data ? data.filter((r) => f.match(r.status, r.kind)).length : "–"}</strong>
           </button>
         ))}
       </div>
@@ -96,7 +84,8 @@ export function CenterPage() {
           <button key={r.id} className="list-row" onClick={() => setOpen(r.id)}>
             <span className="stack tight">
               <strong>
-                {r.categoryName} <Priority value={r.priority} />
+                {r.categoryName} {r.kind === "improvement" ? <span className="kind-tag">Öneri</span> : <Priority value={r.priority} />}
+                {r.supportCount + r.mergedCount > 0 && <span className="support"> · +{r.supportCount + r.mergedCount} etkilenen</span>}
               </strong>
               <span className="meta">
                 {r.reference} · {r.address || "Haritada işaretli"}

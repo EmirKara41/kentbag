@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react";
 import L from "leaflet";
-import { clockTime, dateTime, isLive, routeIndex, routeStops, type RequestStatus } from "@kentbag/shared";
+import { clockTime, dateTime, isLive, routeIndex, stopsFor, type RequestKind, type RequestStatus } from "@kentbag/shared";
 
 const priorityText = { urgent: "Acil", high: "Yüksek", normal: "Normal", low: "Düşük" } as const;
 
@@ -9,22 +9,34 @@ export function Priority({ value }: { value: keyof typeof priorityText }) {
 }
 
 export function StatusPill({ status, label }: { status: RequestStatus; label: string }) {
-  const tone = status === "resolved" ? "done" : status === "cancelled" ? "off" : isLive(status) ? "live" : "wait";
+  const tone = status === "resolved" ? "done" : ["cancelled", "rejected", "merged"].includes(status) ? "off" : isLive(status) ? "live" : "wait";
   return <span className={`pill ${tone}`}>{label}</span>;
 }
 
 /** The transit-line strip: one stop per stage, the current stop marked. */
-export function RouteStrip({ status, etaArrival, etaFinish }: { status: RequestStatus; etaArrival?: string | null; etaFinish?: string | null }) {
-  const here = routeIndex(status);
-  if (here < 0) return <p className="muted">Bu talep iptal edildi.</p>;
+export function RouteStrip({
+  status,
+  kind = "issue",
+  etaArrival,
+  etaFinish,
+}: {
+  status: RequestStatus;
+  kind?: RequestKind;
+  etaArrival?: string | null;
+  etaFinish?: string | null;
+}) {
+  const stops = stopsFor(kind);
+  const here = routeIndex(status, kind);
+  if (here < 0) return <p className="muted">{status === "rejected" ? "Bu öneri uygulanmayacak." : "Bu talep iptal edildi."}</p>;
+  const issue = kind === "issue";
   return (
-    <ol className="route" aria-label={`Talebin durumu: ${routeStops[here]}`}>
-      {routeStops.map((stop, i) => (
-        <li key={stop} className={`${i < here ? "passed" : i === here ? "here" : ""} ${i === 5 ? "final" : ""}`}>
+    <ol className="route" aria-label={`Talebin durumu: ${stops[here]}`}>
+      {stops.map((stop, i) => (
+        <li key={stop} className={`${i < here ? "passed" : i === here ? "here" : ""} ${i === stops.length - 1 ? "final" : ""}`}>
           <i />
           {stop}
-          {i === 3 && here <= 3 && etaArrival && <small className="num">varış {clockTime(etaArrival)}</small>}
-          {i === 4 && here === 4 && etaFinish && <small className="num">bitiş {clockTime(etaFinish)}</small>}
+          {issue && i === 3 && here <= 3 && etaArrival && <small className="num">varış {clockTime(etaArrival)}</small>}
+          {issue && i === 4 && here === 4 && etaFinish && <small className="num">bitiş {clockTime(etaFinish)}</small>}
         </li>
       ))}
     </ol>

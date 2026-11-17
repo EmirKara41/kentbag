@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from "react";
-import { clockTime, institutions, isLive, type InstitutionId } from "@kentbag/shared";
+import { clockTime, dateTime, institutions, type InstitutionId } from "@kentbag/shared";
 import { api, type StaffRequest, type StaffRequestDetail, type TeamBoard } from "../api.ts";
 import { usePolling, useAgentSettings } from "../components/hooks.ts";
 import { RequestDrawer } from "../components/RequestDrawer.tsx";
 import { Priority, StatusPill } from "../components/parts.tsx";
-import { CancelRequest, LiveSummary, TeamChoice } from "../components/Actions.tsx";
+import { NextStep } from "../components/NextStep.tsx";
 
 const WAITING = ["routed", "returned", "reopened"];
 
@@ -103,31 +103,20 @@ export function InstitutionPage({ institution }: { institution: string }) {
     await requests.refresh();
     await teams.refresh();
   };
-  const waiting = (requests.data ?? []).filter((r) => WAITING.includes(r.status));
+  const waiting = (requests.data ?? []).filter((r) => r.kind === "issue" && WAITING.includes(r.status));
+  const ideas = (requests.data ?? []).filter((r) => r.kind === "improvement" && (r.status === "routed" || r.status === "planned"));
   const agentOn = settings ? settings.center && settings.institutions[institution] : false;
 
-  const nextStep = (d: StaffRequestDetail, done: () => Promise<void>) => {
-    const after = async () => {
-      await done();
-      await refreshAll();
-    };
-    if (WAITING.includes(d.status))
-      return (
-        <>
-          <TeamChoice detail={d} refresh={after} title="Hangi ekip gitsin?" />
-          <CancelRequest detail={d} refresh={after} />
-        </>
-      );
-    if (isLive(d.status))
-      return (
-        <>
-          <LiveSummary detail={d} />
-          <TeamChoice detail={d} refresh={after} title="Başka ekibe ver" />
-          <CancelRequest detail={d} refresh={after} />
-        </>
-      );
-    return <p className="muted">{d.status === "resolved" ? "Ekip işi tamamladı." : "Bu talep artık açık değil."}</p>;
-  };
+  const nextStep = (d: StaffRequestDetail, done: () => Promise<void>) => (
+    <NextStep
+      role="institution"
+      detail={d}
+      refresh={async () => {
+        await done();
+        await refreshAll();
+      }}
+    />
+  );
 
   return (
     <main className="page">
@@ -157,6 +146,28 @@ export function InstitutionPage({ institution }: { institution: string }) {
           ))}
         </section>
         <section className="stack">
+          {ideas.length > 0 && (
+            <div className="stack">
+              <h2>İyileştirme önerileri ({ideas.length})</h2>
+              <div className="list">
+                {ideas.map((r) => (
+                  <button key={r.id} className="list-row" onClick={() => setOpen(r.id)}>
+                    <span className="stack tight">
+                      <strong>
+                        {r.categoryName}
+                        {r.supportCount + r.mergedCount > 0 && <span className="support"> · +{r.supportCount + r.mergedCount} destek</span>}
+                      </strong>
+                      <span className="meta">
+                        {r.reference} · {r.address || "Haritada işaretli"}
+                      </span>
+                    </span>
+                    <span className="meta">{dateTime(r.createdAt)}</span>
+                    <StatusPill status={r.status} label={r.status === "routed" ? "Karar bekliyor" : r.statusLabel} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           <h2>Ekipler</h2>
           <div className="teams">
             {(teams.data ?? []).map((t) => (
