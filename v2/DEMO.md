@@ -26,3 +26,25 @@ Bilgisayarda https://kentbag2-web.vercel.app açık olsun.
 
 Not: Ekip uygulaması açıkken konum gönderir; ekip telefonu 30 dakikadan uzun
 kapalı kalırsa ilk varış süresi "hesaplanamadı" görünebilir, akış yine çalışır.
+
+## Faz 2 eklentileri (yaklaşık 4 dakika)
+
+9. **Duyuru.** Bilgisayar, **Elektrik Dağıtımı** → üstte **Duyurular** → başlık
+   "Planlı elektrik kesintisi", açıklama, bölge *Cumhuriyet* → **Duyuruyu yayınla**.
+   Telefon 1: ana ekranın en üstünde duyuru görünür.
+10. **Aynı sorun, ikinci kişi.** Telefon 1'deki elektrik talebi açıkken bilgisayarda
+    merkez → talebe tıkla → **Yakında aynı sorun** bölümünü göster. Telefonda
+    **Sorun bildir** → *Elektrik kesintisi* → aynı yerde konum seç: "Bu sorun yakında
+    zaten bildirilmiş" kutusu çıkar (kendi talebin listede görünmez; başka hesapla dene).
+    **Ben de etkileniyorum** → talep "Takip ediyorsun" olarak listeye girer.
+11. **Birleştirme.** İki ayrı vatandaş aynı yerden bildirdiyse kurum panelinde
+    talebi aç → **Yakında aynı sorun** → **Bununla birleştir**. İkinci talep ekip
+    sırasından çıkar, vatandaşı ana talebin ilerlemesini görür.
+12. **İyileştirme önerisi.** Telefon 1: **Sorun bildir** → **İyileştirme öner** →
+    *Aydınlatma* → gönder. Kurum panelinde "İyileştirme önerileri" → aç →
+    **Planlandı** → açıklama → **Planı kaydet**. Telefonda "Önerin planlandı".
+13. **Personel ve başvuru.** Telefon 1: **Ayarlar** → **Saha ekibine başvur** →
+    ekip, telefon → gönder. Bilgisayar, kurum → **Personel** → **Onayla, ekibe ekle**.
+    (Demo vatandaş onaylanırsa artık ekip hesabı olur; sunumda bunu yeni bir
+    hesapla göster.)
+14. **Raporlar.** **Raporlar** → ortalama varış ve çözüm süresi → **CSV indir**.
