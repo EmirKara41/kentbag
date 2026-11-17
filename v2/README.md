@@ -37,6 +37,17 @@ Alındı → Kuruma iletildi → Ekibe atandı → Ekip yolda → Ekip sahada �
 - Ekip "Bitti" dediği anda talep kapanır ve vatandaşa bildirim gider.
 - Vatandaş "Sorun devam ediyor" derse talep yeniden açılır, ajan tekrar atar.
 
+## Faz 2 özellikleri
+
+- **İyileştirme önerileri:** Vatandaş "İyileştirme öner" der (aydınlatma, kaldırım, erişilebilirlik, park). Ajan kuruma yönlendirir, ekibe atamaz. Kurum *Planlandı*, *Tamamlandı* ya da gerekçeli *Uygulanmayacak* der.
+- **Ortak sorunlar:** Bildirim ekranı 1,5 km içindeki aynı sorunları gösterir. "Ben de etkileniyorum" diyen vatandaş talebi takip eder ve bildirim alır; bildirenin metni, fotoğrafı ve tam konumu gizli kalır. Panelde **Yakında aynı sorun** bölümünden talepler birleştirilir. Birleşen talep ana talebin durumunu gösterir ve onunla kapanır. Sorun sürerse vatandaş talebini ayırıp yeniden açabilir.
+- **Duyurular:** Panelde *Duyurular*. Merkez belediye adına, kurum kendi adına yayınlar. Duyuru vatandaşın ana ekranında görünür.
+- **Personel:** Panelde *Personel*. Merkez her rolden hesap açar ve kapatır; kurum yalnız kendi ekip hesaplarını yönetir. Var olan bir e-postaya personel rolü verilmez. Vatandaş Ayarlar ekranından **Saha ekibine başvur**ur; kurum onaylayınca aynı hesapla KentBağ Ekip uygulamasına girer.
+- **Şifremi unuttum:** Üç girişte de var. Bağlantı e-postayla gelir ve web'deki `/sifre` sayfasını açar. E-posta için API'de `RESEND_API_KEY` (ve isteğe bağlı `RESEND_FROM`) gerekir. Anahtar yoksa istek kabul edilir ama e-posta gitmez.
+- **Raporlar:** Panelde *Raporlar*: talep sayıları, ortalama varış ve çözüm süresi, yeniden açılma oranı, kurum ve kategori kırılımı, **CSV indir**.
+
+Veritabanı şeması API açılırken kendiliğinden güncellenir (`api/src/schema.ts`, yalnız ekleme). Faz 1'e dönmek için `faz1-tamam` etiketi ve `C:\Users\emirk\KentBag-Yedek-Faz1-2026-11-18\GERI-DON.md`.
+
 ## Klasörler
 
 ```
@@ -63,7 +74,7 @@ npm -w web run test:ui          # panel tarayıcı testleri (Edge)
 ## Yayınlama
 
 API: `cd api && npm run build:cloud && npm run stage-deploy && cd .deploy && npx vercel@65.11.0 deploy --prod`
-Veritabanı değişikliği varsa önce `npm run migrate` (DATABASE_URL yeni veritabanı).
+Şema değişiklikleri API açılırken uygulanır; ayrıca migrate çalıştırmak gerekmez.
 
 APK: `powershell -File scripts/build-android.ps1 -ApiUrl https://kentbag2-api.vercel.app`
 (imza anahtarı `%USERPROFILE%\.cache\kentyanimda-android\signing`).
