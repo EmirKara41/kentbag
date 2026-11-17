@@ -16,6 +16,9 @@ import { staffRoutes } from "./staff.ts";
 import { recomputeTeamEta } from "./eta.ts";
 import { pushHook, pushRoutes, type PushSend } from "./push.ts";
 import { demoRoutes } from "./demo.ts";
+import { peopleRoutes } from "./people.ts";
+import { announcementRoutes } from "./announcements.ts";
+import { reportRoutes } from "./reports.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -102,6 +105,9 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
   app.use("/api", crewRoutes(ctx));
   app.use("/api", staffRoutes(ctx));
   app.use("/api", pushRoutes(ctx));
+  app.use("/api", peopleRoutes(ctx));
+  app.use("/api", announcementRoutes(ctx));
+  app.use("/api", reportRoutes(ctx));
   app.use("/api", demoRoutes(ctx, options.demoPassword));
   app.use("/api", (_req, res) => void res.status(404).json({ error: "Bulunamadı." }));
   app.use(errorHandler);

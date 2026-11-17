@@ -9,6 +9,7 @@ import { migrate } from "../src/migrate.ts";
 import { seedDemo, seedTeams } from "../src/seed.ts";
 import { createServer, type ServerOptions } from "../src/server.ts";
 import { memoryPhotoStore } from "../src/photos.ts";
+import type { Mail } from "../src/mail.ts";
 
 export const PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jX1sAAAAASUVORK5CYII=",
@@ -35,11 +36,12 @@ export async function startTestApi(options: Partial<ServerOptions> = {}) {
     webOrigins: ["http://localhost:5173"],
     testing: true,
   };
-  const auth = createAuth(pool, config);
+  const mails: Mail[] = [];
+  const auth = createAuth(pool, { ...config, resetPage: "http://localhost:5173/sifre" }, async (m) => void mails.push(m));
   await migrate(db, auth);
   await seedTeams(db);
   await seedDemo(db, auth, TEST_PASSWORD);
-  const server = createServer({ db, auth, config, photos: memoryPhotoStore(), ...options });
+  const server = createServer({ db, auth, config: { ...config, resetPage: "http://localhost:5173/sifre" }, photos: memoryPhotoStore(), ...options });
   const app: Express = server.app;
 
   async function login(email: string): Promise<Headers> {
@@ -60,7 +62,7 @@ export async function startTestApi(options: Partial<ServerOptions> = {}) {
     await socket.stop();
     await pg.close();
   }
-  return { app, db, server, login, signUpCitizen, close };
+  return { app, db, server, login, signUpCitizen, close, mails };
 }
 
 export type TestApi = Awaited<ReturnType<typeof startTestApi>>;

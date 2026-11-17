@@ -75,10 +75,15 @@ test("a neighbour sees the nearby problem, joins it and follows its progress", a
   const far = (await request(api.app).get("/api/requests/nearby").query({ lat: 40.6, lng: 41.994, category: "water" }).set(ayse).expect(200)).body.requests;
   assert.ok(!far.some((n: { id: string }) => n.id === outage.id));
 
-  const followed = (await request(api.app).post(`/api/requests/${outage.id}/support`).set(ayse).expect(200)).body.request;
+  const near = { point: { lat: 40.5465, lng: 41.9945 } };
+  // Following needs the follower to be near the problem.
+  await request(api.app).post(`/api/requests/${outage.id}/support`).set(ayse).send({ point: { lat: 40.7, lng: 41.9945 } }).expect(404);
+  const followed = (await request(api.app).post(`/api/requests/${outage.id}/support`).set(ayse).send(near).expect(200)).body.request;
   assert.equal(followed.relation, "following");
   assert.equal(followed.description, "");
-  await request(api.app).post(`/api/requests/${outage.id}/support`).set(ali).expect(409);
+  assert.equal(followed.point, null);
+  assert.ok(!("address" in found));
+  await request(api.app).post(`/api/requests/${outage.id}/support`).set(ali).send(near).expect(409);
   const mine = (await request(api.app).get("/api/requests/mine").set(ayse).expect(200)).body.requests;
   assert.ok(mine.some((m: { id: string; relation: string }) => m.id === outage.id && m.relation === "following"));
   const owner = (await request(api.app).get(`/api/requests/${outage.id}`).set(ali).expect(200)).body.request;

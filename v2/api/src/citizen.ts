@@ -35,6 +35,7 @@ export function citizenRoutes(ctx: Context): Router {
   const router = express.Router();
   const link = photoLinker(ctx.config);
   const lastRetry = new Map<string, number>();
+  const nearbyCalls = new Map<string, number[]>();
 
   async function ownPhotos(userId: string, ids: string[], requestId: string | null) {
     if (!ids.length) return;
@@ -98,7 +99,8 @@ export function citizenRoutes(ctx: Context): Router {
       }
     }
     if (!own) {
-      shown = { ...shown, description: "", photoIds: [] };
+      // A follower sees the shared problem's progress, not the reporter's words, photos or exact spot.
+      shown = { ...shown, description: "", photoIds: [], point: null };
       events = events.filter((e) => e.actorRole !== "citizen");
     }
     const primaryDone = r.status === "merged" && !isOpen(shown.status);
@@ -228,6 +230,12 @@ export function citizenRoutes(ctx: Context): Router {
     "/requests/nearby",
     handle(async (req, res) => {
       const user = await ctx.access.requireUser(req);
+      if (user.role !== "citizen") throw new HttpError(403, "Bu işlem vatandaşlar içindir.");
+      // Throttle so the map cannot be scanned: 20 lookups a minute per citizen.
+      const nowMs = ctx.now().getTime();
+      const recent = (nearbyCalls.get(user.userId) ?? []).filter((t) => nowMs - t < 60_000);
+      if (recent.length >= 20) throw new HttpError(429, "Çok sık arandı. Biraz sonra tekrar dene.");
+      nearbyCalls.set(user.userId, [...recent, nowMs]);
       const { lat, lng, category } = nearbyQuery.parse(req.query);
       const dLat = NEARBY_METERS / 111_000;
       const dLng = dLat / Math.cos((lat * Math.PI) / 180);
@@ -258,11 +266,11 @@ export function citizenRoutes(ctx: Context): Router {
             categoryName: v.categoryName,
             status: v.status,
             statusLabel: v.statusLabel,
-            address: v.address,
             etaArrival: v.etaArrival,
             etaFinish: v.etaFinish,
             createdAt: v.createdAt,
-            distanceMeters: Math.round(distance),
+            // Rounded, and no address: enough to recognise the problem, not to locate a person.
+            distanceMeters: Math.max(100, Math.round(distance / 100) * 100),
             supporting,
           };
         }),
@@ -284,9 +292,12 @@ export function citizenRoutes(ctx: Context): Router {
     handle(async (req, res) => {
       const user = await ctx.access.requireUser(req);
       if (user.role !== "citizen") throw new HttpError(403, "Bu işlem vatandaşlar içindir.");
+      const where = point.parse(req.body?.point);
       let r = await getRequest(ctx.db, String(req.params.id));
       if (r?.status === "merged" && r.mergedInto) r = await getRequest(ctx.db, r.mergedInto);
       if (!r || !isOpen(r.status)) throw new HttpError(404, "Bu sorun artık açık değil.");
+      // Only people near the problem can join it, so request ids cannot be used to follow strangers.
+      if (!r.point || distanceMeters(where, r.point) > NEARBY_METERS) throw new HttpError(404, "Yakınında böyle bir sorun bulunamadı.");
       if (r.citizenId === user.userId) throw new HttpError(409, "Bu talebi zaten sen bildirdin.");
       await ctx.db.query("INSERT INTO request_supporter (request_id, user_id) VALUES ($1,$2) ON CONFLICT DO NOTHING", [r.id, user.userId]);
       res.json({ request: await view(r.id, user.userId) });

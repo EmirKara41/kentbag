@@ -73,6 +73,18 @@ async function crewUserIds(db: Db, teamId: string) {
 
 const place = (r: CitizenRequest) => r.address || "Haritada işaretli konum";
 
+/** Sends a notice to every citizen with notifications on (announcements). Staff devices are skipped. */
+export async function broadcastToCitizens(db: Db, send: PushSend, msg: { title: string; body: string }) {
+  const { rows } = await db.query(
+    `SELECT token FROM push_token p WHERE enabled AND NOT EXISTS (SELECT 1 FROM staff s WHERE s.user_id=p.user_id)`,
+  );
+  const tokens = rows.map((r) => r.token as string);
+  for (let i = 0; i < tokens.length; i += 500) {
+    const { invalidTokens } = await send(tokens.slice(i, i + 500), { ...msg, data: { requestId: "", target: "citizen" } });
+    if (invalidTokens.length) await db.query("DELETE FROM push_token WHERE token = ANY($1)", [invalidTokens]);
+  }
+}
+
 export function pushHook(db: Db, send: PushSend): ChangeHook {
   async function deliver(userIds: string[], msg: PushMessage) {
     const tokens = await tokensFor(db, userIds);

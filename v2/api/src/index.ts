@@ -10,13 +10,17 @@ import { createServer } from "./server.ts";
 import { createGeo } from "./geo.ts";
 import { geminiClassify } from "./agent.ts";
 import { firebaseSend } from "./push.ts";
+import { resendMailer } from "./mail.ts";
 
 const config = configFromEnv(process.env);
 const pool = new Pool({ connectionString: config.databaseUrl, max: 5, idleTimeoutMillis: 5000, connectionTimeoutMillis: 10000 });
 if (process.env.VERCEL) attachDatabasePool(pool);
 const db = createPgDb(pool);
 await migrateApp(db);
-const auth = createAuth(pool, config);
+const mailer = process.env.RESEND_API_KEY
+  ? resendMailer(process.env.RESEND_API_KEY, process.env.RESEND_FROM || "KentBağ <onboarding@resend.dev>")
+  : undefined;
+const auth = createAuth(pool, config, mailer);
 const geo = createGeo();
 const classify = process.env.GEMINI_API_KEY
   ? geminiClassify(process.env.GEMINI_API_KEY, process.env.GEMINI_MODEL || "gemini-3.5-flash-lite")

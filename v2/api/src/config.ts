@@ -3,6 +3,8 @@ export type Config = {
   baseUrl: string;
   secret: string;
   webOrigins: string[];
+  /** Web page that completes a password reset (default: first web origin + /sifre). */
+  resetPage?: string;
   /** Test mode: disables auth rate limits. */
   testing?: boolean;
 };
@@ -22,5 +24,6 @@ export function configFromEnv(env: NodeJS.ProcessEnv): Config {
     .filter(Boolean);
   for (const origin of webOrigins)
     if (new URL(origin).origin !== origin) throw new Error("WEB_ORIGINS must contain exact origins.");
-  return { databaseUrl: env.DATABASE_URL!, baseUrl: base.origin, secret: env.BETTER_AUTH_SECRET!, webOrigins };
+  const resetPage = env.RESET_PAGE_URL || (webOrigins[0] ? `${webOrigins[0]}/sifre` : undefined);
+  return { databaseUrl: env.DATABASE_URL!, baseUrl: base.origin, secret: env.BETTER_AUTH_SECRET!, webOrigins, resetPage };
 }
