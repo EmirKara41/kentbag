@@ -44,6 +44,7 @@ export function rowToRequest(r: Row): CitizenRequest {
     resolutionNote: r.resolution_note,
     resolutionPhotoIds: r.resolution_photo_ids ?? [],
     resolvedAt: date(r.resolved_at),
+    mergedInto: r.merged_into ?? null,
     createdAt: new Date(r.created_at),
     updatedAt: new Date(r.updated_at),
   };
@@ -91,12 +92,12 @@ export async function writeRequest(q: Db, r: CitizenRequest) {
   await q.query(
     `UPDATE request SET status=$2, priority=$3, category=$4, kind=$5, institution_id=$6, team_id=$7, queue_order=$8,
        remaining_minutes=$9, remaining_set_at=$10, eta_arrival=$11, eta_finish=$12, agent_reason=$13,
-       resolution_note=$14, resolution_photo_ids=$15, resolved_at=$16, lat=$17, lng=$18, updated_at=$19
+       resolution_note=$14, resolution_photo_ids=$15, resolved_at=$16, lat=$17, lng=$18, updated_at=$19, merged_into=$20
      WHERE id=$1`,
     [
       r.id, r.status, r.priority, r.category, r.kind, r.institution, r.teamId, r.queueOrder,
       r.remainingMinutes, r.remainingSetAt, r.etaArrival, r.etaFinish, r.agentReason,
-      r.resolutionNote, r.resolutionPhotoIds, r.resolvedAt, r.point?.lat ?? null, r.point?.lng ?? null, r.updatedAt,
+      r.resolutionNote, r.resolutionPhotoIds, r.resolvedAt, r.point?.lat ?? null, r.point?.lng ?? null, r.updatedAt, r.mergedInto,
     ],
   );
 }

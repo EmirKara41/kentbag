@@ -37,9 +37,28 @@ const citizenTitle: Partial<Record<RequestStatus, string>> = {
   en_route: "Ekip yolda",
   on_site: "Ekip sahada",
   resolved: "Sorununuz çözüldü",
-  returned: "Talebiniz yeniden atanıyor",
   cancelled: "Talebiniz iptal edildi",
+  merged: "Talebiniz benzer bir taleple birleştirildi",
 };
+
+const improvementTitle: Partial<Record<RequestStatus, string>> = {
+  routed: "Öneriniz kuruma iletildi",
+  planned: "Öneriniz planlandı",
+  rejected: "Öneriniz değerlendirildi",
+  resolved: "Öneriniz hayata geçirildi",
+  cancelled: "Öneriniz iptal edildi",
+  merged: "Öneriniz benzer bir öneriyle birleştirildi",
+};
+
+/** People following a request: supporters and owners of requests merged into it. */
+async function followerIds(db: Db, requestId: string) {
+  const { rows } = await db.query(
+    `SELECT user_id FROM request_supporter WHERE request_id=$1
+     UNION SELECT citizen_id FROM request WHERE merged_into=$1 AND status='merged'`,
+    [requestId],
+  );
+  return rows.map((r) => r.user_id as string);
+}
 
 async function tokensFor(db: Db, userIds: string[]) {
   if (!userIds.length) return [];
@@ -66,12 +85,21 @@ export function pushHook(db: Db, send: PushSend): ChangeHook {
     }
   }
   return async ({ before, after, event }) => {
-    if (event.public && event.actorRole !== "citizen" && citizenTitle[after.status]) {
+    const title = (after.kind === "improvement" ? improvementTitle : citizenTitle)[after.status];
+    if (event.public && event.actorRole !== "citizen" && title) {
       await deliver([after.citizenId], {
-        title: citizenTitle[after.status]!,
+        title,
         body: `${after.reference} · ${event.body}`,
         data: { requestId: after.id, target: "citizen" },
       });
+      // Followers learn about progress of the shared problem, not about the merge itself.
+      const followers = after.status === "merged" ? [] : (await followerIds(db, after.id)).filter((id) => id !== after.citizenId);
+      if (followers.length)
+        await deliver(followers, {
+          title: `Takip ettiğin sorun: ${title.replace(/^Talebiniz |^Öneriniz /, "").replace(/^./, (c) => c.toLocaleUpperCase("tr"))}`,
+          body: `${categories[after.category].name} · ${place(after)}`,
+          data: { requestId: after.id, target: "citizen" },
+        });
     }
     if (after.teamId && after.teamId !== before.teamId) {
       await deliver(await crewUserIds(db, after.teamId), {

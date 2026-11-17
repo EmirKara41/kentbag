@@ -25,5 +25,11 @@ export function statusLabel(req: CitizenRequest, institutionName?: string, teamN
       return "İptal edildi";
     case "returned":
       return "Yeniden atanıyor";
+    case "planned":
+      return "Planlandı";
+    case "rejected":
+      return "Uygulanmayacak";
+    case "merged":
+      return "Aynı sorunla birleştirildi";
   }
 }

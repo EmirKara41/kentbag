@@ -18,6 +18,14 @@ import { getEvents, getRequest, photoLinker, placeInQueue, rowToRequest, saveTra
 import { agentSettings, setAgent } from "./settings.ts";
 import { loadTeams } from "./agent.ts";
 import type { CurrentUser } from "./access.ts";
+import type { Row } from "./db.ts";
+import { distanceMeters, NEARBY_METERS } from "./nearby.ts";
+
+/** Supporter and merged-request counts, joined onto request rows for staff lists. */
+const WITH_COUNTS = `SELECT r.*,
+  (SELECT count(*) FROM request_supporter s WHERE s.request_id = r.id) AS support_count,
+  (SELECT count(*) FROM request m WHERE m.merged_into = r.id) AS merged_count
+  FROM request r`;
 
 const institutionEnum = z.enum(institutionIds as [InstitutionId, ...InstitutionId[]]);
 
@@ -27,9 +35,12 @@ export function staffRoutes(ctx: Context): Router {
   const staff = (req: express.Request) => ctx.access.requireRole(req, "center", "institution");
   const actor = (u: CurrentUser): Actor => ({ role: u.role, userId: u.userId, institution: u.institution });
 
-  function row(r: CitizenRequest) {
+  function row(r: CitizenRequest, counts?: Row) {
     const team = r.teamId ? teamById(r.teamId) : null;
     return {
+      mergedInto: r.mergedInto,
+      supportCount: Number(counts?.support_count ?? 0),
+      mergedCount: Number(counts?.merged_count ?? 0),
       id: r.id,
       reference: r.reference,
       kind: r.kind,
@@ -81,11 +92,15 @@ export function staffRoutes(ctx: Context): Router {
         params.push(`%${String(req.query.q)}%`);
         where.push(`(reference ILIKE $${params.length} OR description ILIKE $${params.length} OR address ILIKE $${params.length})`);
       }
+      if (req.query.kind === "issue" || req.query.kind === "improvement") {
+        params.push(req.query.kind);
+        where.push(`kind=$${params.length}`);
+      }
       const { rows } = await ctx.db.query(
-        `SELECT * FROM request ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY created_at DESC LIMIT 300`,
+        `${WITH_COUNTS} ${where.length ? "WHERE " + where.join(" AND ") : ""} ORDER BY created_at DESC LIMIT 300`,
         params,
       );
-      res.json({ requests: rows.map((x) => row(rowToRequest(x))) });
+      res.json({ requests: rows.map((x) => row(rowToRequest(x), x)) });
     }),
   );
 
@@ -98,9 +113,16 @@ export function staffRoutes(ctx: Context): Router {
       let citizenName: string | undefined;
       if (user.role === "center")
         citizenName = (await ctx.db.query(`SELECT name FROM "user" WHERE id=$1`, [r.citizenId])).rows[0]?.name;
+      const counts = (await ctx.db.query(`${WITH_COUNTS} WHERE r.id=$1`, [r.id])).rows[0];
+      const merged = (await ctx.db.query(`SELECT id, reference FROM request WHERE merged_into=$1 ORDER BY created_at`, [r.id])).rows;
+      const mergedIntoReference = r.mergedInto
+        ? ((await ctx.db.query(`SELECT reference FROM request WHERE id=$1`, [r.mergedInto])).rows[0]?.reference ?? null)
+        : null;
       res.json({
         request: {
-          ...row(r),
+          ...row(r, counts),
+          merged: merged.map((m) => ({ id: m.id, reference: m.reference })),
+          mergedIntoReference,
           citizenName,
           photos: r.photoIds.map(link),
           resolutionNote: r.resolutionNote,
@@ -152,6 +174,85 @@ export function staffRoutes(ctx: Context): Router {
       const { reason } = z.object({ reason: z.string() }).parse(req.body);
       const r = await visible(user, String(req.params.id));
       const after = await saveTransition(ctx, r.id, { type: "cancel", reason }, actor(user));
+      res.json({ request: row(after) });
+    }),
+  );
+
+  // Improvement requests: the institution decides; no crew is involved.
+  const decisions = {
+    plan: z.object({ note: z.string() }),
+    reject: z.object({ reason: z.string() }),
+    complete: z.object({ note: z.string() }),
+  };
+  for (const type of ["plan", "reject", "complete"] as const)
+    router.post(
+      `/staff/requests/:id/${type}`,
+      handle(async (req, res) => {
+        const user = await staff(req);
+        const r = await visible(user, String(req.params.id));
+        const input = decisions[type].parse(req.body) as { note?: string; reason?: string };
+        const action =
+          type === "reject" ? { type, reason: input.reason ?? "" } : { type, note: input.note ?? "" };
+        const after = await saveTransition(ctx, r.id, action, actor(user));
+        res.json({ request: row(after) });
+      }),
+    );
+
+  /** Open requests of the same category within 1.5 km, candidates for merging. */
+  router.get(
+    "/staff/requests/:id/similar",
+    handle(async (req, res) => {
+      const user = await staff(req);
+      const r = await visible(user, String(req.params.id));
+      if (!r.point) return void res.json({ requests: [] });
+      const params: unknown[] = [r.category, r.id];
+      let scope = "";
+      if (user.role === "institution") {
+        params.push(user.institution);
+        scope = `AND r.institution_id=$${params.length}`;
+      }
+      const { rows } = await ctx.db.query(
+        `${WITH_COUNTS} WHERE r.category=$1 AND r.id<>$2 AND r.lat IS NOT NULL
+           AND r.status NOT IN ('resolved','cancelled','rejected','merged') ${scope}
+         ORDER BY r.created_at LIMIT 200`,
+        params,
+      );
+      const similar = rows
+        .map((x) => ({ x, distance: distanceMeters(r.point!, { lat: Number(x.lat), lng: Number(x.lng) }) }))
+        .filter((s) => s.distance <= NEARBY_METERS)
+        .sort((a, b) => a.distance - b.distance)
+        .slice(0, 10)
+        .map(({ x, distance }) => ({ ...row(rowToRequest(x), x), distanceMeters: Math.round(distance) }));
+      res.json({ requests: similar });
+    }),
+  );
+
+  /** Joins this request into another one about the same problem. */
+  router.post(
+    "/staff/requests/:id/merge",
+    handle(async (req, res) => {
+      const user = await staff(req);
+      const { into } = z.object({ into: z.uuid() }).parse(req.body);
+      const r = await visible(user, String(req.params.id));
+      let target = await visible(user, into);
+      if (target.status === "merged" && target.mergedInto) target = await visible(user, target.mergedInto);
+      if (target.id === r.id) throw new HttpError(409, "Talep kendisiyle birleştirilemez.");
+      if (target.category !== r.category) throw new HttpError(409, "Yalnız aynı kategorideki talepler birleştirilebilir.");
+      if (["resolved", "cancelled", "rejected", "merged"].includes(target.status))
+        throw new HttpError(409, "Birleştirilecek talep açık olmalı.");
+      const after = await saveTransition(ctx, r.id, { type: "merge", into: target.id, reference: target.reference }, actor(user), {
+        inside: async (q) => {
+          // Anything that followed or was merged into this request now follows the target.
+          await q.query(`UPDATE request SET merged_into=$2 WHERE merged_into=$1`, [r.id, target.id]);
+          await q.query(
+            `INSERT INTO request_supporter (request_id, user_id, created_at)
+             SELECT $2, user_id, created_at FROM request_supporter WHERE request_id=$1 AND user_id <> $3
+             ON CONFLICT DO NOTHING`,
+            [r.id, target.id, target.citizenId],
+          );
+          await q.query(`DELETE FROM request_supporter WHERE request_id=$1`, [r.id]);
+        },
+      });
       res.json({ request: row(after) });
     }),
   );

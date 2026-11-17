@@ -33,7 +33,12 @@ export type RequestStatus =
   | "resolved"
   | "reopened"
   | "cancelled"
-  | "returned";
+  | "returned"
+  // Improvement requests: the institution plans or rejects them.
+  | "planned"
+  | "rejected"
+  // Joined into another request about the same problem; follows that request.
+  | "merged";
 
 export type CitizenRequest = {
   id: string;
@@ -58,6 +63,8 @@ export type CitizenRequest = {
   resolutionNote: string | null;
   resolutionPhotoIds: string[];
   resolvedAt: Date | null;
+  /** Set when this request was merged into another one. */
+  mergedInto: string | null;
   createdAt: Date;
   updatedAt: Date;
 };

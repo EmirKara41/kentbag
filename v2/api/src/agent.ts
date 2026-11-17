@@ -143,7 +143,8 @@ export function createAgent(deps: {
 
   async function assign(id: string, extraReason = "") {
     const r = await getRequest(deps.db, id);
-    if (!r || !WAITING.includes(r.status) || !r.institution) return false;
+    // Improvements go to the institution only; it plans them without a crew.
+    if (!r || r.kind !== "issue" || !WAITING.includes(r.status) || !r.institution) return false;
     if (!(await agentEnabled(deps.db, r.institution))) return false;
     const choice = await pickTeam(r, extraReason);
     if (!choice) return false;
@@ -199,7 +200,7 @@ export function createAgent(deps: {
 
   async function assignWaiting(institution: InstitutionId) {
     const { rows } = await deps.db.query(
-      `SELECT id FROM request WHERE institution_id=$1 AND status = ANY($2) ORDER BY created_at`,
+      `SELECT id FROM request WHERE institution_id=$1 AND kind='issue' AND status = ANY($2) ORDER BY created_at`,
       [institution, WAITING],
     );
     let n = 0;
@@ -225,6 +226,8 @@ export function createAgent(deps: {
     const r = await getRequest(deps.db, id);
     if (!r) return null;
     const institution = r.institution ?? institutionFor(r.category);
+    if (r.kind === "improvement")
+      return { institution, teamId: null, reason: "İyileştirme önerileri ekibe atanmaz; kurum planlar ya da gerekçesiyle reddeder." };
     const choice = await pickTeam({ ...r, institution });
     return {
       institution,

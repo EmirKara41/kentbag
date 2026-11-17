@@ -16,7 +16,11 @@ export type Action =
   | { type: "resolve"; note: string; photoIds: string[] }
   | { type: "reopen"; note: string; photoIds: string[] }
   | { type: "cancel"; reason: string }
-  | { type: "decline"; reason: string };
+  | { type: "decline"; reason: string }
+  | { type: "plan"; note: string }
+  | { type: "reject"; reason: string }
+  | { type: "complete"; note: string }
+  | { type: "merge"; into: string; reference: string };
 
 export type Actor = {
   role: ActorRole;
@@ -34,7 +38,7 @@ export class TransitionError extends Error {
   }
 }
 
-const ACTIVE: RequestStatus[] = ["received", "routed", "assigned", "en_route", "on_site", "reopened", "returned"];
+const ACTIVE: RequestStatus[] = ["received", "routed", "assigned", "en_route", "on_site", "reopened", "returned", "planned"];
 
 const rules: Record<Action["type"], { from: RequestStatus[]; to: RequestStatus }> = {
   route: { from: ["received", "reopened", "returned", "routed"], to: "routed" },
@@ -43,9 +47,13 @@ const rules: Record<Action["type"], { from: RequestStatus[]; to: RequestStatus }
   arrive: { from: ["assigned", "en_route"], to: "on_site" },
   update_remaining: { from: ["on_site"], to: "on_site" },
   resolve: { from: ["assigned", "en_route", "on_site"], to: "resolved" },
-  reopen: { from: ["resolved"], to: "reopened" },
-  cancel: { from: ACTIVE, to: "cancelled" },
+  reopen: { from: ["resolved", "merged"], to: "reopened" },
+  cancel: { from: [...ACTIVE, "merged"], to: "cancelled" },
   decline: { from: ["assigned", "en_route", "on_site"], to: "returned" },
+  plan: { from: ["routed", "planned"], to: "planned" },
+  reject: { from: ["routed", "planned"], to: "rejected" },
+  complete: { from: ["routed", "planned"], to: "resolved" },
+  merge: { from: ACTIVE, to: "merged" },
 };
 
 const forbid = (message = "Bu işlem için yetkiniz yok.") => new TransitionError("forbidden", message);
@@ -91,6 +99,12 @@ function authorize(req: CitizenRequest, action: Action, actor: Actor) {
     case "cancel":
       if (!(owner || actor.role === "center" || ownInstitution)) throw forbid();
       return;
+    case "plan":
+    case "reject":
+    case "complete":
+    case "merge":
+      if (!(actor.role === "center" || ownInstitution)) throw forbid();
+      return;
   }
 }
 
@@ -110,6 +124,11 @@ export function applyTransition(
   now: Date,
 ): { request: CitizenRequest; event: Omit<RequestEvent, "id"> } {
   authorize(req, action, actor);
+  const improvement = req.kind === "improvement";
+  if (improvement && action.type === "assign") throw invalid("İyileştirme önerileri ekibe atanmaz; kurum planlar.");
+  if (improvement && action.type === "reopen") throw invalid("İyileştirme önerisi yeniden açılamaz; yeni öneri gönderebilirsin.");
+  if (!improvement && (action.type === "plan" || action.type === "reject" || action.type === "complete"))
+    throw invalid("Bu işlem yalnız iyileştirme önerileri içindir.");
   const rule = rules[action.type];
   if (!rule.from.includes(req.status))
     throw new TransitionError("invalid_state", "Talep bu işlem için uygun durumda değil.");
@@ -164,6 +183,7 @@ export function applyTransition(
       photos(action.photoIds);
       clearAssignment(next);
       next.resolvedAt = null;
+      next.mergedInto = null;
       body = `Vatandaş sorunun devam ettiğini bildirdi: ${note}`;
       break;
     }
@@ -177,6 +197,23 @@ export function applyTransition(
       clearAssignment(next);
       body = `Ekip işi iade etti: ${text(action.reason, 10, "Gerekçe")}`;
       isPublic = false;
+      break;
+    case "plan":
+      body = `Öneri planlandı: ${text(action.note, 5, "Plan açıklaması")}`;
+      break;
+    case "reject":
+      body = `Öneri uygulanmayacak: ${text(action.reason, 10, "Gerekçe")}`;
+      break;
+    case "complete":
+      next.resolutionNote = text(action.note, 10, "Yapılan işlem açıklaması");
+      next.resolvedAt = now;
+      body = `Öneri hayata geçirildi: ${next.resolutionNote}`;
+      break;
+    case "merge":
+      if (action.into === req.id) throw invalid("Talep kendisiyle birleştirilemez.");
+      clearAssignment(next);
+      next.mergedInto = action.into;
+      body = `Aynı sorunla ilgili ${action.reference} numaralı taleple birleştirildi; ikisi birlikte takip ediliyor.`;
       break;
   }
   next.status = rule.to;

@@ -1,3 +1,9 @@
+// KentBağ SQL schema, applied in order by migrateApp. Only additive changes after 001.
+// Kept in TypeScript so the cloud bundle carries it.
+export const migrations: { name: string; sql: string }[] = [
+  {
+    name: "001_init",
+    sql: `
 CREATE TABLE IF NOT EXISTS staff (
   user_id text PRIMARY KEY REFERENCES "user"(id) ON DELETE CASCADE,
   role text NOT NULL CHECK (role IN ('center','institution','crew')),
@@ -82,3 +88,52 @@ CREATE TABLE IF NOT EXISTS push_token (
   enabled boolean NOT NULL DEFAULT true,
   updated_at timestamptz NOT NULL DEFAULT now()
 );
+`,
+  },
+  {
+    name: "002_faz2",
+    sql: `
+-- Faz 2: only additions, so Faz 1 code keeps working on this schema.
+ALTER TABLE request ADD COLUMN IF NOT EXISTS merged_into uuid REFERENCES request(id);
+CREATE INDEX IF NOT EXISTS request_merged_into ON request(merged_into);
+CREATE INDEX IF NOT EXISTS request_category_status ON request(category, status);
+
+CREATE TABLE IF NOT EXISTS request_supporter (
+  request_id uuid NOT NULL REFERENCES request(id) ON DELETE CASCADE,
+  user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  PRIMARY KEY (request_id, user_id)
+);
+CREATE INDEX IF NOT EXISTS request_supporter_user ON request_supporter(user_id);
+
+CREATE TABLE IF NOT EXISTS announcement (
+  id uuid PRIMARY KEY,
+  institution_id text,
+  title text NOT NULL,
+  body text NOT NULL,
+  neighborhood text,
+  request_id uuid REFERENCES request(id) ON DELETE SET NULL,
+  starts_at timestamptz NOT NULL DEFAULT now(),
+  ends_at timestamptz NOT NULL,
+  created_by text NOT NULL,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS announcement_active ON announcement(ends_at);
+
+CREATE TABLE IF NOT EXISTS crew_application (
+  id uuid PRIMARY KEY,
+  user_id text NOT NULL REFERENCES "user"(id) ON DELETE CASCADE,
+  institution_id text NOT NULL,
+  team_id text NOT NULL REFERENCES team(id),
+  phone text NOT NULL DEFAULT '',
+  note text NOT NULL DEFAULT '',
+  status text NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','approved','rejected')),
+  decision_note text,
+  decided_by text,
+  decided_at timestamptz,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+CREATE UNIQUE INDEX IF NOT EXISTS crew_application_pending ON crew_application(user_id) WHERE status = 'pending';
+`,
+  },
+];

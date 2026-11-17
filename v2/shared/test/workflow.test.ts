@@ -34,6 +34,7 @@ const base = (over: Partial<CitizenRequest> = {}): CitizenRequest => ({
   resolutionNote: null,
   resolutionPhotoIds: [],
   resolvedAt: null,
+  mergedInto: null,
   createdAt: now,
   updatedAt: now,
   ...over,
@@ -149,4 +150,29 @@ test("status labels", () => {
   assert.equal(statusLabel(base({ status: "reopened" })), "Sorun devam ediyor");
   assert.equal(statusLabel(base({ status: "cancelled" })), "İptal edildi");
   assert.equal(statusLabel(base({ status: "returned" })), "Yeniden atanıyor");
+});
+
+const idea = (s: RequestStatus = "routed") => base({ kind: "improvement", category: "lighting", status: s, institution: "electricity" });
+
+test("improvements are planned, rejected or completed by their institution, never assigned", () => {
+  ok(idea(), { type: "plan", note: "Gelecek ay yapılacak." }, inst, "planned");
+  ok(idea("planned"), { type: "complete", note: "Sokak lambaları takıldı." }, center, "resolved");
+  const { event } = ok(idea(), { type: "reject", reason: "Bölgede yeterli aydınlatma var." }, inst, "rejected");
+  assert.equal(event.public, true);
+  assert.throws(() => applyTransition(idea(), { type: "assign", teamId: "elk-trafo", reason: "x" }, agent, now), TransitionError);
+  assert.throws(() => applyTransition(idea(), { type: "plan", note: "Plan var." }, otherInst, now), TransitionError);
+  assert.throws(() => applyTransition(idea(), { type: "plan", note: "Plan var." }, owner, now), TransitionError);
+  assert.throws(() => applyTransition(routed(), { type: "plan", note: "Plan var." }, inst, now), TransitionError);
+  assert.throws(() => applyTransition(idea("resolved"), { type: "reopen", note: "Yine yok.", photoIds: [] }, owner, now), TransitionError);
+  assert.equal(statusLabel(idea("planned")), "Planlandı");
+});
+
+test("merge clears the queue spot and reopen splits a merged request again", () => {
+  const { request } = ok(onTeam("assigned"), { type: "merge", into: "r2", reference: "KB-XYZ999" }, inst, "merged");
+  assert.equal(request.teamId, null);
+  assert.equal(request.mergedInto, "r2");
+  assert.throws(() => applyTransition(routed(), { type: "merge", into: "r1", reference: "KB-ABC123" }, center, now), TransitionError);
+  assert.throws(() => applyTransition(routed(), { type: "merge", into: "r2", reference: "KB" }, otherInst, now), TransitionError);
+  const back = ok(request, { type: "reopen", note: "Bende hâlâ yok.", photoIds: [] }, owner, "reopened");
+  assert.equal(back.request.mergedInto, null);
 });
