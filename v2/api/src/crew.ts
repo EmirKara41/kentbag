@@ -4,6 +4,7 @@ import { categories, institutions, teamById, type Action, type Actor } from "@ke
 import type { Context } from "./server.ts";
 import { handle } from "./server.ts";
 import { HttpError } from "./errors.ts";
+import { checkResolution } from "./vision.ts";
 import { getRequest, photoLinker, rowToRequest, saveTransition } from "./requests.ts";
 import type { CurrentUser } from "./access.ts";
 
@@ -124,6 +125,14 @@ export function crewRoutes(ctx: Context): Router {
             await q.query("UPDATE photo SET request_id=$1 WHERE id = ANY($2::uuid[])", [id, action.photoIds]);
         },
       });
+      if (action.type === "resolve" && action.photoIds.length) {
+        // Before/after comparison is advisory and slow; it runs after the crew gets the answer.
+        const work = checkResolution({ db: ctx.db, photos: ctx.photos, judge: ctx.photoJudge, now: ctx.now }, id).catch((e) =>
+          console.error("Resolution check failed", e),
+        );
+        if (ctx.defer) ctx.defer(work);
+        else await work;
+      }
       if (action.type === "decline") {
         try {
           await ctx.agent.processRequest(id);

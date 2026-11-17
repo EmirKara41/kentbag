@@ -8,6 +8,29 @@ export function Priority({ value }: { value: keyof typeof priorityText }) {
   return <span className={`prio prio-${value}`}>{priorityText[value]}</span>;
 }
 
+/** Badge for the AI photo check; nothing when the photo fits or was not checked. */
+export function PhotoFlag({ check }: { check?: { verdict: string } | null }) {
+  if (check?.verdict === "unrelated") return <span className="pill flag">Fotoğraf uyumsuz</span>;
+  if (check?.verdict === "doubtful") return <span className="pill wait">Fotoğraf belirsiz</span>;
+  return null;
+}
+
+const photoText = { ok: "Fotoğraf sorunla uyumlu", doubtful: "Fotoğrafın sorunla ilgisi belirsiz", unrelated: "Fotoğraf sorunla uyumsuz görünüyor" } as const;
+const fixText = { confirmed: "Aynı yer, sorun giderilmiş görünüyor", unclear: "Karşılaştırma için yeterli değil", mismatch: "Farklı yer ya da sorun sürüyor görünüyor" } as const;
+
+/** The AI's advisory note, always labelled as such so staff weigh it, not obey it. */
+export function AiNote({ kind, check }: { kind: "photo" | "fix"; check?: { verdict: string; note: string } | null }) {
+  if (!check) return null;
+  const title = kind === "photo" ? photoText[check.verdict as keyof typeof photoText] : fixText[check.verdict as keyof typeof fixText];
+  const bad = check.verdict === "unrelated" || check.verdict === "mismatch";
+  return (
+    <p className={`ai-note ${bad ? "bad" : ""}`}>
+      <strong>{kind === "photo" ? "Yapay zekâ fotoğraf kontrolü" : "Yapay zekâ önce/sonra teyidi"}: {title}.</strong> {check.note}
+      <small> Öneri niteliğindedir; karar personelindir.</small>
+    </p>
+  );
+}
+
 export function StatusPill({ status, label }: { status: RequestStatus; label: string }) {
   const tone = status === "resolved" ? "done" : ["cancelled", "rejected", "merged"].includes(status) ? "off" : isLive(status) ? "live" : "wait";
   return <span className={`pill ${tone}`}>{label}</span>;

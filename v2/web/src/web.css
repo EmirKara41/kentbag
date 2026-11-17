@@ -82,3 +82,7 @@ table.data td.num, table.data th.num { text-align: right; }
 .table-wrap { overflow-x: auto; }
 .notice { display: grid; gap: 4px; }
 .notice.ended { opacity: 0.6; }
+.pill.flag { background: #fde8e6; color: var(--alert); border-color: #f3b5ae; }
+.ai-note { background: #eef3fb; border-left: 4px solid var(--civic); padding: 10px 12px; border-radius: var(--radius-s); }
+.ai-note.bad { background: #fdeeec; border-left-color: var(--alert); }
+.ai-note small { color: var(--ink-soft); }

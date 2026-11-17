@@ -1,6 +1,6 @@
 // Production entry (Vercel). Wires real Postgres, auth and private Blob storage.
 import { Pool } from "pg";
-import { attachDatabasePool } from "@vercel/functions";
+import { attachDatabasePool, waitUntil } from "@vercel/functions";
 import { configFromEnv } from "./config.ts";
 import { createAuth } from "./auth.ts";
 import { createPgDb } from "./db.ts";
@@ -9,6 +9,7 @@ import { blobPhotoStore } from "./photos.ts";
 import { createServer } from "./server.ts";
 import { createGeo } from "./geo.ts";
 import { geminiClassify } from "./agent.ts";
+import { geminiJudge } from "./vision.ts";
 import { firebaseSend } from "./push.ts";
 import { resendMailer } from "./mail.ts";
 
@@ -33,6 +34,10 @@ const { app } = createServer({
   travel: geo.travel,
   geocode: geo.geocode,
   classify,
+  photoJudge: process.env.GEMINI_API_KEY
+    ? geminiJudge(process.env.GEMINI_API_KEY, process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || "gemini-3.5-flash-lite")
+    : undefined,
+  defer: process.env.VERCEL ? (work) => waitUntil(work) : undefined,
   pushSend: await firebaseSend(process.env.FIREBASE_SERVICE_ACCOUNT),
   demoPassword: process.env.DEMO_LOGIN === "on" ? process.env.DEMO_PASSWORD : undefined,
 });

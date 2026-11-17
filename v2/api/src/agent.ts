@@ -16,6 +16,10 @@ import {
 import type { Db, Row } from "./db.ts";
 import { getRequest, placeInQueue, rowToRequest, saveTransition, type ChangeHook } from "./requests.ts";
 import { agentEnabled, centerAgentOn } from "./settings.ts";
+import { loadImages, withTimeout as timeLimit, type PhotoCheck, type PhotoJudge } from "./vision.ts";
+import type { PhotoStore } from "./photos.ts";
+
+const PHOTO_HOLD = "Fotoğraf anlatılan sorunla uyumsuz görünüyor; ajan otomatik atamadı, personel onayı bekleniyor.";
 
 export type Classify = (input: { category: CategoryId; description: string; address: string }) => Promise<{
   category?: CategoryId;
@@ -117,6 +121,8 @@ export function createAgent(deps: {
   travel: AsyncTravel;
   classify?: Classify;
   classifyTimeoutMs?: number;
+  judge?: PhotoJudge;
+  photos?: PhotoStore;
 }) {
   const ctx = { db: deps.db, hooks: deps.hooks, now: deps.now };
 
@@ -146,6 +152,8 @@ export function createAgent(deps: {
     // Improvements go to the institution only; it plans them without a crew.
     if (!r || r.kind !== "issue" || !WAITING.includes(r.status) || !r.institution) return false;
     if (!(await agentEnabled(deps.db, r.institution))) return false;
+    // An unrelated photo keeps the request for a person to look at; staff can still assign it by hand.
+    if ((await photoCheckOf(id))?.verdict === "unrelated") return false;
     const choice = await pickTeam(r, extraReason);
     if (!choice) return false;
     try {
@@ -175,14 +183,38 @@ export function createAgent(deps: {
     }
   }
 
+  async function photoCheckOf(id: string): Promise<PhotoCheck | null> {
+    const { rows } = await deps.db.query("SELECT photo_check FROM request WHERE id=$1", [id]);
+    return (rows[0]?.photo_check as PhotoCheck | null) ?? null;
+  }
+
+  /** Asks the vision model once per request whether the photos fit the report; failures leave no mark. */
+  async function checkPhotos(r: CitizenRequest): Promise<PhotoCheck | null> {
+    if (!deps.judge || !deps.photos || !r.photoIds.length) return null;
+    const existing = await photoCheckOf(r.id);
+    if (existing) return existing;
+    try {
+      const photos = await loadImages(deps.db, deps.photos, r.photoIds);
+      if (!photos.length) return null;
+      const result = await timeLimit(deps.judge.relevance({ category: r.category, description: r.description, photos }), 10_000);
+      const stored = { ...result, at: deps.now().toISOString() };
+      await deps.db.query("UPDATE request SET photo_check=$2 WHERE id=$1", [r.id, JSON.stringify(stored)]);
+      return stored;
+    } catch (error) {
+      console.error("Photo check failed; continuing without it", error);
+      return null;
+    }
+  }
+
   async function processRequest(id: string) {
     const r = await getRequest(deps.db, id);
     if (!r) return;
     if (r.status === "received") {
       if (!(await centerAgentOn(deps.db))) return;
-      const result = await classify(r);
+      const [result, photo] = await Promise.all([classify(r), checkPhotos(r)]);
       const institution = institutionFor(r.category);
-      const reason = `${result.note} ${categories[r.category].name} → ${institutions[institution].name}.`;
+      const photoNote = photo?.verdict === "unrelated" ? ` ${PHOTO_HOLD}` : photo?.verdict === "doubtful" ? " Fotoğrafın sorunla ilgisi belirsiz." : "";
+      const reason = `${result.note} ${categories[r.category].name} → ${institutions[institution].name}.${photoNote}`;
       try {
         await saveTransition(ctx, id, { type: "route", institution, reason }, { role: "agent" }, {
           expectStatus: ["received"],

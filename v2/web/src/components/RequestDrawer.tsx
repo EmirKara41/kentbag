@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type ReactNode } from "react";
 import { dateTime } from "@kentbag/shared";
 import { api, type StaffRequestDetail } from "../api.ts";
-import { MapView, Priority, RouteStrip, StatusPill, Timeline } from "./parts.tsx";
+import { AiNote, MapView, Priority, RouteStrip, StatusPill, Timeline } from "./parts.tsx";
 
 /** Side panel with everything about one request and a single "next step" area. */
 export function RequestDrawer({
@@ -82,6 +82,7 @@ export function RequestDrawer({
               ))}
             </div>
           )}
+          <AiNote kind="photo" check={detail.photoCheck} />
           {detail.agentReason && (
             <p className="agent-note">
               <strong>Ajanın gerekçesi:</strong> {detail.agentReason}
@@ -90,6 +91,7 @@ export function RequestDrawer({
           {detail.resolutionNote && (
             <div className="stack tight">
               <h3>Ekibin kapanış notu</h3>
+              <AiNote kind="fix" check={detail.resolutionCheck} />
               <p>{detail.resolutionNote}</p>
               <div className="photos">
                 {detail.resolutionPhotos.map((p) => (

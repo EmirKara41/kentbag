@@ -41,6 +41,8 @@ export function staffRoutes(ctx: Context): Router {
       mergedInto: r.mergedInto,
       supportCount: Number(counts?.support_count ?? 0),
       mergedCount: Number(counts?.merged_count ?? 0),
+      photoCheck: (counts?.photo_check ?? null) as { verdict: string; note: string } | null,
+      resolutionCheck: (counts?.resolution_check ?? null) as { verdict: string; note: string } | null,
       id: r.id,
       reference: r.reference,
       kind: r.kind,

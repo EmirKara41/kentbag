@@ -63,6 +63,8 @@ export type StaffRequest = {
   mergedInto: string | null;
   supportCount: number;
   mergedCount: number;
+  photoCheck?: { verdict: "ok" | "doubtful" | "unrelated"; note: string } | null;
+  resolutionCheck?: { verdict: "confirmed" | "unclear" | "mismatch"; note: string } | null;
   createdAt: string;
   updatedAt: string;
 };

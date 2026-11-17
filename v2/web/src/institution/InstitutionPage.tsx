@@ -3,7 +3,7 @@ import { clockTime, dateTime, institutions, type InstitutionId } from "@kentbag/
 import { api, type StaffRequest, type StaffRequestDetail, type TeamBoard } from "../api.ts";
 import { usePolling, useAgentSettings } from "../components/hooks.ts";
 import { RequestDrawer } from "../components/RequestDrawer.tsx";
-import { Priority, StatusPill } from "../components/parts.tsx";
+import { PhotoFlag, Priority, StatusPill } from "../components/parts.tsx";
 import { NextStep } from "../components/NextStep.tsx";
 
 const WAITING = ["routed", "returned", "reopened"];
@@ -34,7 +34,7 @@ function WaitingCard({ request, onOpen, onDone }: { request: StaffRequest; onOpe
     <article className="card">
       <div className="spread">
         <strong>
-          {request.categoryName} <Priority value={request.priority} />
+          {request.categoryName} <Priority value={request.priority} /> <PhotoFlag check={request.photoCheck} />
         </strong>
         <StatusPill status={request.status} label={request.status === "routed" ? "Atama bekliyor" : request.statusLabel} />
       </div>

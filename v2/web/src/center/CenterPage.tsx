@@ -3,7 +3,7 @@ import { clockTime, institutionIds, institutions, isLive, type RequestStatus } f
 import { api, type StaffRequest, type StaffRequestDetail } from "../api.ts";
 import { usePolling, useAgentSettings } from "../components/hooks.ts";
 import { RequestDrawer } from "../components/RequestDrawer.tsx";
-import { Priority, StatusPill } from "../components/parts.tsx";
+import { PhotoFlag, Priority, StatusPill } from "../components/parts.tsx";
 import { NextStep } from "../components/NextStep.tsx";
 
 const filters: { key: string; label: string; match: (s: RequestStatus, kind: string) => boolean }[] = [
@@ -85,7 +85,8 @@ export function CenterPage() {
             <span className="stack tight">
               <strong>
                 {r.categoryName} {r.kind === "improvement" ? <span className="kind-tag">Öneri</span> : <Priority value={r.priority} />}
-                {r.supportCount + r.mergedCount > 0 && <span className="support"> · +{r.supportCount + r.mergedCount} etkilenen</span>}
+                {r.supportCount + r.mergedCount > 0 && <span className="support"> · +{r.supportCount + r.mergedCount} etkilenen</span>}{" "}
+                <PhotoFlag check={r.photoCheck} />
               </strong>
               <span className="meta">
                 {r.reference} · {r.address || "Haritada işaretli"}

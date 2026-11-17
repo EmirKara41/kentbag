@@ -136,4 +136,12 @@ CREATE TABLE IF NOT EXISTS crew_application (
 CREATE UNIQUE INDEX IF NOT EXISTS crew_application_pending ON crew_application(user_id) WHERE status = 'pending';
 `,
   },
+  {
+    name: "003_photo_checks",
+    sql: `
+-- Advisory AI checks: does the citizen's photo fit the report, does the crew's closing photo confirm the fix.
+ALTER TABLE request ADD COLUMN IF NOT EXISTS photo_check jsonb;
+ALTER TABLE request ADD COLUMN IF NOT EXISTS resolution_check jsonb;
+`,
+  },
 ];

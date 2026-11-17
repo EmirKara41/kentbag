@@ -19,6 +19,7 @@ import { demoRoutes } from "./demo.ts";
 import { peopleRoutes } from "./people.ts";
 import { announcementRoutes } from "./announcements.ts";
 import { reportRoutes } from "./reports.ts";
+import type { PhotoJudge } from "./vision.ts";
 
 export type ServerOptions = {
   db: Db;
@@ -31,6 +32,10 @@ export type ServerOptions = {
   classify?: Classify;
   classifyTimeoutMs?: number;
   pushSend?: PushSend;
+  /** Vision model for advisory photo checks; without it the checks are skipped. */
+  photoJudge?: PhotoJudge;
+  /** Keeps work running after the response (Vercel waitUntil); without it the work is awaited. */
+  defer?: (work: Promise<unknown>) => void;
   /** Enables one-tap demo login with this shared demo password. */
   demoPassword?: string;
 };
@@ -75,6 +80,8 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     travel: ctx.travel,
     classify: options.classify,
     classifyTimeoutMs: options.classifyTimeoutMs,
+    judge: options.photoJudge,
+    photos: options.photos,
   });
   ctx.agent = ctx.agentService;
   const app = express();
