@@ -13,7 +13,7 @@ const roleLabel = { center: "Belediye merkezi", institution: "Kurum", crew: "Sah
 const newAccount = z.object({
   name: z.string().trim().min(2).max(80),
   email: z.email().transform((e) => e.trim().toLowerCase()),
-  password: z.string().min(8).max(128).optional(),
+  password: z.string().min(8).max(128),
   role: z.enum(["center", "institution", "crew"]),
   institution: institutionEnum.optional(),
   teamId: z.string().optional(),
@@ -78,19 +78,19 @@ export function peopleRoutes(ctx: Context): Router {
       if (input.role === "crew" && !team) throw new HttpError(400, "Ekip seç.");
       if (input.role === "institution" && !institution) throw new HttpError(400, "Kurum seç.");
       if (!canManage(user, { role: input.role, institution })) throw new HttpError(403, "Bu hesabı açma yetkin yok.");
-      let userId = (await ctx.db.query(`SELECT id FROM "user" WHERE lower(email)=$1`, [input.email])).rows[0]?.id as string | undefined;
-      if (userId) {
-        if ((await ctx.db.query("SELECT 1 FROM staff WHERE user_id=$1", [userId])).rows.length)
-          throw new HttpError(409, "Bu e-posta zaten bir personel hesabına ait.");
-      } else {
-        if (!input.password) throw new HttpError(400, "Yeni hesap için en az 8 karakterlik bir ilk şifre yaz.");
-        const created = await ctx.auth.api.signUpEmail({ body: { name: input.name, email: input.email, password: input.password } });
-        userId = created.user.id;
-      }
+      // Only new addresses: promoting an existing account by e-mail would hand staff rights to whoever
+      // registered that address first. Existing citizens join through their own crew application instead.
+      if ((await ctx.db.query(`SELECT 1 FROM "user" WHERE lower(email)=$1`, [input.email])).rows.length)
+        throw new HttpError(
+          409,
+          "Bu e-postayla zaten bir hesap var. Kişi vatandaş uygulamasından “Saha ekibine başvur” ile başvurabilir; ya da başka bir e-posta kullanın.",
+        );
+      const created = await ctx.auth.api.signUpEmail({ body: { name: input.name, email: input.email, password: input.password } });
+      const userId = created.user.id;
       await ctx.db.query(`INSERT INTO staff (user_id, role, institution_id, team_id) VALUES ($1,$2,$3,$4)`, [
         userId, input.role, institution ?? null, input.role === "crew" ? team!.id : null,
       ]);
-      // An existing citizen account changes role: its app sessions end so the right app is used.
+      // Sign-up opened a session for the new account; the person signs in with their own password.
       await signOutEverywhere(ctx.db, userId);
       const { rows } = await ctx.db.query(`SELECT s.*, u.name, u.email FROM staff s JOIN "user" u ON u.id=s.user_id WHERE s.user_id=$1`, [userId]);
       res.status(201).json({ account: accountRow(rows[0]) });

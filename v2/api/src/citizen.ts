@@ -35,7 +35,15 @@ export function citizenRoutes(ctx: Context): Router {
   const router = express.Router();
   const link = photoLinker(ctx.config);
   const lastRetry = new Map<string, number>();
-  const nearbyCalls = new Map<string, number[]>();
+  const locationCalls = new Map<string, number[]>();
+
+  /** Shared budget for location-based lookups (nearby list and following), so the map cannot be scanned. */
+  function throttleLocation(userId: string) {
+    const nowMs = ctx.now().getTime();
+    const recent = (locationCalls.get(userId) ?? []).filter((t) => nowMs - t < 60_000);
+    if (recent.length >= 20) throw new HttpError(429, "Çok sık denendi. Biraz sonra tekrar dene.");
+    locationCalls.set(userId, [...recent, nowMs]);
+  }
 
   async function ownPhotos(userId: string, ids: string[], requestId: string | null) {
     if (!ids.length) return;
@@ -231,11 +239,7 @@ export function citizenRoutes(ctx: Context): Router {
     handle(async (req, res) => {
       const user = await ctx.access.requireUser(req);
       if (user.role !== "citizen") throw new HttpError(403, "Bu işlem vatandaşlar içindir.");
-      // Throttle so the map cannot be scanned: 20 lookups a minute per citizen.
-      const nowMs = ctx.now().getTime();
-      const recent = (nearbyCalls.get(user.userId) ?? []).filter((t) => nowMs - t < 60_000);
-      if (recent.length >= 20) throw new HttpError(429, "Çok sık arandı. Biraz sonra tekrar dene.");
-      nearbyCalls.set(user.userId, [...recent, nowMs]);
+      throttleLocation(user.userId);
       const { lat, lng, category } = nearbyQuery.parse(req.query);
       const dLat = NEARBY_METERS / 111_000;
       const dLng = dLat / Math.cos((lat * Math.PI) / 180);
@@ -292,6 +296,7 @@ export function citizenRoutes(ctx: Context): Router {
     handle(async (req, res) => {
       const user = await ctx.access.requireUser(req);
       if (user.role !== "citizen") throw new HttpError(403, "Bu işlem vatandaşlar içindir.");
+      throttleLocation(user.userId);
       const where = point.parse(req.body?.point);
       let r = await getRequest(ctx.db, String(req.params.id));
       if (r?.status === "merged" && r.mergedInto) r = await getRequest(ctx.db, r.mergedInto);

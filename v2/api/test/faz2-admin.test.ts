@@ -94,11 +94,14 @@ test("center opens and closes staff accounts; institutions manage only their own
   const accounts = (await request(api.app).get("/api/staff/accounts").set(electricity).expect(200)).body.accounts;
   assert.ok(accounts.every((a: { role: string; institution: string }) => a.role === "crew" && a.institution === "electricity"));
 
-  // An existing citizen account can be given a staff role; its old sessions end.
+  // An address that already has an account is never promoted (it may belong to someone else).
   const person = await api.signUpCitizen("donusen@example.test");
-  await request(api.app).post("/api/staff/accounts").set(center).send({ name: "Dönüşen", email: "donusen@example.test", role: "crew", teamId: "fen-yol" }).expect(201);
-  await request(api.app).get("/api/me").set(person).expect(401);
-  assert.equal((await request(api.app).get("/api/me").set(bearer(await signIn("donusen@example.test").expect(200)))).body.role, "crew");
+  await request(api.app)
+    .post("/api/staff/accounts")
+    .set(center)
+    .send({ name: "Dönüşen", email: "Donusen@example.test", password: "Ilk-sifre-123", role: "center" })
+    .expect(409);
+  assert.equal((await request(api.app).get("/api/me").set(person).expect(200)).body.role, "citizen");
 
   const tech = bearer(await signIn("teknisyen@example.test", "Ilk-sifre-123").expect(200));
   await request(api.app).patch(`/api/staff/accounts/${created.userId}`).set(water).send({ active: false }).expect(404);
