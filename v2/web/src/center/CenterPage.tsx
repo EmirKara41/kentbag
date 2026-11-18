@@ -12,6 +12,7 @@ const filters: { key: string; label: string; match: (s: RequestStatus, kind: str
   { key: "ideas", label: "Öneriler", match: (s, k) => k === "improvement" && (s === "routed" || s === "planned") },
   { key: "live", label: "Sahada", match: isLive },
   { key: "resolved", label: "Çözülen", match: (s) => s === "resolved" },
+  { key: "referred", label: "Yetki dışı", match: (s) => s === "referred" },
 ];
 
 export function CenterPage() {

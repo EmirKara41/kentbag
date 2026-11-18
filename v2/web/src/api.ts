@@ -63,6 +63,7 @@ export type StaffRequest = {
   mergedInto: string | null;
   supportCount: number;
   mergedCount: number;
+  referral?: { district: string; province: string | null; contacts: { name: string; phone: string; why: string }[] } | null;
   photoCheck?: { verdict: "ok" | "doubtful" | "unrelated"; note: string } | null;
   resolutionCheck?: { verdict: "confirmed" | "unclear" | "mismatch"; note: string } | null;
   createdAt: string;

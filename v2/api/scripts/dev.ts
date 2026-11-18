@@ -33,5 +33,5 @@ await migrate(db, auth);
 await seedTeams(db);
 await seedDemo(db, auth, password);
 const geo = createGeo();
-const { app } = createServer({ db, auth, config, photos: memoryPhotoStore(), travel: geo.travel, geocode: geo.geocode, demoPassword: password });
+const { app } = createServer({ db, auth, config, photos: memoryPhotoStore(), travel: geo.travel, geocode: geo.geocode, locate: geo.locate, demoPassword: password });
 app.listen(port, "127.0.0.1", () => console.log(`KentBağ v2 dev API on http://127.0.0.1:${port} (demo login on)`));

@@ -14,7 +14,14 @@ export function RouteStrip({
 }) {
   const stops = stopsFor(kind);
   const here = routeIndex(status, kind);
-  if (here < 0) return <p className="muted">{status === "rejected" ? "Bu öneri uygulanmayacak." : "Bu talep iptal edildi."}</p>;
+  // Outside the area: the referral card right below says it all.
+  if (status === "referred") return null;
+  if (here < 0)
+    return (
+      <p className="muted">
+        {status === "rejected" ? "Bu öneri uygulanmayacak." : "Bu talep iptal edildi."}
+      </p>
+    );
   const issue = kind === "issue";
   return (
     <ol className="route" aria-label={`Durum: ${stops[here]}`}>
@@ -38,6 +45,7 @@ export function etaLine(
   queuePosition?: number | null,
   kind: RequestKind = "issue",
 ) {
+  if (status === "referred") return "Yetki alanımız dışında · ilgili numaralar aşağıda";
   if (kind === "improvement") {
     if (status === "received") return "Önerin alındı, kuruma iletiliyor";
     if (status === "routed") return "Kurum önerini değerlendiriyor";

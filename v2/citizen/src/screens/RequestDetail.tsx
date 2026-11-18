@@ -3,6 +3,7 @@ import { dateTime, isLive } from "@kentbag/shared";
 import { api, type CitizenView } from "../app.ts";
 import { RouteStrip, etaLine } from "../../../shared/client/RouteStrip.tsx";
 import { onResume } from "../../../shared/client/native.ts";
+import { ContactList } from "../../../shared/client/Referral.tsx";
 
 export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }) {
   const [r, setR] = useState<CitizenView | null>(null);
@@ -89,6 +90,16 @@ export function RequestDetail({ id, onBack }: { id: string; onBack: () => void }
               </p>
             )}
           </section>
+          {r.referral && (
+            <section className="panel stack referral">
+              <h2>Yetki alanımız dışında</h2>
+              <p>
+                Bildirdiğin yer {[r.referral.district, r.referral.province].filter(Boolean).join(", ")} sınırları içinde; Oltu Belediyesi burada
+                hizmet veremiyor. Sorunu şu numaralardan ilgili kuruma iletebilirsin:
+              </p>
+              <ContactList contacts={r.referral.contacts} />
+            </section>
+          )}
           {r.status === "resolved" && (
             <section className="panel stack resolved">
               <h2>{r.kind === "improvement" ? "Önerin hayata geçirildi" : "Ekip işi tamamladı"}</h2>

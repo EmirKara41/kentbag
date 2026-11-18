@@ -3,10 +3,32 @@ import L from "leaflet";
 import { categories, oltuCenter, type CategoryId, type RequestKind } from "@kentbag/shared";
 import { api, type CitizenView, type NearbyProblem } from "../app.ts";
 import { createDraftStore, validateReport, type ReportDraft } from "../report.ts";
+import { ContactList, type Contact } from "../../../shared/client/Referral.tsx";
 import { capturePhoto, currentPosition, isNative, preparePhoto, type LocalPhoto } from "../../../shared/client/native.ts";
 
 const drafts = createDraftStore(localStorage);
 const categoriesOf = (kind: RequestKind) => (Object.keys(categories) as CategoryId[]).filter((id) => categories[id].kind === kind);
+
+/** Warns before sending when the spot is outside Oltu, and gives the numbers to call instead. */
+function AreaWarning({ point, category }: { point: { lat: number; lng: number }; category: CategoryId }) {
+  const [area, setArea] = useState<{ outside: boolean; message?: string; contacts?: Contact[] } | null>(null);
+  useEffect(() => {
+    const q = new URLSearchParams({ lat: String(point.lat), lng: String(point.lng), category });
+    api
+      .call<{ outside: boolean; message?: string; contacts?: Contact[] }>(`/api/area?${q}`)
+      .then(setArea)
+      .catch(() => setArea(null));
+  }, [point.lat, point.lng, category]);
+  if (!area?.outside) return null;
+  return (
+    <section className="panel stack referral" role="status">
+      <strong>Bu yer Oltu Belediyesi'nin yetki alanı dışında</strong>
+      <span>{area.message}</span>
+      <ContactList contacts={area.contacts ?? []} />
+      <small className="muted">Yine de gönderebilirsin; talebin kaydedilir ve bu numaralar talep sayfanda da durur.</small>
+    </section>
+  );
+}
 
 /** Open reports of the same problem near the chosen spot; joining one beats a duplicate report. */
 function Nearby({ point, category, onJoined }: { point: { lat: number; lng: number }; category: CategoryId; onJoined: (id: string) => void }) {
@@ -187,6 +209,7 @@ export function Report({ onCancel, onSent }: { onCancel: () => void; onSent: (id
           <input value={draft.address} maxLength={300} onChange={(e) => update({ address: e.target.value })} placeholder="Örn. Cumhuriyet Mah. Lale Sok. No 4" />
         </label>
       </section>
+      {draft.point && draft.category && <AreaWarning point={draft.point} category={draft.category} />}
       {draft.point && draft.category && (
         <Nearby
           point={draft.point}

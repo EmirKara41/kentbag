@@ -144,4 +144,11 @@ ALTER TABLE request ADD COLUMN IF NOT EXISTS photo_check jsonb;
 ALTER TABLE request ADD COLUMN IF NOT EXISTS resolution_check jsonb;
 `,
   },
+  {
+    name: "004_referral",
+    sql: `
+-- Requests outside Oltu: the place found from the point and the numbers offered to the citizen.
+ALTER TABLE request ADD COLUMN IF NOT EXISTS referral jsonb;
+`,
+  },
 ];

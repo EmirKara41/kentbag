@@ -7,7 +7,7 @@ import type { Db } from "./db.ts";
 import type { PhotoStore } from "./photos.ts";
 import { createAccess, type Access } from "./access.ts";
 import { errorHandler } from "./errors.ts";
-import { fallbackTravelMinutes, type Point } from "@kentbag/shared";
+import { fallbackTravelMinutes, type Place, type Point } from "@kentbag/shared";
 import { createAgent, type Agent, type AsyncTravel, type Classify } from "./agent.ts";
 import type { ChangeHook } from "./requests.ts";
 import { citizenRoutes } from "./citizen.ts";
@@ -29,6 +29,8 @@ export type ServerOptions = {
   now?: () => Date;
   geocode?: (address: string) => Promise<Point | null>;
   travel?: AsyncTravel;
+  /** District of a point, for the service-area check; without it every place counts as inside. */
+  locate?: (p: Point) => Promise<Place | null>;
   classify?: Classify;
   classifyTimeoutMs?: number;
   pushSend?: PushSend;
@@ -46,6 +48,7 @@ export type Context = ServerOptions & {
   access: Access;
   now: () => Date;
   geocode: (address: string) => Promise<Point | null>;
+  locate: (p: Point) => Promise<Place | null>;
   hooks: ChangeHook[];
   agent: AgentApi;
   agentService: Agent;
@@ -65,6 +68,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     access: createAccess(options.db, options.auth),
     now: options.now ?? (() => new Date()),
     geocode: options.geocode ?? (async () => null),
+    locate: options.locate ?? (async () => null),
     hooks: [],
     travel: options.travel ?? (async (a, b) => fallbackTravelMinutes(a, b)),
   } as unknown as Context;
@@ -81,6 +85,7 @@ export function createServer(options: ServerOptions): { app: Express; ctx: Conte
     classify: options.classify,
     classifyTimeoutMs: options.classifyTimeoutMs,
     judge: options.photoJudge,
+    locate: options.locate,
     photos: options.photos,
   });
   ctx.agent = ctx.agentService;

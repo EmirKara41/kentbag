@@ -2,6 +2,10 @@ import express, { type Router } from "express";
 import { z } from "zod";
 import {
   categories,
+  outsideServiceArea,
+  referralContacts,
+  referralMessage,
+  serviceArea,
   institutionIds,
   institutions,
   queueEta,
@@ -41,6 +45,7 @@ export function staffRoutes(ctx: Context): Router {
       mergedInto: r.mergedInto,
       supportCount: Number(counts?.support_count ?? 0),
       mergedCount: Number(counts?.merged_count ?? 0),
+      referral: (counts?.referral ?? null) as { district: string; province: string | null; contacts: { name: string; phone: string; why: string }[] } | null,
       photoCheck: (counts?.photo_check ?? null) as { verdict: string; note: string } | null,
       resolutionCheck: (counts?.resolution_check ?? null) as { verdict: string; note: string } | null,
       id: r.id,
@@ -199,6 +204,25 @@ export function staffRoutes(ctx: Context): Router {
         res.json({ request: row(after) });
       }),
     );
+
+  /** Center marks a request as outside Oltu; the citizen gets the numbers to call. */
+  router.post(
+    "/staff/requests/:id/refer",
+    handle(async (req, res) => {
+      const user = await ctx.access.requireRole(req, "center");
+      const { district } = z.object({ district: z.string().trim().min(2).max(60).optional() }).parse(req.body ?? {});
+      const r = await visible(user, String(req.params.id));
+      const found = r.point ? await ctx.locate(r.point).catch(() => null) : null;
+      const place = district ? { district, province: found?.province ?? serviceArea.province } : found;
+      if (!place?.district) throw new HttpError(400, "İlçe bulunamadı; ilçeyi yazın.");
+      if (!outsideServiceArea(place)) throw new HttpError(409, `Bu konum ${serviceArea.district} içinde görünüyor.`);
+      const referral = { ...place, contacts: referralContacts(r.category, place, r.priority) };
+      const after = await saveTransition(ctx, r.id, { type: "refer", message: referralMessage(place) }, actor(user), {
+        inside: (q) => q.query("UPDATE request SET referral=$2 WHERE id=$1", [r.id, JSON.stringify(referral)]).then(() => undefined),
+      });
+      res.json({ request: row(after) });
+    }),
+  );
 
   /** Open requests of the same category within 1.5 km, candidates for merging. */
   router.get(

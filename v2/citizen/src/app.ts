@@ -42,6 +42,7 @@ export type CitizenView = {
   othersAffected: boolean;
   canReopen: boolean;
   canCancel: boolean;
+  referral: { district: string; province: string | null; contacts: { name: string; phone: string; why: string }[] } | null;
 };
 
 export type Announcement = {

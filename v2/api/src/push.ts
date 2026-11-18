@@ -39,6 +39,7 @@ const citizenTitle: Partial<Record<RequestStatus, string>> = {
   resolved: "Sorununuz çözüldü",
   cancelled: "Talebiniz iptal edildi",
   merged: "Talebiniz benzer bir taleple birleştirildi",
+  referred: "Talebiniz yetki alanımız dışında",
 };
 
 const improvementTitle: Partial<Record<RequestStatus, string>> = {
@@ -48,6 +49,7 @@ const improvementTitle: Partial<Record<RequestStatus, string>> = {
   resolved: "Öneriniz hayata geçirildi",
   cancelled: "Öneriniz iptal edildi",
   merged: "Öneriniz benzer bir öneriyle birleştirildi",
+  referred: "Öneriniz yetki alanımız dışında",
 };
 
 /** People following a request: supporters and owners of requests merged into it. */

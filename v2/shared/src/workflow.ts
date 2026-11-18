@@ -20,7 +20,8 @@ export type Action =
   | { type: "plan"; note: string }
   | { type: "reject"; reason: string }
   | { type: "complete"; note: string }
-  | { type: "merge"; into: string; reference: string };
+  | { type: "merge"; into: string; reference: string }
+  | { type: "refer"; message: string };
 
 export type Actor = {
   role: ActorRole;
@@ -41,7 +42,7 @@ export class TransitionError extends Error {
 const ACTIVE: RequestStatus[] = ["received", "routed", "assigned", "en_route", "on_site", "reopened", "returned", "planned"];
 
 const rules: Record<Action["type"], { from: RequestStatus[]; to: RequestStatus }> = {
-  route: { from: ["received", "reopened", "returned", "routed"], to: "routed" },
+  route: { from: ["received", "reopened", "returned", "routed", "referred"], to: "routed" },
   assign: { from: ["routed", "assigned", "returned", "reopened"], to: "assigned" },
   depart: { from: ["assigned"], to: "en_route" },
   arrive: { from: ["assigned", "en_route"], to: "on_site" },
@@ -54,6 +55,7 @@ const rules: Record<Action["type"], { from: RequestStatus[]; to: RequestStatus }
   reject: { from: ["routed", "planned"], to: "rejected" },
   complete: { from: ["routed", "planned"], to: "resolved" },
   merge: { from: ACTIVE, to: "merged" },
+  refer: { from: ["received", "routed", "returned", "reopened", "assigned"], to: "referred" },
 };
 
 const forbid = (message = "Bu işlem için yetkiniz yok.") => new TransitionError("forbidden", message);
@@ -81,6 +83,7 @@ function authorize(req: CitizenRequest, action: Action, actor: Actor) {
   const owner = actor.role === "citizen" && actor.userId === req.citizenId;
   switch (action.type) {
     case "route":
+    case "refer":
       if (actor.role !== "agent" && actor.role !== "center") throw forbid();
       return;
     case "assign":
@@ -208,6 +211,11 @@ export function applyTransition(
       next.resolutionNote = text(action.note, 10, "Yapılan işlem açıklaması");
       next.resolvedAt = now;
       body = `Öneri hayata geçirildi: ${next.resolutionNote}`;
+      break;
+    case "refer":
+      clearAssignment(next);
+      next.institution = null;
+      body = action.message;
       break;
     case "merge":
       if (action.into === req.id) throw invalid("Talep kendisiyle birleştirilemez.");

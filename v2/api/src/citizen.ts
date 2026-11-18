@@ -3,7 +3,7 @@ import express, { type Router } from "express";
 import { z } from "zod";
 import { fileTypeFromBuffer } from "file-type";
 import { imageSize } from "image-size";
-import { categories, isOpen, type CategoryId, type CitizenRequest, type RequestEvent } from "@kentbag/shared";
+import { categories, isOpen, outsideServiceArea, referralContacts, referralMessage, type CategoryId, type CitizenRequest, type RequestEvent } from "@kentbag/shared";
 import type { Context } from "./server.ts";
 import { handle } from "./server.ts";
 import { HttpError } from "./errors.ts";
@@ -119,6 +119,7 @@ export function citizenRoutes(ctx: Context): Router {
       othersAffected: await othersAffected(shown.mergedInto ?? r.id),
       canReopen: own && shown.kind === "issue" && (r.status === "resolved" || primaryDone),
       canCancel: own && (isOpen(r.status) || (r.status === "merged" && !primaryDone)),
+      referral: r.status === "referred" ? ((await ctx.db.query("SELECT referral FROM request WHERE id=$1", [r.id])).rows[0]?.referral ?? null) : null,
     };
   }
 
@@ -279,6 +280,19 @@ export function citizenRoutes(ctx: Context): Router {
           };
         }),
       });
+    }),
+  );
+
+  /** Before sending: is the chosen spot inside Oltu? If not, whom to call instead. */
+  router.get(
+    "/area",
+    handle(async (req, res) => {
+      const user = await ctx.access.requireUser(req);
+      throttleLocation(user.userId);
+      const { lat, lng, category } = nearbyQuery.parse(req.query);
+      const place = await ctx.locate({ lat, lng }).catch(() => null);
+      if (!outsideServiceArea(place)) return void res.json({ outside: false, place });
+      res.json({ outside: true, place, message: referralMessage(place!), contacts: referralContacts(category, place!) });
     }),
   );
 

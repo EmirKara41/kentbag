@@ -32,7 +32,7 @@ export function AiNote({ kind, check }: { kind: "photo" | "fix"; check?: { verdi
 }
 
 export function StatusPill({ status, label }: { status: RequestStatus; label: string }) {
-  const tone = status === "resolved" ? "done" : ["cancelled", "rejected", "merged"].includes(status) ? "off" : isLive(status) ? "live" : "wait";
+  const tone = status === "resolved" ? "done" : ["cancelled", "rejected", "merged", "referred"].includes(status) ? "off" : isLive(status) ? "live" : "wait";
   return <span className={`pill ${tone}`}>{label}</span>;
 }
 
@@ -50,7 +50,12 @@ export function RouteStrip({
 }) {
   const stops = stopsFor(kind);
   const here = routeIndex(status, kind);
-  if (here < 0) return <p className="muted">{status === "rejected" ? "Bu öneri uygulanmayacak." : "Bu talep iptal edildi."}</p>;
+  if (here < 0)
+    return (
+      <p className="muted">
+        {status === "rejected" ? "Bu öneri uygulanmayacak." : status === "referred" ? "Yetki alanı dışında; vatandaşa ilgili numaralar verildi." : "Bu talep iptal edildi."}
+      </p>
+    );
   const issue = kind === "issue";
   return (
     <ol className="route" aria-label={`Talebin durumu: ${stops[here]}`}>

@@ -176,3 +176,16 @@ test("merge clears the queue spot and reopen splits a merged request again", () 
   const back = ok(request, { type: "reopen", note: "Bende hâlâ yok.", photoIds: [] }, owner, "reopened");
   assert.equal(back.request.mergedInto, null);
 });
+
+test("outside the area: only center or agent refers; center can take it back", async () => {
+  const { outsideServiceArea, referralContacts } = await import("../src/index.ts");
+  assert.equal(outsideServiceArea({ district: "Oltu", province: "Erzurum" }), false);
+  assert.equal(outsideServiceArea({ district: "Narman", province: "Erzurum" }), true);
+  assert.equal(outsideServiceArea(null), false);
+  assert.deepEqual(referralContacts("road", { district: "Narman", province: "Erzurum" }).map((c) => c.phone), ["159", "153"]);
+  assert.deepEqual(referralContacts("electricity", { district: "Yakutiye", province: "Erzurum" }, "urgent").map((c) => c.phone), ["112", "186", "153"]);
+  const { request } = ok(base(), { type: "refer", message: "Yetki dışı." }, agent, "referred");
+  assert.throws(() => applyTransition(base(), { type: "refer", message: "x" }, inst, now), TransitionError);
+  ok(request, { type: "route", institution: "public-works", reason: "Merkez işleme aldı." }, center, "routed");
+  assert.equal(statusLabel(request), "Yetki alanı dışında");
+});

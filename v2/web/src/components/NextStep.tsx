@@ -1,6 +1,6 @@
 import { isLive } from "@kentbag/shared";
 import type { StaffRequestDetail } from "../api.ts";
-import { CancelRequest, LiveSummary, RouteChoice, TeamChoice } from "./Actions.tsx";
+import { CancelRequest, LiveSummary, ReferChoice, RouteChoice, TeamChoice } from "./Actions.tsx";
 import { ImprovementDecision, MergeChoice } from "./Decisions.tsx";
 
 const WAITING = ["routed", "returned", "reopened"];
@@ -9,7 +9,24 @@ const WAITING = ["routed", "returned", "reopened"];
 export function NextStep({ role, detail, refresh }: { role: "center" | "institution"; detail: StaffRequestDetail; refresh: () => Promise<void> }) {
   const d = detail;
   if (d.status === "received")
-    return role === "center" ? <RouteChoice detail={d} refresh={refresh} /> : <p className="muted">Merkez yönlendirmeyi bekliyor.</p>;
+    return role === "center" ? (
+      <>
+        <RouteChoice detail={d} refresh={refresh} />
+        <ReferChoice detail={d} refresh={refresh} />
+      </>
+    ) : (
+      <p className="muted">Merkez yönlendirmeyi bekliyor.</p>
+    );
+  if (d.status === "referred")
+    return (
+      <>
+        <p>
+          Yetki alanı dışında ({[d.referral?.district, d.referral?.province].filter(Boolean).join(", ") || "ilçe bilinmiyor"}). Vatandaşa önerilen numaralar:{" "}
+          {(d.referral?.contacts ?? []).map((c) => `${c.name} ${c.phone}`).join(" · ")}
+        </p>
+        {role === "center" && <RouteChoice detail={d} refresh={refresh} />}
+      </>
+    );
   if (d.status === "merged")
     return <p className="muted">Bu talep {d.mergedIntoReference ?? "başka bir taleple"} birleştirildi. İşlemleri o talep üzerinden yapın.</p>;
   if (d.kind === "improvement" && (d.status === "routed" || d.status === "planned"))
@@ -23,6 +40,7 @@ export function NextStep({ role, detail, refresh }: { role: "center" | "institut
   if (WAITING.includes(d.status))
     return (
       <>
+        {role === "center" && d.status === "routed" && <ReferChoice detail={d} refresh={refresh} />}
         <TeamChoice detail={d} refresh={refresh} title={role === "center" ? `${d.institutionName} · hangi ekip gitsin?` : "Hangi ekip gitsin?"} />
         <MergeChoice detail={d} refresh={refresh} />
         <CancelRequest detail={d} refresh={refresh} />

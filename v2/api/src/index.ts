@@ -33,6 +33,7 @@ const { app } = createServer({
   photos: await blobPhotoStore(),
   travel: geo.travel,
   geocode: geo.geocode,
+  locate: geo.locate,
   classify,
   photoJudge: process.env.GEMINI_API_KEY
     ? geminiJudge(process.env.GEMINI_API_KEY, process.env.GEMINI_VISION_MODEL || process.env.GEMINI_MODEL || "gemini-3.5-flash-lite")

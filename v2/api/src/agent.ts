@@ -1,6 +1,10 @@
 import { z } from "zod";
 import {
   categories,
+  outsideServiceArea,
+  referralContacts,
+  referralMessage,
+  type Place,
   chooseTeam,
   institutionFor,
   institutions,
@@ -123,6 +127,7 @@ export function createAgent(deps: {
   classifyTimeoutMs?: number;
   judge?: PhotoJudge;
   photos?: PhotoStore;
+  locate?: (p: Point) => Promise<Place | null>;
 }) {
   const ctx = { db: deps.db, hooks: deps.hooks, now: deps.now };
 
@@ -206,11 +211,32 @@ export function createAgent(deps: {
     }
   }
 
+  /** Outside Oltu: tell the citizen whom to call instead of sending the request to our institutions. */
+  async function referIfOutside(r: CitizenRequest) {
+    if (!deps.locate || !r.point) return false;
+    const place = await timeLimit(deps.locate(r.point), 4000).catch(() => null);
+    if (!outsideServiceArea(place)) return false;
+    const { priority } = await classify(r);
+    const referral = { ...place!, contacts: referralContacts(r.category, place!, priority) };
+    try {
+      await saveTransition(ctx, r.id, { type: "refer", message: referralMessage(place!) }, { role: "agent" }, {
+        expectStatus: ["received"],
+        inside: (q) =>
+          q.query("UPDATE request SET referral=$2, priority=$3 WHERE id=$1", [r.id, JSON.stringify(referral), priority]).then(() => undefined),
+      });
+    } catch (error) {
+      if (error instanceof TransitionError && error.code === "invalid_state") return true;
+      throw error;
+    }
+    return true;
+  }
+
   async function processRequest(id: string) {
     const r = await getRequest(deps.db, id);
     if (!r) return;
     if (r.status === "received") {
       if (!(await centerAgentOn(deps.db))) return;
+      if (await referIfOutside(r)) return;
       const [result, photo] = await Promise.all([classify(r), checkPhotos(r)]);
       const institution = institutionFor(r.category);
       const photoNote = photo?.verdict === "unrelated" ? ` ${PHOTO_HOLD}` : photo?.verdict === "doubtful" ? " Fotoğrafın sorunla ilgisi belirsiz." : "";

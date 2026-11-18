@@ -38,7 +38,9 @@ export type RequestStatus =
   | "planned"
   | "rejected"
   // Joined into another request about the same problem; follows that request.
-  | "merged";
+  | "merged"
+  // Outside the municipality's area; the citizen got numbers of the responsible bodies.
+  | "referred";
 
 export type CitizenRequest = {
   id: string;

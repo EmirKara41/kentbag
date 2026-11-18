@@ -1,4 +1,4 @@
-import { fallbackTravelMinutes, type Point } from "@kentbag/shared";
+import { fallbackTravelMinutes, type Place, type Point } from "@kentbag/shared";
 
 const USER_AGENT = "KentBag-ders-projesi/2.0";
 const CACHE_MS = 10 * 60_000;
@@ -42,5 +42,27 @@ export function createGeo(deps: { fetch?: typeof fetch; now?: () => number } = {
     }
   }
 
-  return { travel, geocode };
+  const places = new Map<string, { place: Place | null; at: number }>();
+  /** District and province of a point (Nominatim reverse); null when unknown. */
+  async function locate(p: Point): Promise<Place | null> {
+    const key = `${p.lat.toFixed(3)},${p.lng.toFixed(3)}`;
+    const hit = places.get(key);
+    if (hit && now() - hit.at < CACHE_MS * 6) return hit.place;
+    try {
+      const r = await get(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&zoom=10&lat=${p.lat}&lon=${p.lng}`, {
+        signal: AbortSignal.timeout(3000),
+        headers: { "User-Agent": USER_AGENT, "Accept-Language": "tr" },
+      });
+      if (!r.ok) return null;
+      const a = ((await r.json()) as { address?: Record<string, string> }).address ?? {};
+      const district = a.town ?? a.county ?? a.city_district ?? a.municipality ?? null;
+      const place = district ? { district, province: a.province ?? a.state ?? null } : null;
+      places.set(key, { place, at: now() });
+      return place;
+    } catch {
+      return null;
+    }
+  }
+
+  return { travel, geocode, locate };
 }

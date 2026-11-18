@@ -5,3 +5,4 @@ export * from "./labels.ts";
 export * from "./eta.ts";
 export * from "./assign.ts";
 export * from "./stages.ts";
+export * from "./area.ts";

@@ -64,6 +64,37 @@ export function RouteChoice({ detail, refresh }: { detail: StaffRequestDetail; r
   );
 }
 
+/** Center: the place is outside Oltu; the citizen gets the numbers of the responsible bodies. */
+export function ReferChoice({ detail, refresh }: { detail: StaffRequestDetail; refresh: () => Promise<void> }) {
+  const [open, setOpen] = useState(false);
+  const [district, setDistrict] = useState("");
+  const { busy, error, run } = useRun(refresh);
+  if (!open)
+    return (
+      <button className="link" onClick={() => setOpen(true)}>
+        Yetki alanımız dışında
+      </button>
+    );
+  return (
+    <div className="stack">
+      <label>
+        Hangi ilçede? (boş bırakırsanız konumdan bulunur)
+        <input value={district} onChange={(e) => setDistrict(e.target.value)} placeholder="Örn. Narman" />
+      </label>
+      <small>Vatandaşa o ilçenin belediyesi ve ilgili arıza hatları (153, 185, 186, 159) önerilir.</small>
+      {error && <p className="error">{error}</p>}
+      <div className="row">
+        <button disabled={busy} onClick={() => void run(`/api/staff/requests/${detail.id}/refer`, district.trim() ? { district: district.trim() } : {})}>
+          Yönlendir ve kapat
+        </button>
+        <button className="link" onClick={() => setOpen(false)}>
+          Vazgeç
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function TeamChoice({ detail, refresh, title }: { detail: StaffRequestDetail; refresh: () => Promise<void>; title: string }) {
   const suggestion = useSuggestion(detail.id);
   const teams = useTeams(detail.institution);

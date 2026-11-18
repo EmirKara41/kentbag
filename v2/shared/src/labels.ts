@@ -31,5 +31,7 @@ export function statusLabel(req: CitizenRequest, institutionName?: string, teamN
       return "Uygulanmayacak";
     case "merged":
       return "Aynı sorunla birleştirildi";
+    case "referred":
+      return "Yetki alanı dışında";
   }
 }

@@ -46,6 +46,7 @@ export function routeIndex(status: RequestStatus, kind: RequestKind = "issue"): 
       return 5;
     case "cancelled":
     case "rejected":
+    case "referred":
       return -1;
   }
 }
@@ -53,7 +54,7 @@ export function routeIndex(status: RequestStatus, kind: RequestKind = "issue"): 
 export const isLive = (s: RequestStatus) => s === "assigned" || s === "en_route" || s === "on_site";
 
 /** Requests that are still being worked on (not finished, cancelled, rejected or merged away). */
-export const isOpen = (s: RequestStatus) => !["resolved", "cancelled", "rejected", "merged"].includes(s);
+export const isOpen = (s: RequestStatus) => !["resolved", "cancelled", "rejected", "merged", "referred"].includes(s);
 
 export const clockTime = (d: string | Date | null | undefined) =>
   d ? new Intl.DateTimeFormat("tr-TR", { hour: "2-digit", minute: "2-digit", timeZone: "Europe/Istanbul" }).format(new Date(d)) : "";
