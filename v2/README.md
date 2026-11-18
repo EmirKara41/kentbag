@@ -48,6 +48,31 @@ Alındı → Kuruma iletildi → Ekibe atandı → Ekip yolda → Ekip sahada �
 
 Veritabanı şeması API açılırken kendiliğinden güncellenir (`api/src/schema.ts`, yalnız ekleme). Faz 1'e dönmek için `faz1-tamam` etiketi ve `C:\Users\emirk\KentBag-Yedek-Faz1-2026-11-18\GERI-DON.md`.
 
+## Yapay zekâ: ne yapıyor, nasıl ölçüldü
+
+**İki görev, ikisi de yalnızca öneri niteliğinde (hiçbir talebi engellemez):**
+
+1. **Fotoğraf–bildirim uyumu** (görüntü sınıflandırma, 3 sınıf: `ok` / `doubtful` / `unrelated`). Vatandaş "yol hasarı" deyip yemek fotoğrafı gönderirse talep otomatik ekip atamasında bekletilir; personel yine elle atayabilir.
+2. **Önce/sonra teyidi**: ekip işi kapatınca kapanış fotoğrafı vatandaşın fotoğrafıyla karşılaştırılır (`confirmed` / `unclear` / `mismatch`).
+
+Akış: fotoğraf + kategori + açıklama → Gemini (`gemini-3.5-flash-lite`, AI SDK, şemalı JSON çıktı) → karar + kısa gerekçe → panelde rozet. Kod: [`api/src/vision.ts`](api/src/vision.ts), [`api/src/agent.ts`](api/src/agent.ts).
+
+**Ölçüm** ([`api/eval`](api/eval)): 15 etiketli durum (8 gerçek sorun, 4 alakasız fotoğraf, 3 zor durum: karanlık, bulanık, açıklamaya gizlenmiş talimat). Fotoğraflar Wikimedia Commons'tan serbest lisanslı; kaynaklar `api/eval/photos/sources.json`. Karanlık ve bulanık örnekler bu fotoğraflardan türetildi.
+
+| Ölçü | Sonuç |
+|---|---|
+| Tam doğruluk (3 sınıf) | %93 (14/15) |
+| "Alakasız" kesinlik / duyarlılık | %100 / %100 (5/5, yanlış alarm 0) |
+| Gerçek sorunların geçme oranı | %100 (8/8) |
+| Yanıt süresi | medyan 1,9 sn · ort. 3,2 sn · en çok 6,8 sn |
+| YZ'siz karşılaştırma | alakasız fotoğrafların %0'ı yakalanır |
+
+Başarısız örnek: neredeyse siyah (%12 parlaklık) gece fotoğrafı `doubtful` beklenirken `ok` dendi; model karanlıkta kırık kapağı yine seçebildi. Yani hata "fazla iyimser" yönde; bu yüzden karar yalnızca öneri, son söz personelde. Ayrıntı: [`api/eval/RESULTS.md`](api/eval/RESULTS.md).
+
+Yeniden çalıştırmak: `GEMINI_API_KEY=... npm run eval:photos -w @kentbag/api`
+
+**Sınırlılıklar:** 15 örnek küçük bir set; sonuçlar yön gösterir, genelleme iddiası taşımaz. Model yüz/plaka tanımlamaması için yönlendirildi, fotoğraflar yalnızca bu kontrol için gönderilir. Ücretsiz katman dakikalık kotaya takılabilir; o durumda kontrol atlanır, talep normal akışta ilerler.
+
 ## Klasörler
 
 ```
