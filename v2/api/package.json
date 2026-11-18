@@ -9,7 +9,7 @@
     "migrate": "tsx --env-file-if-exists=.env scripts/migrate.ts",
     "seed": "tsx --env-file-if-exists=.env scripts/seed.ts",
     "build:cloud": "node scripts/build.mjs",
-    "dev": "tsx scripts/dev.ts",
+    "dev": "tsx --env-file-if-exists=.env scripts/dev.ts",
     "stage-deploy": "node scripts/stage-deploy.mjs",
     "eval:photos": "tsx --env-file-if-exists=.env eval/photo-eval.ts"
   },

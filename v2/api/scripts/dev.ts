@@ -11,6 +11,7 @@ import { seedDemo, seedTeams } from "../src/seed.ts";
 import { createServer } from "../src/server.ts";
 import { memoryPhotoStore } from "../src/photos.ts";
 import { createGeo } from "../src/geo.ts";
+import { geminiJudge } from "../src/vision.ts";
 
 const port = Number(process.env.PORT || 3100);
 const password = process.env.DEMO_PASSWORD || "Demo-yerel-sifre-123";
@@ -33,5 +34,8 @@ await migrate(db, auth);
 await seedTeams(db);
 await seedDemo(db, auth, password);
 const geo = createGeo();
-const { app } = createServer({ db, auth, config, photos: memoryPhotoStore(), travel: geo.travel, geocode: geo.geocode, locate: geo.locate, demoPassword: password });
+const { app } = createServer({ db, auth, config, photos: memoryPhotoStore(), travel: geo.travel, geocode: geo.geocode, locate: geo.locate, demoPassword: password,
+  // Optional: with GEMINI_API_KEY in api/.env the photo checks run locally too.
+  photoJudge: process.env.GEMINI_API_KEY ? geminiJudge(process.env.GEMINI_API_KEY, process.env.GEMINI_VISION_MODEL ?? "gemini-3.5-flash-lite") : undefined,
+});
 app.listen(port, "127.0.0.1", () => console.log(`KentBağ v2 dev API on http://127.0.0.1:${port} (demo login on)`));
