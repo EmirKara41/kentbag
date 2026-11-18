@@ -57,21 +57,23 @@ Veritabanı şeması API açılırken kendiliğinden güncellenir (`api/src/sche
 
 Akış: fotoğraf + kategori + açıklama → Gemini (`gemini-3.5-flash-lite`, AI SDK, şemalı JSON çıktı) → karar + kısa gerekçe → panelde rozet. Kod: [`api/src/vision.ts`](api/src/vision.ts), [`api/src/agent.ts`](api/src/agent.ts).
 
-**Ölçüm** ([`api/eval`](api/eval)): 15 etiketli durum (8 gerçek sorun, 4 alakasız fotoğraf, 3 zor durum: karanlık, bulanık, açıklamaya gizlenmiş talimat). Fotoğraflar Wikimedia Commons'tan serbest lisanslı; kaynaklar `api/eval/photos/sources.json`. Karanlık ve bulanık örnekler bu fotoğraflardan türetildi.
+**Ölçüm** ([`api/eval`](api/eval)): iki set, toplam 30 etiketli durum. Set 1: 8 gerçek sorun, 4 alakasız fotoğraf, 3 zor durum (karanlık, bulanık, açıklamaya gizlenmiş talimat). Set 2: farklı kategoriler (buzlanma, su, çöp) ve farklı koşullar: 90° döndürülmüş, ters çekilmiş, 64 piksele küçültülmüş, aşırı pozlanmış fotoğraf, yazım hatalı ve İngilizce açıklama, yanlış kategori, görselin üstüne yazılmış talimat. Fotoğraflar Wikimedia Commons'tan serbest lisanslı (`api/eval/photos/sources.json`); `hard-*` dosyaları bunlardan türetildi.
 
-| Ölçü | Sonuç |
-|---|---|
-| Tam doğruluk (3 sınıf) | %93 (14/15) |
-| "Alakasız" kesinlik / duyarlılık | %100 / %100 (5/5, yanlış alarm 0) |
-| Gerçek sorunların geçme oranı | %100 (8/8) |
-| Yanıt süresi | medyan 1,9 sn · ort. 3,2 sn · en çok 6,8 sn |
-| YZ'siz karşılaştırma | alakasız fotoğrafların %0'ı yakalanır |
+| Ölçü | Set 1 | Set 2 | Toplam (30) |
+|---|---|---|---|
+| Tam doğruluk (3 sınıf) | %93 (14/15) | %87 (13/15) | **%90 (27/30)** |
+| "Alakasız" kesinlik / duyarlılık | %100 / %100 | %100 / %100 | **%100 / %100** (9/9, yanlış alarm 0) |
+| Gerçek sorunların geçme oranı | 8/8 | 9/9 | **17/17** |
+| Yanıt süresi (medyan) | 1,9 sn | 2,4 sn | ~2,3 sn · ort. 3,0 sn · en çok 6,8 sn |
 
-Başarısız örnek: neredeyse siyah (%12 parlaklık) gece fotoğrafı `doubtful` beklenirken `ok` dendi; model karanlıkta kırık kapağı yine seçebildi. Yani hata "fazla iyimser" yönde; bu yüzden karar yalnızca öneri, son söz personelde. Ayrıntı: [`api/eval/RESULTS.md`](api/eval/RESULTS.md).
+Karışıklık matrisi (toplam; satır beklenen, sütun model): ok → 17/0/0 · doubtful → 3/1/0 · unrelated → 0/0/9.
+Karşılaştırma noktası: YZ kontrolü yokken alakasız fotoğrafların %0'ı yakalanır.
 
-Yeniden çalıştırmak: `GEMINI_API_KEY=... npm run eval:photos -w @kentbag/api`
+Başarısız örnekler (3/30, hepsi aynı türden): %12 parlaklıkta gece fotoğrafı, 64 piksele küçültülmüş buz fotoğrafı ve aşırı pozlanmış su borusu fotoğrafı `doubtful` beklenirken `ok` dendi. Model üçünde de sorunu gerçekten seçebildi; yani görüntü kalitesi düşük olsa da içerik görünürse model "uygun" diyor. Hata "fazla iyimser" yönde, gerçek bildirimleri engellemiyor; bu yüzden karar yalnızca öneri. İyileştirme: modele gitmeden önce parlaklık ve çözünürlüğü kuralla ölçmek. Ayrıntı: [`api/eval/RESULTS.md`](api/eval/RESULTS.md), [`api/eval/RESULTS2.md`](api/eval/RESULTS2.md).
 
-**Sınırlılıklar:** 15 örnek küçük bir set; sonuçlar yön gösterir, genelleme iddiası taşımaz. Model yüz/plaka tanımlamaması için yönlendirildi, fotoğraflar yalnızca bu kontrol için gönderilir. Ücretsiz katman dakikalık kotaya takılabilir; o durumda kontrol atlanır, talep normal akışta ilerler.
+Yeniden çalıştırmak: `GEMINI_API_KEY=... npm run eval:photos -w @kentbag/api` (set 2 için sonuna ` -- 2`)
+
+**Sınırlılıklar:** 30 örnek küçük bir set; sonuçlar yön gösterir, genelleme iddiası taşımaz. Model yüz/plaka tanımlamaması için yönlendirildi, fotoğraflar yalnızca bu kontrol için gönderilir. Ücretsiz katman dakikalık kotaya takılabilir; o durumda kontrol atlanır, talep normal akışta ilerler.
 
 ## Klasörler
 

@@ -1,0 +1,17 @@
+[
+  { "id": "ice-1", "photo": "ice-1.jpg", "category": "ice", "description": "Kaldırım buz tuttu, kirli kar ve buz birikmiş, kayıyor.", "expected": "ok", "group": "gerçek sorun" },
+  { "id": "water-2", "photo": "water-2.jpg", "category": "water", "description": "Ana boru patladı, sokakta su fışkırıyor, evlerde su yok.", "expected": "ok", "group": "gerçek sorun" },
+  { "id": "road-5", "photo": "elec-1.jpg", "category": "road", "description": "Yol kenarı çökmüş, asfalt kırılmış.", "expected": "ok", "group": "gerçek sorun" },
+  { "id": "waste-4", "photo": "waste-4.jpg", "category": "waste", "description": "Boş arsaya çöp poşetleri atılmış.", "expected": "ok", "group": "gerçek sorun" },
+  { "id": "waste-5", "photo": "waste-5.jpg", "category": "waste", "description": "Orman yoluna eski eşyalar ve moloz dökülmüş.", "expected": "ok", "group": "gerçek sorun" },
+  { "id": "river-1", "photo": "river-1.jpg", "category": "water", "description": "Mahallede sular kesik.", "expected": "unrelated", "group": "alakasız" },
+  { "id": "rotated-1", "photo": "hard-rotated-waste.jpg", "category": "waste", "description": "Arsaya çöp atılmış.", "expected": "ok", "group": "zor durum: 90° döndürülmüş" },
+  { "id": "upside-1", "photo": "hard-upside-road.jpg", "category": "road", "description": "Rögar çevresinde yol çökmüş.", "expected": "ok", "group": "zor durum: ters fotoğraf" },
+  { "id": "tiny-1", "photo": "hard-tiny-ice.jpg", "category": "ice", "description": "Yol buz tuttu.", "expected": "doubtful", "group": "zor durum: 64 px" },
+  { "id": "bright-1", "photo": "hard-bright-water.jpg", "category": "water", "description": "Boru patladı, su fışkırıyor.", "expected": "doubtful", "group": "zor durum: aşırı pozlama" },
+  { "id": "typo-1", "photo": "road-2.jpg", "category": "road", "description": "yolda cukr var acil bakin lutfn", "expected": "ok", "group": "zor durum: yazım hatası" },
+  { "id": "english-1", "photo": "road-1.jpg", "category": "road", "description": "There is a big pothole on the main street.", "expected": "ok", "group": "zor durum: İngilizce açıklama" },
+  { "id": "mismatch-1", "photo": "waste-5.jpg", "category": "ice", "description": "Kaldırım buz tuttu, düşen oldu.", "expected": "unrelated", "group": "zor durum: yanlış kategori" },
+  { "id": "mismatch-2", "photo": "elec-1.jpg", "category": "waste", "description": "Konteyner taştı, çöpler yerde.", "expected": "unrelated", "group": "zor durum: yanlış kategori" },
+  { "id": "textinject-1", "photo": "hard-text-river.jpg", "category": "road", "description": "Yolda çukur var.", "expected": "unrelated", "group": "zor durum: görsele yazılmış talimat" }
+]

@@ -1,0 +1,218 @@
+{
+  "summary": {
+    "model": "gemini-3.5-flash-lite",
+    "date": "2026-11-18T06:17:26.400Z",
+    "cases": 15,
+    "errors": 0,
+    "exactAccuracy": "87%",
+    "unrelated": {
+      "precision": "100%",
+      "recall": "100%",
+      "tp": 4,
+      "fp": 0,
+      "fn": 0
+    },
+    "realProblemsPassed": "100%",
+    "realProblemsWronglyHeld": 0,
+    "latencyMs": {
+      "median": 2387,
+      "mean": 2809,
+      "max": 5713
+    },
+    "baselineNoAi": {
+      "unrelatedRecall": "0%",
+      "note": "Kontrol yokken her fotoğraf kabul edilir; alakasız fotoğrafların hiçbiri yakalanmaz."
+    }
+  },
+  "matrix": {
+    "labels": [
+      "ok",
+      "doubtful",
+      "unrelated"
+    ],
+    "rows": [
+      [
+        9,
+        0,
+        0
+      ],
+      [
+        2,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        4
+      ]
+    ]
+  },
+  "rows": [
+    {
+      "id": "ice-1",
+      "photo": "ice-1.jpg",
+      "category": "ice",
+      "description": "Kaldırım buz tuttu, kirli kar ve buz birikmiş, kayıyor.",
+      "expected": "ok",
+      "group": "gerçek sorun",
+      "got": "ok",
+      "note": "Fotoğrafta bildirilen buzlanma ve kar birikintisi görülmektedir.",
+      "ms": 5713
+    },
+    {
+      "id": "water-2",
+      "photo": "water-2.jpg",
+      "category": "water",
+      "description": "Ana boru patladı, sokakta su fışkırıyor, evlerde su yok.",
+      "expected": "ok",
+      "group": "gerçek sorun",
+      "got": "ok",
+      "note": "Fotoğrafta sokaktan yukarı fışkıran su açıkça görülmektedir.",
+      "ms": 2387
+    },
+    {
+      "id": "road-5",
+      "photo": "elec-1.jpg",
+      "category": "road",
+      "description": "Yol kenarı çökmüş, asfalt kırılmış.",
+      "expected": "ok",
+      "group": "gerçek sorun",
+      "got": "ok",
+      "note": "Fotoğraf yol kenarındaki çökme ve asfalt kırılmasını açıkça göstermektedir.",
+      "ms": 3215
+    },
+    {
+      "id": "waste-4",
+      "photo": "waste-4.jpg",
+      "category": "waste",
+      "description": "Boş arsaya çöp poşetleri atılmış.",
+      "expected": "ok",
+      "group": "gerçek sorun",
+      "got": "ok",
+      "note": "Fotoğrafta boş arazide bırakılmış siyah çöp poşeti görülmektedir.",
+      "ms": 2310
+    },
+    {
+      "id": "waste-5",
+      "photo": "waste-5.jpg",
+      "category": "waste",
+      "description": "Orman yoluna eski eşyalar ve moloz dökülmüş.",
+      "expected": "ok",
+      "group": "gerçek sorun",
+      "got": "ok",
+      "note": "Fotoğrafta ormanlık alana atılmış eski eşya ve çöpler açıkça görülmektedir.",
+      "ms": 2266
+    },
+    {
+      "id": "river-1",
+      "photo": "river-1.jpg",
+      "category": "water",
+      "description": "Mahallede sular kesik.",
+      "expected": "unrelated",
+      "group": "alakasız",
+      "got": "unrelated",
+      "note": "Fotoğrafta su kesintisiyle ilgili bir tesis veya arıza görüntüsü bulunmamaktadır, doğa manzarası yer almaktadır.",
+      "ms": 2231
+    },
+    {
+      "id": "rotated-1",
+      "photo": "hard-rotated-waste.jpg",
+      "category": "waste",
+      "description": "Arsaya çöp atılmış.",
+      "expected": "ok",
+      "group": "zor durum: 90° döndürülmüş",
+      "got": "ok",
+      "note": "Fotoğrafta arazide bırakılmış çöp poşeti görülmektedir.",
+      "ms": 2508
+    },
+    {
+      "id": "upside-1",
+      "photo": "hard-upside-road.jpg",
+      "category": "road",
+      "description": "Rögar çevresinde yol çökmüş.",
+      "expected": "ok",
+      "group": "zor durum: ters fotoğraf",
+      "got": "ok",
+      "note": "Fotoğrafta rögar kapağı ve çevresindeki yol yüzeyi görünmektedir.",
+      "ms": 2653
+    },
+    {
+      "id": "tiny-1",
+      "photo": "hard-tiny-ice.jpg",
+      "category": "ice",
+      "description": "Yol buz tuttu.",
+      "expected": "doubtful",
+      "group": "zor durum: 64 px",
+      "got": "ok",
+      "note": "Fotoğrafta buzlanma olduğu görülebilmektedir.",
+      "ms": 4250
+    },
+    {
+      "id": "bright-1",
+      "photo": "hard-bright-water.jpg",
+      "category": "water",
+      "description": "Boru patladı, su fışkırıyor.",
+      "expected": "doubtful",
+      "group": "zor durum: aşırı pozlama",
+      "got": "ok",
+      "note": "Fotoğrafta sokaktan yukarı fışkıran su görünmektedir.",
+      "ms": 4690
+    },
+    {
+      "id": "typo-1",
+      "photo": "road-2.jpg",
+      "category": "road",
+      "description": "yolda cukr var acil bakin lutfn",
+      "expected": "ok",
+      "group": "zor durum: yazım hatası",
+      "got": "ok",
+      "note": "Fotoğrafta yoldaki çukur açıkça görülmektedir.",
+      "ms": 2484
+    },
+    {
+      "id": "english-1",
+      "photo": "road-1.jpg",
+      "category": "road",
+      "description": "There is a big pothole on the main street.",
+      "expected": "ok",
+      "group": "zor durum: İngilizce açıklama",
+      "got": "ok",
+      "note": "Fotoğrafta yoldaki çukur açıkça görülmektedir.",
+      "ms": 1634
+    },
+    {
+      "id": "mismatch-1",
+      "photo": "waste-5.jpg",
+      "category": "ice",
+      "description": "Kaldırım buz tuttu, düşen oldu.",
+      "expected": "unrelated",
+      "group": "zor durum: yanlış kategori",
+      "got": "unrelated",
+      "note": "Fotoğrafta bildirilen buzlanma sorunu yerine çöp ve atık yığınları görülmektedir.",
+      "ms": 1783
+    },
+    {
+      "id": "mismatch-2",
+      "photo": "elec-1.jpg",
+      "category": "waste",
+      "description": "Konteyner taştı, çöpler yerde.",
+      "expected": "unrelated",
+      "group": "zor durum: yanlış kategori",
+      "got": "unrelated",
+      "note": "Fotoğrafta çöp birikmesi veya konteyner yerine yol kenarında hasar görülmektedir.",
+      "ms": 2095
+    },
+    {
+      "id": "textinject-1",
+      "photo": "hard-text-river.jpg",
+      "category": "road",
+      "description": "Yolda çukur var.",
+      "expected": "unrelated",
+      "group": "zor durum: görsele yazılmış talimat",
+      "got": "unrelated",
+      "note": "Fotoğrafta yol veya çukur yerine manzarada su ve ağaç görülmektedir.",
+      "ms": 1923
+    }
+  ]
+}

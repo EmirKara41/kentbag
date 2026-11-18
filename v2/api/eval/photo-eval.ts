@@ -17,7 +17,10 @@ const key = process.env.GEMINI_API_KEY;
 if (!key) throw new Error("GEMINI_API_KEY is required");
 const model = process.env.GEMINI_VISION_MODEL ?? "gemini-3.5-flash-lite";
 const judge = geminiJudge(key, model);
-const cases: Case[] = JSON.parse(readFileSync(join(here, "cases.json"), "utf8"));
+// Optional argument: the set number (1 = cases.json, 2 = cases2.json ...). Each set writes its own results.
+const set = process.argv[2] ?? "1";
+const suffix = set === "1" ? "" : set;
+const cases: Case[] = JSON.parse(readFileSync(join(here, `cases${suffix}.json`), "utf8"));
 const verdicts: Verdict[] = ["ok", "doubtful", "unrelated"];
 
 const rows: (Case & { got: Verdict | "error"; note: string; ms: number })[] = [];
@@ -58,10 +61,10 @@ const summary = {
   latencyMs: { median: ms[Math.floor(ms.length / 2)] ?? null, mean: ms.length ? Math.round(ms.reduce((a, b) => a + b, 0) / ms.length) : null, max: ms.at(-1) ?? null },
   baselineNoAi: { unrelatedRecall: "0%", note: "Kontrol yokken her fotoğraf kabul edilir; alakasız fotoğrafların hiçbiri yakalanmaz." },
 };
-writeFileSync(join(here, "results.json"), JSON.stringify({ summary, matrix: { labels: verdicts, rows: matrix }, rows }, null, 2));
+writeFileSync(join(here, `results${suffix}.json`), JSON.stringify({ summary, matrix: { labels: verdicts, rows: matrix }, rows }, null, 2));
 
 const md = [
-  `# Fotoğraf kontrolü ölçümü`,
+  `# Fotoğraf kontrolü ölçümü · set ${set}`,
   ``,
   `Model: \`${model}\` · ${rows.length} durum · ${summary.date.slice(0, 16).replace("T", " ")} UTC`,
   ``,
@@ -90,5 +93,5 @@ const md = [
   ...rows.map((r) => `| ${r.got === r.expected ? "✓" : "✗"} ${r.id} | ${r.group} | ${r.category} | ${r.expected} | ${r.got} | ${r.ms} | ${r.note.replace(/\|/g, "/").replace(/\n/g, " ")} |`),
   ``,
 ].join("\n");
-writeFileSync(join(here, "RESULTS.md"), md);
+writeFileSync(join(here, `RESULTS${suffix}.md`), md);
 console.log(JSON.stringify(summary, null, 2));

@@ -64,5 +64,42 @@
     "page": "https://commons.wikimedia.org/wiki/File:Bache_en_la_calle.jpg",
     "license": "CC BY 4.0",
     "author": "Avief.am"
-  }
+  },
+  "ice-1": {
+    "file": "Dirty snow and ice 01.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Dirty_snow_and_ice_01.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Kritzolina"
+  },
+  "water-2": {
+    "file": "Burst pipe in Long Eaton.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Burst_pipe_in_Long_Eaton.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Crep171166"
+  },
+  "elec-1": {
+    "file": "Damage from energized fallen power line caused by Hurricane Maria in Puerto Rico.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Damage_from_energized_fallen_power_line_caused_by_Hurricane_Maria_in_Puerto_Rico.jpg",
+    "license": "CC BY 2.0",
+    "author": "Western Area Power"
+  },
+  "waste-4": {
+    "file": "Illegal dumping near Swamp Creek in North Lynnwood.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Illegal_dumping_near_Swamp_Creek_in_North_Lynnwood.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "PinchyCC"
+  },
+  "waste-5": {
+    "file": "Fly tipping near High Beech, Essex.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Fly_tipping_near_High_Beech,_Essex.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "The wub"
+  },
+  "river-1": {
+    "file": "Flooded Albizia Saman (rain tree) in the Mekong.jpg",
+    "page": "https://commons.wikimedia.org/wiki/File:Flooded_Albizia_Saman_(rain_tree)_in_the_Mekong.jpg",
+    "license": "CC BY-SA 4.0",
+    "author": "Basile Morin"
+  },
+  "_türetilmiş": "hard-* dosyaları bu fotoğraflardan karartma, bulanıklaştırma, döndürme, küçültme, aşırı pozlama veya yazı ekleme ile üretildi; panel ekran görüntüsü projenin kendisine ait."
 }
